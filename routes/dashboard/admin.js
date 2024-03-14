@@ -38,7 +38,6 @@ router.get('/check', verifyTokenAndAdmin, async (req, res, next) => {
     try {
 
         const result = await admin_model.findById(req.user.id)
-
         res.json({
             'status': result != null,
         })

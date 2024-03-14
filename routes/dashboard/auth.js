@@ -15,9 +15,7 @@ router.get('/test', (req, res, next) => {
 router.post('/login', async (req, res, next) => {
 
     try {
-
         const { username, password, fcm } = req.body
-
         if (!username || !password) return next('Bad Request')
 
         if (process.env.SUPER_ADMIN_USERNAME == username && process.env.SUPER_ADMIN_PASSWORD == password) {
