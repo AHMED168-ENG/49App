@@ -75,6 +75,8 @@ const schema = new Schema({
     monthly_contest_fees: { type: Number, default: 0 },
     monthly_contest_reward: { type: Number, default: 0 },
     instant_pay_number: { type: String },
+    high_cost_per_kilo: { type: Number , default : 5 }, // this for hight price per mail  
+    low_cost_per_kilo: { type: Number , default : 3 }, // this for lowest price per mail 
 
 }, { versionKey: false, timestamps: true })
 

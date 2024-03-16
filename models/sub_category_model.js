@@ -11,7 +11,7 @@ const schema = new mongoose.Schema({
     name_ar: { type: String, required: true },
     name_en: { type: String, required: true },
     is_hidden: { type: Boolean, default: false },
-
+    
     parent: { type: String, required: true },
     daily_price: { type: Number, default: 0 },
     portion: { type: Number, required: true }, // () نصيب صاحب التطبيق

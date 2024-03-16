@@ -53,9 +53,9 @@ const schema = new mongoose.Schema({
     privacy_call: { type: Number, default: 2 },
 
 
-    is_rider: { type: Boolean, default: false, },
-    is_doctor: { type: Boolean, default: false },
-    is_restaurant: { type: Boolean, default: false },
+    is_rider: { type: Boolean, default: false, },       
+    is_doctor: { type: Boolean, default: false },       
+    is_restaurant: { type: Boolean, default: false },     
     is_loading: { type: Boolean, default: false },
 
     friends: { type: Array, default: [] },

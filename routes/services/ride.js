@@ -24,11 +24,10 @@ const router = express.Router()
 
 ///////////////////////////////////////////////// RIDER /////////////////////////////////////////////////////////////
 
-
+// get the manager info
 router.get('/attachments-info', async (req, res, next) => { // attachments info
 
     try {
-
         const info = await app_manager_model.findOne({}).select('ride_criminal_record ride_technical_examination ride_drug_analysis ride_technical_examination_center_phone ride_technical_examination_center_location ride_drug_analysis_center_phone ride_drug_analysis_center_location')
 
         delete info._doc._id
@@ -46,6 +45,10 @@ router.get('/attachments-info', async (req, res, next) => { // attachments info
     }
 })
 
+// register a new rider
+/**
+ * capiten => mohafazat => buses man
+ */
 router.post('/register-rider', verifyToken, async (req, res, next) => {
 
     try {
@@ -78,6 +81,7 @@ router.post('/register-rider', verifyToken, async (req, res, next) => {
                 'message': language == 'ar' ? 'ليس مسموحا لك بالتسجيل فى هذا القسم' : 'You are not authorized to register in this category',
             })
         }
+
         const result = await rider_model.findOne({ user_id: req.user.id })
 
         if (result) return next({
@@ -120,6 +124,11 @@ router.post('/register-rider', verifyToken, async (req, res, next) => {
     }
 })
 
+// get the highest and the lowest price for this distance in all riders
+
+/**
+ * 
+ */
 router.post('/get-high-low-price', async (req, res, next) => {
 
     try {
@@ -152,6 +161,7 @@ router.post('/get-high-low-price', async (req, res, next) => {
     }
 })
 
+// toggle rider is_ready attribute if ready make it ready if not make it not ready
 router.get('/toggle-ready', verifyToken, async (req, res, next) => {
 
     try {
@@ -169,6 +179,7 @@ router.get('/toggle-ready', verifyToken, async (req, res, next) => {
     }
 })
 
+// make rider not ready
 router.get('/not-ready', verifyToken, async (req, res, next) => {
 
     try {
@@ -184,6 +195,10 @@ router.get('/not-ready', verifyToken, async (req, res, next) => {
     }
 })
 
+// make rider change his price but price should be less than 2 and more than 4
+/**
+ * 
+ */
 router.post('/change-price', verifyToken, async (req, res, next) => {
 
     try {
@@ -191,8 +206,9 @@ router.post('/change-price', verifyToken, async (req, res, next) => {
         const { language } = req.headers
 
         const { price } = req.body
-
-        if (price > 4 || price < 2)
+        const info = await app_manager_model.findOne({}).select('high_cost_per_kilo low_cost_per_kilo')
+        
+        if (price > info.high_cost_per_kilo || price < info.low_cost_per_kilo)
             return next({ 'status': 400, 'message': language == 'ar' ? 'يجب أن يتراوح نطاق السعر بين 2 و 4' : 'The Price Range is must Between 2 to 4' })
 
         const result = await rider_model.findOneAndUpdate({ user_id: req.user.id, is_approved: true, is_active: true, }, { pricing_per_km: price }).select('_id')
@@ -208,6 +224,7 @@ router.post('/change-price', verifyToken, async (req, res, next) => {
     }
 })
 
+// update air conditioner for the rider car acording to state as true or false
 router.post('/update-air-conditioner', verifyToken, async (req, res, next) => {
 
     try {
@@ -227,7 +244,7 @@ router.post('/update-air-conditioner', verifyToken, async (req, res, next) => {
     }
 })
 
-
+// update car model year
 router.post('/update-car-model-year', verifyToken, async (req, res, next) => {
 
     try {
@@ -247,7 +264,7 @@ router.post('/update-car-model-year', verifyToken, async (req, res, next) => {
     }
 })
 
-
+// update rider phone
 router.post('/update-phone', verifyToken, async (req, res, next) => {
 
     try {
@@ -267,6 +284,7 @@ router.post('/update-phone', verifyToken, async (req, res, next) => {
     }
 })
 
+// update-driving-license-front
 router.post('/update-driving-license-front', verifyToken, async (req, res, next) => {
 
     try {
@@ -305,7 +323,7 @@ router.post('/update-driving-license-behind', verifyToken, async (req, res, next
         next(e)
     }
 })
-
+  
 router.post('/update-car-license-front', verifyToken, async (req, res, next) => {
 
     try {
@@ -431,7 +449,7 @@ router.get('/get-rider-rides', verifyToken, async (req, res, next) => {
         const result = await ride_model.find({ rider_id: req.user.id, is_completed: true }).sort({ createdAt: -1, _id: 1 }).skip((((page ?? 1) - 1) * 20)).limit(20)
 
         const ratings = await rating_model.find({ user_id: req.user.id, ad_id: { $in: result.map(e => e.id) } })
-
+        
         for (const ride of result) {
             ride._doc.sub_category_name = ''
             for (const rating of ratings) {
@@ -527,7 +545,6 @@ router.delete('/cancel-ride', verifyToken, async (req, res, next) => {
     }
 })
 
-
 router.get('/rider-go-to-client/:rideId', verifyToken, async (req, res, next) => {
 
     try {
@@ -586,7 +603,7 @@ router.get('/send-arrived-to-client/:rideId', verifyToken, async (req, res, next
                     const titleEn = 'The captain has arrived'
                     const bodyAr = 'لقد وصل الكابتن الى المكان المحدد'
                     const bodyEn = 'The captain has arrived at the designated place'
-
+                        
                     sendNotifications(
                         fcm,
                         user.language == 'ar' ? titleAr : titleEn,
@@ -751,10 +768,10 @@ router.post('/complete-ride', verifyToken, async (req, res, next) => {
 router.post('/rating-ride', verifyToken, async (req, res, next) => {
 
     try {
-
         const { language } = req.headers
 
         const { field_one, field_two, field_three, comment, category_id, ad_id, user_id } = req.body
+        if (comment.length > 100) return next({ 'stauts': 400, 'message': language == 'ar' ? 'أقصى عدد حروف للتعليق 100 حرف' : 'Max Comment length is 100 Letters' })
 
         if (!category_id || !ad_id || !user_id) return next('Bad Request')
 
@@ -762,7 +779,6 @@ router.post('/rating-ride', verifyToken, async (req, res, next) => {
 
         if (category && category.parent == rideCategoryId) {
 
-            if (comment.length > 100) return next({ 'stauts': 400, 'message': language == 'ar' ? 'أقصى عدد حروف للتعليق 100 حرف' : 'Max Comment length is 100 Letters' })
 
             await rating_model.updateOne({ user_rating_id: req.user.id, category_id, ad_id, user_id }, { field_one, field_two, field_three, comment, }, { upsert: true, new: true, setDefaultsOnInsert: true })
 
@@ -1033,9 +1049,7 @@ router.post('/accept-ride-offer', verifyToken, async (req, res, next) => {
 })
 
 router.delete('/delete-ride-request/:requestId', verifyToken, async (req, res, next) => {
-
     try {
-
         const { language } = req.headers
 
         const result = await ride_model.findOneAndDelete({ _id: req.params.requestId, user_id: req.user.id, })

@@ -134,6 +134,7 @@ export async function createOtherRequest(userId, country_code, mainCategoryId, c
         console.log(e)
     }
 }
+
 export const isTaxiOrCaptainOrScooter = (categoryId) =>
     categoryId == taxiCategoryId ||
     categoryId == captainCategoryId ||
