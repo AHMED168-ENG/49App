@@ -16,7 +16,7 @@ const schema = new mongoose.Schema({
     daily_price: { type: Number, default: 0 },
     portion: { type: Number, required: true }, // () نصيب صاحب التطبيق
     provider_portion: { type: Number, required: true }, // 
-
+    
     payment_factor: { type: Number, required: true },
     over_head_factor: { type: Number, default: 0 },
     gross_money: { type: Number, default: 0 },

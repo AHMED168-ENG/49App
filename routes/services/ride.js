@@ -17,6 +17,8 @@ import come_with_me_ride_model from '../../models/come_with_me_ride_model.js';
 import pick_me_ride_model from '../../models/pick_me_ride_model.js';
 import axios from 'axios';
 import wallet_model from '../../models/wallet_model.js';
+import handel_validation_errors from '../../middleware/handelBodyError.js';
+import getLocation from '../../validation/riders.js';
 
 
 const router = express.Router()
@@ -207,7 +209,7 @@ router.post('/change-price', verifyToken, async (req, res, next) => {
 
         const { price } = req.body
         const info = await app_manager_model.findOne({}).select('high_cost_per_kilo low_cost_per_kilo')
-        
+
         if (price > info.high_cost_per_kilo || price < info.low_cost_per_kilo)
             return next({ 'status': 400, 'message': language == 'ar' ? 'يجب أن يتراوح نطاق السعر بين 2 و 4' : 'The Price Range is must Between 2 to 4' })
 
@@ -475,7 +477,6 @@ router.post('/new-ride-request', verifyToken, async (req, res, next) => {
     try {
 
         const { language } = req.headers
-
         const { phone, car_model_year, air_conditioner, category_id, from, to, distance, time, lat, lng, destination_lat, destination_lng, price, passengers } = req.body
 
         if (category_id && from && to && distance && time && lat && lng && destination_lat && destination_lng) {
@@ -534,7 +535,7 @@ router.delete('/cancel-ride', verifyToken, async (req, res, next) => {
                 },
             )
 
-            //sendCancelRide(id, ride.user_id == req.user.id ? ride.rider_id : ride.user_id, ride.rider_id)
+            //sendCancelRide(id, ride.user_id == req.user.id ? ride.rider_id : ride.user_id , ride.rider_id)
 
         }
 
@@ -543,6 +544,43 @@ router.delete('/cancel-ride', verifyToken, async (req, res, next) => {
     } catch (e) {
         next(e)
     }
+})
+
+router.get('/rider-five-kilometers-away' , getLocation() , handel_validation_errors , async (req, res, next) => {
+    
+    try {
+        const { longitude, latitude } = req.query; // Get the longitude and latitude from the request query parameters
+        const info = await app_manager_model.findOne({}).select('max_distance')
+        const page = req.query.page || process.env.page;
+        const limit = req.query.limit || process.env.limit;
+        const search = req.query.search?.trim();
+        const {organization_id} = req
+        const queryObj = {};
+        if(search){
+          queryObj.car_brand = {'$regex' :  search, '$options' : 'i'}
+        }
+        const aggregate = rider_model.aggregate([
+     
+            {
+              $geoNear: {
+                near: {
+                  type: 'Point',
+                  coordinates: [parseFloat(longitude), parseFloat(latitude)]
+                },
+                distanceField: 'location',
+                spherical: true,
+                maxDistance: info.max_distance ?? process.env.maxDistance // 5 km in meters
+              }
+            },
+            {
+                $match : queryObj
+            },
+          ]);
+          const riders = await rider_model.aggregatePaginate(aggregate , {page , limit , sort : {
+            createdAt : -1,
+          }})
+          res.json(riders);
+    } catch (e) { next(e) }
 })
 
 router.get('/rider-go-to-client/:rideId', verifyToken, async (req, res, next) => {
@@ -685,7 +723,6 @@ router.get('/client-not-arrived/:rideId', verifyToken, async (req, res, next) =>
         return next('Bad Request')
     } catch (e) { next(e) }
 })
-
 
 router.post('/start-ride', verifyToken, async (req, res, next) => {
     try {
@@ -1510,4 +1547,5 @@ async function updateRideRating(riderId, category_id) {
         console.log(e)
     }
 }
+
 export default router

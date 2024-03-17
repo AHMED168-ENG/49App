@@ -77,6 +77,7 @@ const schema = new Schema({
     instant_pay_number: { type: String },
     high_cost_per_kilo: { type: Number , default : 5 }, // this for hight price per mail  
     low_cost_per_kilo: { type: Number , default : 3 }, // this for lowest price per mail 
+    max_distance: { type: Number , default : 5000 }, // this for maxDistance for get riders 
 
 }, { versionKey: false, timestamps: true })
 

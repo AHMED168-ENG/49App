@@ -1,5 +1,6 @@
 import mongoose from 'mongoose'
-
+import mongoosePaginate from 'mongoose-paginate-v2';
+import mongooseAggregatePaginate from 'mongoose-aggregate-paginate-v2';
 
 const schema = new mongoose.Schema({
     category_id: { type: String, required: true },
@@ -49,6 +50,9 @@ const schema = new mongoose.Schema({
     car_model_year: { type: String }
 
 }, { versionKey: false, timestamps: true })
+
+schema.plugin(mongoosePaginate);
+schema.plugin(mongooseAggregatePaginate);
 
 const model = mongoose.model("riders", schema);
 

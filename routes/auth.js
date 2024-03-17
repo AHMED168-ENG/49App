@@ -181,7 +181,7 @@ router.post('/social-login', async (req, res, next) => {
         const firebaseUser = await firebase_admin.auth().verifyIdToken(idToken)
 
         if (firebaseUser) {
-
+            
             const { name, picture, uid, email, phone } = firebaseUser
 
             const provider = firebaseUser.firebase.sign_in_provider
