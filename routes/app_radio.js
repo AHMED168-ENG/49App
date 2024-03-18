@@ -11,7 +11,7 @@ router.get('/', async (req, res, next) => {
     try {
 
         const { page, category } = req.query
-
+        
         const result = await app_radio_model.find({ is_active: true, category })
             .sort({ createdAt: -1, _id: 1 })
             .skip((((page ?? 1) - 1) * 20))

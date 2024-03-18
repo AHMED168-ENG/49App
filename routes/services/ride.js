@@ -546,7 +546,7 @@ router.delete('/cancel-ride', verifyToken, async (req, res, next) => {
     }
 })
 
-router.get('/rider-five-kilometers-away' , getLocation() , handel_validation_errors , async (req, res, next) => {
+router.get('/rider-five-kilometers-away' , verifyToken , getLocation() , handel_validation_errors , async (req, res, next) => {
     
     try {
         const { longitude, latitude } = req.query; // Get the longitude and latitude from the request query parameters

@@ -19,6 +19,7 @@ import notifications from './routes/notification.js'
 import cashBack from './routes/cash_back.js'
 import subscriptions from './routes/subscription.js'
 import payment from './routes/payment.js'
+import addressRoute from './routes/address.js'
 
 import ride from './routes/services/ride.js'
 import food from './routes/services/food.js'
@@ -120,6 +121,7 @@ app.use('/notifications', notifications);
 app.use('/cash-back', cashBack);
 app.use('/subscriptions', subscriptions);
 app.use('/payment', payment);
+app.use('/address', addressRoute);
 
 
 app.use('/social/report', report);
