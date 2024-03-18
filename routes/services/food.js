@@ -594,6 +594,7 @@ router.get('/get-restaurant/:id', verifyToken, async (req, res, next) => {
         result._doc.is_subscription = subscriptions.includes(result.user_id) || subscriptions.includes(req.user.id)
 
         result._doc.main_category_name = language == 'ar' ? mainCategory.name_ar : mainCategory.name_en
+        
         result._doc.sub_category_name = language == 'ar' ? subCategory.name_ar : subCategory.name_en
 
 
