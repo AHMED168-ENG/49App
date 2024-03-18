@@ -32,6 +32,7 @@ export const updateAddress = async (req , res , next) => {
 // get all address
 export const getAllAddress = async (req , res , next) => {
     try {
+        
         // const {id} = req.user
         const {page = process.env.page , limit = process.env.limit} = req.query
         const address = await address_model.paginate({ user_id : "65a53c0a22ca4f80207b4514"} , {
