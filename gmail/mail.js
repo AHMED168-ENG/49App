@@ -1,24 +1,38 @@
 import nodemailer from "nodemailer";
+import { google } from "googleapis";
+import dontenv from 'dotenv'
+dontenv.config()
+const OAuth2 = google.auth.OAuth2;
+
+const oauth2Client = new OAuth2(
+  process.env.CLIENT_ID,
+  process.env.CLIENT_SECRET,
+  process.env.REDIRECT_URL,
+);
 
 
-
-export function SendMails(data) {
+oauth2Client.setCredentials({
+  refresh_token: process.env.REFRESH_TOKEN
+});
+export async function SendMails(data) {
+  const access_token = await oauth2Client.getAccessToken()
+  console.log(access_token.token)
     let transporter = nodemailer.createTransport({
         service:process.env.NODEMAILER_SERVICE,
-        host: process.env.NODEMAILER_HOST,
-        port: +process.env.NODEMAILER_PORT,
-        secure: false, // true for port 465, false for other ports
         auth: {
+          type : "OAuth2",
           user: process.env.NODEMAILER_USERNAME,
-          pass: process.env.NODEMAILER_PASSWORD,
+          clientId: process.env.CLIENT_ID,
+          clientSecret: process.env.CLIENT_SECRET,
+          accessToken : access_token.token,
+          refresh_token: process.env.REFRESH_TOKEN
         },
         tls: {
-            ciphers: 'SSLv3',
-            rejectUnauthorized: false
+          rejectUnauthorized: false
         }
     });
     let mailOptions = {
-      from: "zaza090977777@gmail.com",
+      from: "ahmedzakydev@gmail.com",
       to: data.email,
       subject: data.subject,
       html: `<!DOCTYPE html>

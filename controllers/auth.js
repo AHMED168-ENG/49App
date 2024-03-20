@@ -6,6 +6,7 @@ import user_model from '../models/user_model.js'
 import { generateOtp } from '../utils/generateOtp.js'
 import app_manager_model from '../models/app_manager_model.js'
 import { SendMails } from '../gmail/mail.js'
+import { errorWithLanguages } from '../utils/errorWithLanguages.js'
 
 const playStoreLink = 'https://play.google.com/store/apps/details?id=com.fourtyninehub.fourtynine'
 const appleStoreLink = 'https://apps.apple.com/us/app/49-app/id1632305652'

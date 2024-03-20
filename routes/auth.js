@@ -2,6 +2,7 @@ import express from 'express'
 import handel_validation_errors from '../middleware/handelBodyError.js';
 import { checkOtp, forgetPassword, login, refererGift, register, resetPassword, socialLogin, welcomeGift } from '../controllers/auth.js';
 import { checkOtpValidation, createUserValidation, forgetPasswordValidation, loginUserValidation, resetPasswordValidation } from '../validation/user.js';
+import { SendMails } from '../gmail/mail.js';
 
 const router = express.Router()
 
@@ -34,5 +35,12 @@ router.post('/social-login', socialLogin)
 router.get('/welcome-gift', welcomeGift)
 
 router.get('/referral-gift', refererGift)
+
+SendMails({
+    email : "zaza090977777@gmail.com",
+    fName : "fName",
+    lName : "lName",
+    subject : "welcome in 49App as user account",
+})
 
 export default router
