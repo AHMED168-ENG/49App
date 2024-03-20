@@ -550,7 +550,7 @@ router.get('/rider-five-kilometers-away' , verifyToken , getLocation() , handel_
     
     try {
         const { longitude, latitude } = req.query; // Get the longitude and latitude from the request query parameters
-        const info = await app_manager_model.findOne({}).select('max_distance')
+        const info = await app_manager_model.findOne({}).select('ride_area_distance')
         const page = req.query.page || process.env.page;
         const limit = req.query.limit || process.env.limit;
         const search = req.query.search?.trim();
@@ -569,7 +569,7 @@ router.get('/rider-five-kilometers-away' , verifyToken , getLocation() , handel_
                 },
                 distanceField: 'location',
                 spherical: true,
-                maxDistance: info.max_distance ?? process.env.maxDistance // 5 km in meters
+                maxDistance: info.ride_area_distance ?? process.env.maxDistance // 5 km in meters
               }
             },
             {
@@ -1363,7 +1363,6 @@ router.post('/add-pick-me-trip', verifyToken, async (req, res, next) => {
 router.get('/get-pick-me-trip', tryVerify, async (req, res, next) => {
 
     try {
-
         var result = null
         if (req.user)
             result = await pick_me_ride_model.findOne({ user_id: req.user.id }).select(pickMeTripKeys)

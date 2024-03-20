@@ -1,5 +1,7 @@
 import mongoose from 'mongoose'
-
+import mongoosePaginate from 'mongoose-paginate-v2';
+import bcrypt from "bcrypt";
+import mongooseAggregatePaginate from "mongoose-aggregate-paginate-v2";
 
 const schema = new mongoose.Schema({
 
@@ -7,13 +9,20 @@ const schema = new mongoose.Schema({
     last_name: { type: String, required: true },
 
     email: { type: String, requried: true, unique: true },
+    password: { type: String, requried: true },
+    otp : {
+        type : Number,
+    },
+    passwordResetExpiration : {
+        type : Date,           
+    },
     provider: { type: String, requried: true, default: 'email' },
     uid: { type: String, requried: true, default: '_' },
 
     phone: { type: String },
     birth_date: { type: String, default: '' },
     referral_id: { type: String, default: '' },
-    hash_code: { type: String, required: true, unique: true },
+    // hash_code: { type: String, required: true, unique: true },
     profile_picture: { type: String, default: '', },
     cover_picture: { type: String, default: '' },
     tinder_picture: { type: String, default: '' },
@@ -70,8 +79,21 @@ const schema = new mongoose.Schema({
     last_seen: { type: String },
 
     bio: { type: String, maxLength: 100 },
-    device_id: { type: String, required: true },
+    // device_id: { type: String, required: true },
 
 }, { versionKey: false, timestamps: true })
+
+schema.methods.comparePassword = function (password) { 
+    return bcrypt.compareSync(password , this.password) 
+}
+
+schema.methods.toJSON = function () {
+    const user = this.toObject()
+    delete user.password
+    return user
+}
+
+schema.plugin(mongooseAggregatePaginate);
+schema.plugin(mongoosePaginate);
 
 export default mongoose.model("users", schema);

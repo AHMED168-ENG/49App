@@ -2,6 +2,8 @@ import CryptoJS from "crypto-js"
 import jwt from "jsonwebtoken"
 //import spawn from 'spawn-npm'
 import { spawn, exec, spawnSync } from 'child_process'
+import httpStatus from "http-status"
+import user_model from './models/user_model.js'
 
 export const serverURL = 'https://api.49hub.com/'
 export const filesCloudUrl = 'https://49-space.fra1.digitaloceanspaces.com/'
@@ -31,18 +33,38 @@ export const createToken = (id, auth, authDate, isSuperAdmin, isAdmin) => {
     )
 }
 
-export const verifyToken = (req, res, next) => {
+export const verifyToken = async (req, res, next) => {
 
     try {
 
-        const authorization = req.headers.authorization
+        const authorization = req.headers?.authorization
 
         if (authorization) {
-            jwt.verify(authorization.split('Bearer ')[1], process.env.JWT_KEY, (err, user) => {
-
-                if (err) return res.status(401).json({ 'status': false, 'message': 'Unauthorized' })
-                req.user = user
-                return next()
+            jwt.verify(authorization.split(' ')[1], process.env.SECRET_KEY, async (err, decodedToken) => {
+                console.log(decodedToken)
+                if((err?.name == "TokenExpiredError")) {
+                    return res.status(httpStatus.UNAUTHORIZED).json({
+                      message: "token expired",
+                        success: false,
+                    });
+                } else if(!decodedToken) {
+                  return res.status(httpStatus.UNAUTHORIZED).json({
+                    message: "pad token",
+                    success: false,
+                  });
+                } else  {     
+                  const user = await user_model.findOne({
+                    _id : decodedToken.id                                                          
+                  })                                                                                 
+         
+                  if(user.is_locked) throw buildError(httpStatus.NOT_FOUND , errorWithLanguages({
+                    en : "this account is locked",
+                    ar : "تم غلق هذا الحساب"
+                  }))    
+                  
+                  req.user = {id : decodedToken.id , email : user.email};                                                          
+                  next()
+                }
 
             })
         } else
