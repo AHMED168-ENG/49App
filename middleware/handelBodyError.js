@@ -22,7 +22,8 @@ const handel_validation_errors = (req , res, next) => {
       }
     });
     return res.status(httpStatus.BAD_REQUEST).json({
-      errors: newError,
+      data: newError,
+      status : false
     });
   }
 
