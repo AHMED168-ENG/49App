@@ -37,10 +37,12 @@ export function updateAddressValidation() {
             ar: "قم بادخال خط الطول",
             en: "Enter latitude"
         })),
+
         body("address").notEmpty().withMessage(JSON.stringify({
-                    ar: "قم بادخال العنوان",
-                    en: "Enter address"
-                })),
+            ar: "قم بادخال العنوان",
+            en: "Enter address"
+        })),
+        
         body("city").notEmpty().withMessage(JSON.stringify({
             ar: "قم بادخال المدينه",
             en: "Enter city"

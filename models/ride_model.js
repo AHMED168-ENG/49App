@@ -3,7 +3,7 @@ import mongoose from 'mongoose'
 const schema = new mongoose.Schema({
 
     user_id: { type: String, required: true },
-    rider_id: { type: String },
+    rider_id: { type: String , ref : "riders" },
     category_id: { type: String, required: true },
     from: { type: String, required: true },
     to: { type: String, required: true },

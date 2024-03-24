@@ -18,7 +18,7 @@ import pick_me_ride_model from '../../models/pick_me_ride_model.js';
 import axios from 'axios';
 import wallet_model from '../../models/wallet_model.js';
 import handel_validation_errors from '../../middleware/handelBodyError.js';
-import getLocation from '../../validation/riders.js';
+import getLocation, { addPrimaryRide } from '../../validation/riders.js';
 
 
 const router = express.Router()
@@ -469,32 +469,20 @@ router.get('/get-rider-rides', verifyToken, async (req, res, next) => {
 
 ///////////////////////////////////////////////// CLEINT /////////////////////////////////////////////////////////////
 
-router.post('/new-ride-request', verifyToken, async (req, res, next) => {
+router.post('/new-ride-request' , addPrimaryRide() , handel_validation_errors , verifyToken, async (req, res, next) => {
 
     try {
 
         const { language } = req.headers
-        const { phone, car_model_year, air_conditioner, category_id, from, to, distance, time, lat, lng, destination_lat, destination_lng, price, passengers } = req.body
+        const { phone, car_model_year, air_conditioner, category_id, from, to, distance, time, user_lat, user_lng, destination_lat, destination_lng, price, passengers } = req.body
 
-        if (category_id && from && to && distance && time && lat && lng && destination_lat && destination_lng) {
+        const subCateogry = await sub_category_model.findOne({ _id: category_id, is_hidden: false, }).select('parent name_ar name_en parent')
+        if (!subCateogry || subCateogry.parent != rideCategoryId) return next('Bad Request')
 
-            const subCateogry = await sub_category_model.findOne({ _id: category_id, is_hidden: false, }).select('parent name_ar name_en parent')
-            if (!subCateogry || subCateogry.parent != rideCategoryId) return next('Bad Request')
-
-            const user = await user_model.findById(req.user.id).select('country_code')
-
-            createOtherRequest(req.user.id, user.country_code, subCateogry.parent, subCateogry.name_ar, subCateogry.name_en, category_id, from, to, distance, time, lat, lng, destination_lat, destination_lng, price, passengers, phone, language, air_conditioner, car_model_year)
-
-            // const cashBackRandom = Math.random() * 5
-
-            // if (parseInt(cashBackRandom) == 3) {
-            //     requestCashBack(req.user.id, language)
-            // }
-
-            res.json({ 'status': true });
-        } else {
-            next('Bad Request')
-        }
+        const user = await user_model.findById(req.user.id).select('country_code')
+        createOtherRequest(req.user.id, user?.country_code, subCateogry.parent, subCateogry.name_ar, subCateogry.name_en, category_id, from, to, distance, time, user_lat, user_lng, destination_lat, destination_lng, price, passengers, phone, language, air_conditioner, car_model_year )
+        
+        res.json({ 'status': true });
     } catch (e) {
         next(e)
     }
@@ -550,7 +538,6 @@ router.get('/rider-five-kilometers-away' , verifyToken , getLocation() , handel_
         const page = req.query.page || process.env.page;
         const limit = req.query.limit || process.env.limit;
         const search = req.query.search?.trim();
-        const {organization_id} = req
         const queryObj = {};
         if(search){
           queryObj.car_brand = {'$regex' :  search, '$options' : 'i'}

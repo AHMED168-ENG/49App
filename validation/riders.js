@@ -1,4 +1,4 @@
-import { query } from "express-validator";
+import { body, query } from "express-validator";
 
 
 
@@ -11,6 +11,72 @@ function getLocation() {
         query("latitude").notEmpty().withMessage(JSON.stringify({
           ar: "قم بادخال خط الطول",
           en: "Enter latitude"
+      })),
+    ];
+  }
+
+export function addPrimaryRide() {
+    return [
+      body("category_id").notEmpty().withMessage(JSON.stringify({
+          ar: "قم بادخال القسم ",
+          en: "Enter category id"
+      })),
+      body("air_conditioner").notEmpty().withMessage(JSON.stringify({
+          ar: "قم بادخال حاله التكيف ",
+          en: "Enter air conditioner"
+      })),
+      body("car_model_year").notEmpty().withMessage(JSON.stringify({
+          ar: "قم بادخال حاله السياره ",
+          en: "Enter car model year"
+      })),
+      body("destination_lng").notEmpty().withMessage(JSON.stringify({
+          ar: "قم بادخال خط الطول",
+          en: "Enter longitude"
+      })),
+      body("destination_lat").notEmpty().withMessage(JSON.stringify({
+          ar: "قم بادخال خط الطول",
+          en: "Enter latitude"
+      })),
+      body("user_lng").notEmpty().withMessage(JSON.stringify({
+          ar: "قم بادخال خط الطول",
+          en: "Enter user_lng"
+      })),
+      body("user_lat").notEmpty().withMessage(JSON.stringify({
+          ar: "قم بادخال خط الطول",
+          en: "Enter user_lat"
+      })),
+        
+      body("phone").notEmpty().withMessage(JSON.stringify({
+          ar: "قم بادخال المحمول",
+          en: "Enter phone"
+      })),
+        
+      body("time").notEmpty().withMessage(JSON.stringify({
+          ar: "قم بادخال الوقت",
+          en: "Enter time"
+      })),
+        body("price").notEmpty().withMessage(JSON.stringify({
+          ar: "قم بادخال السعر",
+          en: "Enter price"
+      })),
+        body("passengers").notEmpty().withMessage(JSON.stringify({
+          ar: "قم بادخال الركاب",
+          en: "Enter passengers"
+      })),
+
+      body("distance").notEmpty().withMessage(JSON.stringify({
+          ar: "قم بادخال المسافه",
+          en: "Enter distance"
+      })),
+      
+      body("from").notEmpty().withMessage(JSON.stringify({
+          ar: "قم بادخال نقطه البدايه",
+          en: "Enter from"
+      })),
+
+      body("to").notEmpty().withMessage(JSON.stringify({
+          ar: "قم بادخال نقطه البدايه",
+          en: "Enter to"
       })),
     ];
   }

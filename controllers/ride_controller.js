@@ -5,8 +5,8 @@ import notification_model from '../models/notification_model.js'
 import auth_model from '../models/auth_model.js'
 
 import { sendNotifications } from '../controllers/notification_controller.js'
-import axios from 'axios';
-import subscription_model from '../models/subscription_model.js'
+import app_manager_model from '../models/app_manager_model.js'
+import mongoose from 'mongoose'
 
 export const taxiCategoryId = '62c8ba9e8e28a58a3edf57e9'
 export const captainCategoryId = '62c8ba9f8e28a58a3edf57eb'
@@ -25,112 +25,82 @@ export const profileViewCategoryId = '62ef7cf658c90d4a7ed48120';
 
 
 export async function createOtherRequest(userId, country_code, mainCategoryId, cateogryNameAr, cateogryNameEn, category_id, from, to, distance, time, lat, lng, destination_lat, destination_lng, price, passengers, phone, language, air_conditioner, car_model_year) {
-
     try {
-
         var titleAr = 'طلب جديد'
         var titleEn = 'New Request'
         var bodyEn = `${cateogryNameEn} ride from ${from} to ${to} , distance ${distance}, duration ${time}, passengers ${passengers}, price offer ${price}`
         var bodyAr = `رحلة ${cateogryNameAr} من ${from} الى ${to}, مسافة ${distance}, مدة ${time}, ركاب ${passengers}, عرض سعر ${price}`
 
-
-        const object = new ride_model(
+        const info = await app_manager_model.findOne({}).select('ride_area_distance')
+        const riders = await rider_model.aggregate([
             {
-
-                category_id,
-                destination_lat,
-                destination_lng,
-                distance,
-                to, from,
-                passengers,
-                user_id: userId,
-                time,
-                user_lat: lat,
-                user_lng: lng,
-                price: price,
-                phone,
-            }
-        )
-
-        const ride = await object.save()
-
-        if (isTaxiOrCaptainOrScooter(category_id)) {
-
-            const is_premium = (await subscription_model.findOne({ user_id: userId, sub_category_id: category_id, is_premium: true, is_active: true, })) != null
-
-            axios.post(process.env.REAL_TIME_SERVER_URL + 'new-ride-request',
-                {
-                    user_id: userId,
-                    language,
-                    category_id,
-                    is_premium,
-                    from,
-                    to,
-                    distance,
-                    time,
-                    lat,
-                    lng,
-                    destination_lat,
-                    destination_lng,
-                    price,
-                    phone,
-                    air_conditioner,
-                    car_model_year,
-                    direction_id: ride.id,
+              $geoNear: {
+                near: {
+                  type: 'Point',
+                  coordinates: [parseFloat(lng), parseFloat(lat)]
                 },
-                {
-                    headers:
-                    {
-                        'Key': process.env.REAL_TIME_SERVER_KEY
-                    },
-                },
-            )
-
-        } else {
-            var count = 0
-            while (count != -1) {
-
-                const riders = await rider_model.find({
+                distanceField: 'location',
+                spherical: true,
+                maxDistance: info.ride_area_distance ?? process.env.maxDistance // 5 km in meters
+              }
+            },
+            {
+                $match : {
                     is_active: true,
                     is_approved: true,
-                    country_code,
-                    category_id
-                }).skip((count * 100)).limit(100).select('user_id')
-
-                for (const rider of riders) {
-                    
-                    const notificationObject = new notification_model({
-                        receiver_id: rider.user_id,
-                        user_id: userId,
-                        sub_category_id: category_id,
-                        tab: 2,
-                        text_ar: bodyAr,
-                        text_en: bodyEn,
-                        direction: ride.id,
-                        main_category_id: mainCategoryId,
-                        ad_owner: userId,
-                        type: 10001,
-                    })
-
-                    notificationObject.save()
-
-                    Promise.all([
-                        user_model.findById(rider.user_id).select('language'),
-                        auth_model.find({ 'user_id': rider.user_id }).distinct('fcm'),
-                    ]
-                    ).then(r => {
-                        const user = r[0]
-                        const fcm = r[1]
-                        sendNotifications(fcm, user.language == 'ar' ? titleAr : titleEn, user.language == 'ar' ? bodyAr : bodyEn, 10001)
-                    })
+                    // country_code,
+                    category_id : mongoose.Types.ObjectId(category_id),
+                    airـconditioner : air_conditioner || false,
+                    car_model_year : car_model_year
                 }
-
-                if (riders.length == 100) count++
-                else count = -1
             }
-        }
-    } catch (e) {
+          ]);
+         for(let x = 0 ; x < riders.length ; x++) {
+            const object = new ride_model(
+                {
+                    category_id,
+                    destination_lat,
+                    destination_lng,
+                    distance,
+                    to, from,
+                    passengers,
+                    user_id: userId,
+                    time,
+                    user_lat: lat,
+                    user_lng: lng,
+                    price: price,
+                    phone,
+                    rider_id : riders[x].id
+                }
+            )
+            const ride = await object.save()
+            const notificationObject = new notification_model({
+                receiver_id: ride.user_id,
+                user_id: userId,
+                sub_category_id: category_id,
+                tab: 2,
+                text_ar: bodyAr,
+                text_en: bodyEn,
+                direction: ride.id,
+                main_category_id: mainCategoryId,
+                ad_owner: userId,
+                type: 10001,
+            })
 
+            notificationObject.save()
+
+            Promise.all([
+                user_model.findById(ride.user_id).select('language'),
+                auth_model.find({ 'user_id': ride.user_id }).distinct('fcm'),
+            ]
+            ).then(r => {
+                const user = r[0]
+                const fcm = r[1]
+                sendNotifications(fcm, user.language == 'ar' ? titleAr : titleEn, user.language == 'ar' ? bodyAr : bodyEn, 10001)
+            })
+         }
+
+    } catch (e) {
         console.log(e)
     }
 }
