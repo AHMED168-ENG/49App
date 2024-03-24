@@ -198,9 +198,6 @@ router.get('/not-ready', verifyToken, async (req, res, next) => {
 })
 
 // make rider change his price but price should be less than 2 and more than 4
-/**
- * 
- */
 router.post('/change-price', verifyToken, async (req, res, next) => {
 
     try {
@@ -244,7 +241,7 @@ router.post('/update-air-conditioner', verifyToken, async (req, res, next) => {
     } catch (e) {
         next(e)
     }
-})
+}) 
 
 // update car model year
 router.post('/update-car-model-year', verifyToken, async (req, res, next) => {
@@ -547,7 +544,6 @@ router.delete('/cancel-ride', verifyToken, async (req, res, next) => {
 })
 
 router.get('/rider-five-kilometers-away' , verifyToken , getLocation() , handel_validation_errors , async (req, res, next) => {
-    
     try {
         const { longitude, latitude } = req.query; // Get the longitude and latitude from the request query parameters
         const info = await app_manager_model.findOne({}).select('ride_area_distance')
@@ -1189,7 +1185,6 @@ router.get('/get-my-come-with-me-trips', verifyToken, async (req, res, next) => 
         next(e)
     }
 })
-
 
 router.delete('/delete-come-with-me-trip', verifyToken, async (req, res, next) => {
 

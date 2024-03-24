@@ -98,7 +98,7 @@ export async function createOtherRequest(userId, country_code, mainCategoryId, c
                 }).skip((count * 100)).limit(100).select('user_id')
 
                 for (const rider of riders) {
-
+                    
                     const notificationObject = new notification_model({
                         receiver_id: rider.user_id,
                         user_id: userId,
