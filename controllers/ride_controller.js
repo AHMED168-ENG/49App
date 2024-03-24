@@ -139,4 +139,4 @@ export const isTaxiOrCaptainOrScooter = (categoryId) =>
     categoryId == taxiCategoryId ||
     categoryId == captainCategoryId ||
     categoryId == scooterCategoryId ||
-    categoryId == womenOnlyCategoryId; 
+    categoryId == womenOnlyCategoryId;

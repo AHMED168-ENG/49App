@@ -19,21 +19,24 @@ export const login = async (req, res, next) => {
     try {
         const {email , password , keepLogin} = req.body
         const user = await user_model.findOne({email : email})
-        if(user.is_locked) throw buildError(httpStatus.FORBIDDEN , errorWithLanguages({
-            en : "your account not active check your email or call organization admin",
-            ar : "حسابك غير نشط، تحقق من بريدك الإلكتروني أو اتصل بمسؤول المؤسسة"
-        }))
+        console.log(user)
         if(user && bcrypt.compareSync(password , user.password)) {
+            if(user?.is_locked) throw buildError(httpStatus.FORBIDDEN , errorWithLanguages({
+                en : "your account not active check your email or call organization admin",
+                ar : "حسابك غير نشط، تحقق من بريدك الإلكتروني أو اتصل بمسؤول المؤسسة"
+            }))
             let token = generateToken(user , keepLogin , "7d")
             return res.status(httpStatus.OK).json({
-                success : true,
-                user,
-                token
+                status : true,
+                data : {
+                    user,
+                    token
+                }
             }) 
         } else {
             return res.status(httpStatus.FORBIDDEN).json({
                 message : "you not allowed to enter wrong password",
-                success : false
+                status : false
             })
         }
     } catch (error) {
@@ -80,7 +83,7 @@ export const forgetPassword = async(req , res , next) => {
         await user_model.updateOne({
             _id : user.id
         } , {otp : otp , passwordResetExpiration :  Date.now() + 60 * 60 * 1000})
-        return res.status(httpStatus.OK).send({success : true })
+        return res.status(httpStatus.OK).send({status : true })
     } catch (error) {
         next(error)
     }
@@ -149,7 +152,7 @@ export const checkOtp = async(req , res , next) => {
                     subject : "your password reset successful ",
                 }
             )
-            return res.status(httpStatus.OK).send({success : true , user})
+            return res.status(httpStatus.OK).send({status : true , data : data})
     } catch (error) {
         next(error)
     }
@@ -188,7 +191,7 @@ export const register = async (req, res, next) => {
         const isExisted = await user_model.findOne({
             email : body.email
         })
-
+        console.log(isExisted)
         if(isExisted) throw buildError(httpStatus.FORBIDDEN , errorWithLanguages({
             en : "there is email account already existed",
             ar : "هذا الايميل مسجل بالفعل"
@@ -207,7 +210,10 @@ export const register = async (req, res, next) => {
             lName : body.last_name,
             subject : "welcome in 49App as user account",
         })
-      return res.status(httpStatus.CREATED).json({ user , token })
+      return res.status(httpStatus.CREATED).json({ data : {
+        user,
+        token
+      }})
     } catch (error) {
       next(error);
     }

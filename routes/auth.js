@@ -36,11 +36,4 @@ router.get('/welcome-gift', welcomeGift)
 
 router.get('/referral-gift', refererGift)
 
-SendMails({
-    email : "zaza090977777@gmail.com",
-    fName : "fName",
-    lName : "lName",
-    subject : "welcome in 49App as user account",
-})
-
 export default router
