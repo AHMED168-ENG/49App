@@ -16,13 +16,16 @@ const schema = new mongoose.Schema({
     passwordResetExpiration : {
         type : Date,           
     },
+    user_lat: { type: Number },
+    user_lng: { type: Number },
+
     provider: { type: String, requried: true, default: 'email' },
     uid: { type: String, requried: true, default: '_' },
 
     phone: { type: String },
     birth_date: { type: String, default: '' },
     referral_id: { type: String, default: '' },
-    // hash_code: { type: String, required: true, unique: true },
+    hash_code: { type: String, required: true, unique: true },
     profile_picture: { type: String, default: '', },
     cover_picture: { type: String, default: '' },
     tinder_picture: { type: String, default: '' },

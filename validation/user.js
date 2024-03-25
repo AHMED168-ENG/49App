@@ -19,27 +19,13 @@ export function createUserValidation () {
             "ar" :"ادخل الاسم الاخير",
             "en" : "enter last name user please",
         })),
-        passwordLength(),
-        password()
-    ]
-}
-
-export function registerNadeer () {
-    return [
-        check("email").notEmpty().withMessage(JSON.stringify({
-            "ar" : "قم بادخال ايميل المستخدم",
-            "en" : "enter user email please",
-        })).isEmail().withMessage(JSON.stringify({
-            "ar" : "قم بادخال ايميل صحيح",
-            "en" : "enter valid email please",
-        })).trim().toLowerCase(),
-        check("first_name").notEmpty().withMessage(JSON.stringify({
-            "ar" :"ادخل الاسم الاول",
-            "en" : "enter first name user please",
+        check("fcm").notEmpty().withMessage(JSON.stringify({
+            "ar" :"ادخل fcm",
+            "en" : "enter fcm",
         })),
-        check("last_name").notEmpty().withMessage(JSON.stringify({
-            "ar" :"ادخل الاسم الاخير",
-            "en" : "enter last name user please",
+        check("device_id").notEmpty().withMessage(JSON.stringify({
+            "ar" :"ادخل device_id",
+            "en" : "enter device_id",
         })),
         passwordLength(),
         password()
@@ -202,3 +188,16 @@ export function updatePasswordForAdmin () {
         })
     ]
 }
+
+export function updateUserLocation() {
+    return [
+        check("longitude").notEmpty().withMessage(JSON.stringify({
+          ar: "قم بادخال خط الطول",
+          en: "Enter longitude"
+      })),
+        check("latitude").notEmpty().withMessage(JSON.stringify({
+          ar: "قم بادخال خط الطول",
+          en: "Enter latitude"
+      })),
+    ];
+  }

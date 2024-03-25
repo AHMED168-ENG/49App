@@ -29,7 +29,6 @@ export const requestCashBack = async (userId, language) => {
         if (wallet.last_gift != todayDate) await wallet_model.updateOne({ _id: wallet.id }, { today_gift: 0, last_gift: todayDate })
 
         if (wallet.balance > 1000 && wallet.free_click_storage > 0) {
-            console.log('here 2')
             await wallet_model.updateOne({ _id: wallet._id }, { free_click_storage: 0, $inc: { referral_storage: wallet.free_click_storage } })
         }
 

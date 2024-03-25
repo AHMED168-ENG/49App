@@ -3,6 +3,7 @@ import httpStatus from  'http-status'
 import { buildError } from  '../utils/buildError.js'
 import bcrypt from  'bcrypt'
 import user_model from '../models/user_model.js'
+import auth_model from '../models/auth_model.js'
 import { generateOtp } from '../utils/generateOtp.js'
 import app_manager_model from '../models/app_manager_model.js'
 import { SendMails } from '../gmail/mail.js'
@@ -187,22 +188,25 @@ export const refererGift = async (req, res, next) => {
 
 export const register = async (req, res, next) => {
     try {
+        var hashCode = Math.floor(Math.random() * 9000000000000)
         const body = req.body
         const isExisted = await user_model.findOne({
             email : body.email
         })
-        console.log(isExisted)
+
         if(isExisted) throw buildError(httpStatus.FORBIDDEN , errorWithLanguages({
             en : "there is email account already existed",
             ar : "هذا الايميل مسجل بالفعل"
         }))
-
-        let user = await user_model.create({...body , password : bcrypt.hashSync(body.password , 12)})
+        console.log(hashCode)
+        let user = await user_model.create({...body , password : bcrypt.hashSync(body.password , 12) , hash_code : hashCode})
         let token = generateToken(
             user,
             body.keepLogin, 
             "30d"
         );
+
+        let auth = await auth_model.create({fcm : body.fcm , user_id : user.id , device_id : body.device_id})
 
         SendMails({
             email : body.email,

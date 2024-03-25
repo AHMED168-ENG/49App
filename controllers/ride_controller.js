@@ -26,6 +26,7 @@ export const profileViewCategoryId = '62ef7cf658c90d4a7ed48120';
 
 export async function createOtherRequest(userId, country_code, mainCategoryId, cateogryNameAr, cateogryNameEn, category_id, from, to, distance, time, lat, lng, destination_lat, destination_lng, price, passengers, phone, language, air_conditioner, car_model_year) {
     try {
+        
         var titleAr = 'طلب جديد'
         var titleEn = 'New Request'
         var bodyEn = `${cateogryNameEn} ride from ${from} to ${to} , distance ${distance}, duration ${time}, passengers ${passengers}, price offer ${price}`
@@ -49,6 +50,7 @@ export async function createOtherRequest(userId, country_code, mainCategoryId, c
                     is_active: true,
                     is_approved: true,
                     // country_code,
+                    is_ready : true,
                     category_id : mongoose.Types.ObjectId(category_id),
                     airـconditioner : air_conditioner || false,
                     car_model_year : car_model_year
@@ -95,7 +97,7 @@ export async function createOtherRequest(userId, country_code, mainCategoryId, c
             ]
             ).then(r => {
                 const user = r[0]
-                const fcm = r[1]
+                const fcm = r[1] 
                 sendNotifications(fcm, user.language == 'ar' ? titleAr : titleEn, user.language == 'ar' ? bodyAr : bodyEn, 10001)
             })
          }

@@ -35,6 +35,9 @@ import song_model from '../models/song_model.js'
 import subscription_model from '../models/subscription_model.js'
 import complaintـmodel from '../models/complaintـmodel.js'
 import { sendNotificationToAdmin } from '../controllers/notification_controller.js'
+import getLocation from '../validation/riders.js'
+import handel_validation_errors from '../middleware/handelBodyError.js'
+import { updateUserLocation } from '../validation/user.js'
 
 const router = express.Router()
 
@@ -328,4 +331,22 @@ router.post('/complaints', tryVerify, async (req, res, next) => {
         next(e)
     }
 })
+
+
+router.put('/update-user-location', updateUserLocation() , handel_validation_errors, verifyToken, async (req, res, next) => {
+    try {
+
+        const { longitude , latitude } = req.body
+        const user = await user_model.findOneAndUpdate({ _id: req.user.id }, { user_lat : latitude , user_lng : longitude  } , {new : true})
+
+        return res.json({
+            'status': true,
+            data : user
+        })
+
+    } catch (e) {
+        next(e)
+    }
+})
+
 export default router

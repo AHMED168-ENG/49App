@@ -18,7 +18,8 @@ import pick_me_ride_model from '../../models/pick_me_ride_model.js';
 import axios from 'axios';
 import wallet_model from '../../models/wallet_model.js';
 import handel_validation_errors from '../../middleware/handelBodyError.js';
-import getLocation, { addPrimaryRide } from '../../validation/riders.js';
+import getLocation, { addNormalRide } from '../../validation/riders.js';
+import { updateUserLocation } from '../../validation/user.js';
 
 
 const router = express.Router()
@@ -283,6 +284,26 @@ router.post('/update-phone', verifyToken, async (req, res, next) => {
     }
 })
 
+// update rider phone
+router.put('/update-rider-location' , getLocation() , handel_validation_errors, verifyToken, async (req, res, next) => {
+
+    try {
+
+        const { longitude , latitude } = req.body
+
+        const result = await rider_model.findOneAndUpdate({ user_id: req.user.id, is_approved: true, is_active: true }, { "location.coordinates" : [parseFloat(longitude), parseFloat(latitude)] }).select('_id')
+
+        if (!result) next({ 'status': 404, 'message': 'Not Found' })
+
+        res.json({
+            'status': true,
+        })
+
+    } catch (e) {
+        next(e)
+    }
+})
+
 // update-driving-license-front
 router.post('/update-driving-license-front', verifyToken, async (req, res, next) => {
 
@@ -469,7 +490,46 @@ router.get('/get-rider-rides', verifyToken, async (req, res, next) => {
 
 ///////////////////////////////////////////////// CLEINT /////////////////////////////////////////////////////////////
 
-router.post('/new-ride-request' , addPrimaryRide() , handel_validation_errors , verifyToken, async (req, res, next) => {
+router.get('/client-request' , verifyToken, async (req, res, next) => {
+
+    try {
+        const userRequest = await ride_model.find({
+            user_id : req.user.id
+        })
+        res.json({ 'status': true , data : userRequest});
+    } catch (e) {
+        next(e)
+    }
+})
+
+router.get('/client-request/:id' , verifyToken, async (req, res, next) => {
+
+    try {
+        const userRequest = await ride_model.findOne({
+            user_id : req.user.id,
+            _id : req.params.id
+        })
+        res.json({ 'status': true , data : userRequest});
+    } catch (e) {
+        next(e)
+    }
+})
+ 
+router.put('/update-client-request/:id' , verifyToken, async (req, res, next) => {
+
+    try {
+        const {id} = req.params
+        const body = req.body
+
+        const userRequest = await ride_model.findOneAndUpdate({user_id : req.user.id , _id : id} , body , {new : true})
+
+        res.json({ 'status': true , data : userRequest});
+    } catch (e) {
+        next(e)
+    }
+})
+
+router.post('/new-ride-request' , addNormalRide() , handel_validation_errors , verifyToken, async (req, res, next) => {
 
     try {
 
@@ -480,23 +540,20 @@ router.post('/new-ride-request' , addPrimaryRide() , handel_validation_errors , 
         if (!subCateogry || subCateogry.parent != rideCategoryId) return next('Bad Request')
 
         const user = await user_model.findById(req.user.id).select('country_code')
-        createOtherRequest(req.user.id, user?.country_code, subCateogry.parent, subCateogry.name_ar, subCateogry.name_en, category_id, from, to, distance, time, user_lat, user_lng, destination_lat, destination_lng, price, passengers, phone, language, air_conditioner, car_model_year )
-        
+        await createOtherRequest(req.user.id, user?.country_code, subCateogry.parent, subCateogry.name_ar, subCateogry.name_en, category_id, from, to, distance, time, user_lat, user_lng, destination_lat, destination_lng, price, passengers, phone, language, air_conditioner, car_model_year )
+        await requestCashBack( req.user.id , language)
         res.json({ 'status': true });
     } catch (e) {
         next(e)
     }
 })
 
-router.delete('/cancel-ride', verifyToken, async (req, res, next) => {
+router.delete('/cancel-ride/:id', verifyToken, async (req, res, next) => {
     try {
 
         const { language } = req.headers
 
-        const { id } = req.body
-
-        if (!id) return next('Bad Request')
-
+        const { id } = req.params
         const ride = await ride_model.findOne({ _id: id, is_completed: false, is_canceled: false })
 
         if (!ride) return next({ 'status': 404, 'message': language == 'ar' ? 'لم يتم العثور على الرحلة' : 'The Ride is not Exist' })
@@ -538,7 +595,7 @@ router.get('/rider-five-kilometers-away' , verifyToken , getLocation() , handel_
         const page = req.query.page || process.env.page;
         const limit = req.query.limit || process.env.limit;
         const search = req.query.search?.trim();
-        const queryObj = {};
+        const queryObj = {is_active : true , is_approved : true , is_ready : true};
         if(search){
           queryObj.car_brand = {'$regex' :  search, '$options' : 'i'}
         }
@@ -813,6 +870,7 @@ router.post('/rating-ride', verifyToken, async (req, res, next) => {
         next(e)
     }
 })
+// انا خلصت get order , cancel order , update order , get orders الخاصين بالمستخدم بس
 
 router.delete('/delete-rating-ride', verifyToken, async (req, res, next) => {
 
@@ -1089,7 +1147,6 @@ router.delete('/delete-ride-request/:requestId', verifyToken, async (req, res, n
         next(e)
     }
 })
-
 
 /////////////////// COME WITH YOU ////////////////////////
 

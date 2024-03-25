@@ -15,7 +15,7 @@ function getLocation() {
     ];
   }
 
-export function addPrimaryRide() {
+export function addNormalRide() {
     return [
       body("category_id").notEmpty().withMessage(JSON.stringify({
           ar: "قم بادخال القسم ",
@@ -80,5 +80,9 @@ export function addPrimaryRide() {
       })),
     ];
   }
+
+  
+
+
   
 export default getLocation
