@@ -1,17 +1,49 @@
-import { body, query } from "express-validator";
+import { body, check, query } from "express-validator";
 
 
 
 function getLocation() {
     return [
-        query("longitude").notEmpty().withMessage(JSON.stringify({
-          ar: "قم بادخال خط الطول",
-          en: "Enter longitude"
+        check("longitude").notEmpty().withMessage(JSON.stringify({
+            ar: "قم بادخال خط الطول",
+            en: "Enter longitude"
+        })),
+          check("latitude").notEmpty().withMessage(JSON.stringify({
+            ar: "قم بادخال خط الطول",
+            en: "Enter latitude"
+        })),
+    ];
+  }
+
+
+export function sendRideValidation() {
+    return [
+        check("price").notEmpty().withMessage(JSON.stringify({
+          ar: "قم بادخال السعر",
+          en: "Enter price"
+      }))
+    ];
+  }
+
+export function sendClientOfferValidation() {
+    return [
+        check("price").notEmpty().withMessage(JSON.stringify({
+          ar: "قم بادخال السعر",
+          en: "Enter price"
       })),
-        query("latitude").notEmpty().withMessage(JSON.stringify({
-          ar: "قم بادخال خط الطول",
-          en: "Enter latitude"
-      })),
+      check("riderId").notEmpty().withMessage(JSON.stringify({
+        ar: "قم بادخال معرف الراكب",
+        en: "Enter rider Id"
+    }))
+    ];
+  }
+
+export function acceptRideOfferValidation() {
+    return [
+        check("notificationId").notEmpty().withMessage(JSON.stringify({
+          ar: "قم بادخال الاشعار",
+          en: "Enter notification Id"
+      }))
     ];
   }
 

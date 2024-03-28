@@ -78,6 +78,8 @@ const schema = new Schema({
     high_cost_per_kilo: { type: Number , default : 5 }, // this for hight price per mail  
     low_cost_per_kilo: { type: Number , default : 3 }, // this for lowest price per mail 
 
+    ride_request_cash_back : {type : Boolean , default : true}
+    
 }, { versionKey: false, timestamps: true })
 
 export default mongoose.model("app_manager", schema);

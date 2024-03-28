@@ -18,24 +18,21 @@ export const requestCashBack = async (userId, language) => {
 
         const appManager = await app_manager_model.findOne({})
 
-        console.log('here 1')
         if (!user || !wallet || !fcm || !appManager) return
 
         const now = new Date()
         const todayDate = `${now.getDate()}-${now.getMonth() + 1}-${now.getFullYear()}`
 
-        if (wallet.last_gift == todayDate && wallet.today_gift >= appManager.max_day_gift) return
+        if (wallet.last_gift == todayDate && wallet.today_gift >= appManager.max_day_gift) return // check  
 
-        if (wallet.last_gift != todayDate) await wallet_model.updateOne({ _id: wallet.id }, { today_gift: 0, last_gift: todayDate })
+        if (wallet.last_gift != todayDate) await wallet_model.updateOne({ _id: wallet.id }, { today_gift: 0, last_gift: todayDate }) // 
 
         if (wallet.balance > 1000 && wallet.free_click_storage > 0) {
             await wallet_model.updateOne({ _id: wallet._id }, { free_click_storage: 0, $inc: { referral_storage: wallet.free_click_storage } })
         }
 
-        console.log('here 3')
-        if (wallet.refund_storage >= 0) {
+        if (wallet.refund_storage >= 0 ) {
 
-            console.log('here 4')
             if (wallet.provider_cash_back >= appManager.step_value) {
                 wallet_model.updateOne({ _id: wallet.id }, { last_gift: todayDate, $inc: { provider_cash_back: -appManager.step_value, balance: appManager.step_value, total_cash_back: appManager.step_value, today_gift: appManager.step_value } }).exec()
 

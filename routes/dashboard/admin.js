@@ -27,6 +27,7 @@ import food_order_model from '../../models/food_order_model.js';
 import come_with_me_ride_model from '../../models/come_with_me_ride_model.js';
 import pick_me_ride_model from '../../models/pick_me_ride_model.js';
 import post_comment_model from '../../models/post_comment_model.js';
+import ride_request_logs from '../../models/ride_request_logs.js';
 
 
 
@@ -1672,5 +1673,6 @@ router.get('/get-review-pick-me-trips', verifyTokenAndSuperAdminOrAdmin, async (
         next(e)
     }
 })
+
 
 export default router

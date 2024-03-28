@@ -41,7 +41,6 @@ export const verifyToken = async (req, res, next) => {
 
         if (authorization) {
             jwt.verify(authorization.split(' ')[1], process.env.SECRET_KEY, async (err, decodedToken) => {
-                console.log(decodedToken)
                 if((err?.name == "TokenExpiredError")) {
                     return res.status(httpStatus.UNAUTHORIZED).json({
                       message: "token expired",
@@ -55,14 +54,13 @@ export const verifyToken = async (req, res, next) => {
                 } else  {     
                   const user = await user_model.findOne({
                     _id : decodedToken.id                                                          
-                  })                                                                                 
-         
+                  })          
+                  
                   if(user.is_locked) throw buildError(httpStatus.NOT_FOUND , errorWithLanguages({
                     en : "this account is locked",
                     ar : "تم غلق هذا الحساب"
                   }))    
-                  
-                  req.user = {id : decodedToken.id , email : user.email};                                                          
+                  req.user = {id : decodedToken.id , email : user.email , isAdmin : decodedToken.isAdmin , isSuperAdmin : decodedToken.isSuperAdmin };                                                       
                   next()
                 }
 

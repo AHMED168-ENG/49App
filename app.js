@@ -145,16 +145,16 @@ app.use('/app-radio', appRadio);
 app.use('/payout', payout);
 app.use('/contests', contests);
 
-app.use('/dashboard/', (req, res, next) => {
+// app.use('/dashboard/', (req, res, next) => {
 
-  if (req.headers.key == process.env.DASHBOARD_API_KEY) {
+//   if (req.headers.key == process.env.DASHBOARD_API_KEY) {
 
-    return next()
+//     return next()
 
-  } else {
-    return res.sendStatus(404)
-  }
-})
+//   } else {
+//     return res.sendStatus(404)
+//   }
+// })
 
 app.use('/dashboard/auth', dashboardAuth)
 app.use('/dashboard/super-admin', dashboardSuperAdmin)

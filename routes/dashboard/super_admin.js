@@ -2003,6 +2003,8 @@ router.get('/complaints', verifyTokenAndSuperAdmin, async (req, res, next) => {
         next(e)
     }
 })
+
+
 router.delete('/complaints/:id', verifyTokenAndSuperAdmin, async (req, res, next) => {
     try {
         await complaintـmodel.deleteOne({ _id: req.params.id });
@@ -2011,6 +2013,19 @@ router.delete('/complaints/:id', verifyTokenAndSuperAdmin, async (req, res, next
         })
     } catch (e) {
         next(e);
+    }
+})
+
+router.get('/ride-request-logs', verifyTokenAndSuperAdmin, async (req, res, next) => {
+    try {
+        const requests = await ride_request_logs.find().populate("user_id")
+        return res.json({
+            'status': true,
+            data : requests
+        })
+
+    } catch (e) {
+        next(e)
     }
 })
 export default router

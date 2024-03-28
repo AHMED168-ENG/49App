@@ -19,9 +19,9 @@ const schema = new mongoose.Schema({
     provider_cash_back: { type: Number, default: 0 },
     refund_storage: { type: Number, default: 0 },
 
-    free_click_storage: { type: Number, default: 0 },
+    free_click_storage: { type: Number, default: 0 }, // client have free click if he move it dont give hime gift
 
-    referral_storage: { type: Number, default: 0 },
+    referral_storage: { type: Number, default: 0 }, // 
     referral_cash_back: { type: Number, default: 0 },
 
     total_payment: { type: Number, default: 0 },

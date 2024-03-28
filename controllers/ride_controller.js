@@ -26,6 +26,8 @@ export const profileViewCategoryId = '62ef7cf658c90d4a7ed48120';
 
 export async function createOtherRequest(userId, country_code, mainCategoryId, cateogryNameAr, cateogryNameEn, category_id, from, to, distance, time, lat, lng, destination_lat, destination_lng, price, passengers, phone, language, air_conditioner, car_model_year) {
     try {
+        // لازم يكون دافع اشتراك 
+        //  هل خاد رحله مجانيه في اليوم ولا لا 
         
         var titleAr = 'طلب جديد'
         var titleEn = 'New Request'
@@ -64,7 +66,7 @@ export async function createOtherRequest(userId, country_code, mainCategoryId, c
                     destination_lat,
                     destination_lng,
                     distance,
-                    to, from,
+                    to, from,   
                     passengers,
                     user_id: userId,
                     time,

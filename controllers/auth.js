@@ -20,7 +20,6 @@ export const login = async (req, res, next) => {
     try {
         const {email , password , keepLogin} = req.body
         const user = await user_model.findOne({email : email})
-        console.log(user)
         if(user && bcrypt.compareSync(password , user.password)) {
             if(user?.is_locked) throw buildError(httpStatus.FORBIDDEN , errorWithLanguages({
                 en : "your account not active check your email or call organization admin",
@@ -51,6 +50,8 @@ export const login = async (req, res, next) => {
 const generateToken = (user , keepLogin , expirationDate ) => {
     return jwt.sign({
             id : user._id , 
+            isSuperAdmin : user.isSuperAdmin , 
+            isAdmin : user.isAdmin , 
             email : user.email,
         } , process.env.SECRET_KEY , 
         {expiresIn : keepLogin ? "9999 years" : expirationDate})
