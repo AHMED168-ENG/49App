@@ -4,6 +4,7 @@ import subscription_model from '../../models/subscription_model.js';
 import app_manager_model from '../../models/app_manager_model.js';
 import sub_category_model from '../../models/sub_category_model.js';
 import notification_model from '../../models/notification_model.js';
+import request_offer_model from '../../models/ride_offer.js';
 import user_model from '../../models/user_model.js'
 import auth_model from '../../models/auth_model.js'
 import ride_model from '../../models/ride_model.js';
@@ -19,8 +20,9 @@ import pick_me_ride_model from '../../models/pick_me_ride_model.js';
 import axios from 'axios';
 import wallet_model from '../../models/wallet_model.js';
 import handel_validation_errors from '../../middleware/handelBodyError.js';
-import getLocation, { acceptRideOfferValidation, addNormalRide, sendClientOfferValidation, sendRideValidation } from '../../validation/riders.js';
+import getLocation, { acceptRideOfferValidation, addNormalRide, changeRideOfferStatus, sendClientOfferValidation, sendRideValidation } from '../../validation/riders.js';
 import { updateUserLocation } from '../../validation/user.js';
+import mongoose from 'mongoose';
 
 
 const router = express.Router()
@@ -558,7 +560,7 @@ router.post('/new-ride-request' , addNormalRide() , handel_validation_errors , v
         if (!subCateogry || subCateogry.parent != rideCategoryId) return next('Bad Request')
 
         const user = await user_model.findById(req.user.id).select('country_code')
-        await createOtherRequest(req.user.id, user?.country_code, subCateogry.parent, subCateogry.name_ar, subCateogry.name_en, category_id, from, to, distance, time, user_lat, user_lng, destination_lat, destination_lng, price, passengers, phone, language, air_conditioner, car_model_year )
+        const allRides = await createOtherRequest(req.user.id, user?.country_code, subCateogry.parent, subCateogry.name_ar, subCateogry.name_en, category_id, from, to, distance, time, user_lat, user_lng, destination_lat, destination_lng, price, passengers, phone, language, air_conditioner, car_model_year )
         await ride_request_logs.create({
             user_id : req.user.id
         })
@@ -566,7 +568,7 @@ router.post('/new-ride-request' , addNormalRide() , handel_validation_errors , v
             await requestCashBack(req.user.id , language)
         }
 
-        res.json({ 'status': true });
+        res.json({ 'status': true , allRides});
     } catch (e) {
         next(e)
     }
@@ -1003,7 +1005,6 @@ router.post('/send-ride-offer/:adId' , sendRideValidation() , handel_validation_
     try {
 
         const { language } = req.headers
-
         const { price } = req.body  
         const { adId } = req.params 
 
@@ -1014,6 +1015,7 @@ router.post('/send-ride-offer/:adId' , sendRideValidation() , handel_validation_
         const ad = await ride_model.findOne({ _id: adId, is_start: false, is_completed: false, is_canceled: false })
 
         if (!ad) return next({ 'status': 404, 'message': language == 'ar' ? 'لم يتم العثور على الاعلان' : 'The Ad is not Exist' })
+        
         const rider = await rider_model.findOne({ user_id: req.user.id, is_approved: true, is_active: true, category_id: ad.category_id })
 
         if (!rider) return next({ 'status': 404, 'message': language == 'ar' ? 'لم يتم العثور على البيانات' : 'The rider is not Exist' })
@@ -1022,10 +1024,10 @@ router.post('/send-ride-offer/:adId' , sendRideValidation() , handel_validation_
         const titleEn = 'New Offer'
         const bodyEn = `New Offer (${ad.to}), From ${user.first_name}, price offer ${price}, rating ${rider.rating}`
         const bodyAr = `عرض جديد ${ad.to} ,من ${user.first_name},عرض السعر ${price}, التقييم ${rider.rating}`
-
+        
         const notificationObject = new notification_model({
             receiver_id: ad.user_id,
-            user_id: req.user.id,
+            user_id: req.user.id,   
             sub_category_id: ad.category_id,
             tab: 2,
             text_ar: bodyAr,
@@ -1039,7 +1041,12 @@ router.post('/send-ride-offer/:adId' , sendRideValidation() , handel_validation_
         })
 
         notificationObject.save()
-
+        const offer = await request_offer_model.create({
+            to : ad.user_id,
+            from : req.user.id,
+            price_offer: price,
+            ride_id : adId
+        })
         Promise.all([
             user_model.findById(ad.user_id).select('language'),
             auth_model.find({ 'user_id': ad.user_id }).distinct('fcm'),
@@ -1049,7 +1056,7 @@ router.post('/send-ride-offer/:adId' , sendRideValidation() , handel_validation_
             const fcm = r[1]
             sendNotifications(fcm, user.language == 'ar' ? titleAr : titleEn, user.language == 'ar' ? bodyAr : bodyEn, 10001)
         })
-        res.json({ 'status': true })
+        res.json({ 'status': true , offer})
 
     } catch (e) {
         console.log(e)
@@ -1077,8 +1084,8 @@ router.post('/send-client-offer/:adId' , sendClientOfferValidation() , handel_va
 
         if (!rider) return next({ 'status': 404, 'message': language == 'ar' ? 'لم يتم العثور على البيانات' : 'The rider is not Exist' })
 
-        const titleAr = 'عرض سعر جديد'
-        const titleEn = 'New Offer'
+        const titleAr = 'عرض سعر جديد' 
+        const titleEn = 'New Offer'     
         const bodyEn = `New Offer (${ad.to}), From ${user.first_name}, price offer ${price}, rating ${rider.rating}`
         const bodyAr = `عرض جديد ${ad.to} ,من ${user.first_name},عرض السعر ${price}, التقييم ${rider.rating}`
 
@@ -1087,25 +1094,31 @@ router.post('/send-client-offer/:adId' , sendClientOfferValidation() , handel_va
             user_id: req.user.id,
             sub_category_id: ad.category_id,
             tab: 2,
-            text_ar: bodyAr,
-            text_en: bodyEn,
+            text_ar: bodyAr, 
+            text_en: bodyEn, 
             direction: ad.id,
             main_category_id: rideCategoryId,
             type: 10002,
             attachment: user.profile_picture,
             ad_owner: ad.user_id,
             request_price: price,
+            ride_id : adId
         })
 
         notificationObject.save()
-
+        await request_offer_model.create({
+            to : riderId,
+            from : req.user.id,
+            price_offer: price,
+            ride_id : adId
+        })
         Promise.all([
             user_model.findById(user.id).select('language'),
             auth_model.find({ 'user_id': user.id }).distinct('fcm'),
         ]
         ).then(r => {
             const user = r[0]
-            const fcm = r[1]
+            const fcm = r[1] 
             sendNotifications(fcm, user.language == 'ar' ? titleAr : titleEn, user.language == 'ar' ? bodyAr : bodyEn, 10001)
         })
         res.json({ 'status': true })
@@ -1260,6 +1273,76 @@ router.post('/reject-ride-offer/:adId' , acceptRideOfferValidation() , handel_va
         next(e)
     }
 })
+
+router.get('/get-requests-offers' , verifyToken , async (req, res, next) => {
+
+    try {
+        let {page = process.env.PAGE , limit = process.env.LIMIT} = req.query
+        const aggregate = request_offer_model.aggregate([
+            {   
+                $match : {
+                    status : true,
+                    to : new mongoose.Types.ObjectId(req.user.id)
+                }
+            },
+            {
+                $lookup : {
+                    from : "users",
+                    localField : "to",
+                    foreignField : "_id",
+                    as : "to"
+                }
+            },
+            {
+                $unwind : {
+                    path : "$to",
+                    preserveNullAndEmptyArrays : true
+                }
+            },
+            {
+                $lookup : {
+                    from : "users",
+                    localField : "from",
+                    foreignField : "_id",
+                    as : "from"
+                }
+            },
+            {
+                $unwind : {
+                    path : "$from",
+                    preserveNullAndEmptyArrays : true
+                }
+            },
+            {
+                $lookup : {
+                    from : "rides",
+                    localField : "ride_id",
+                    foreignField : "_id",
+                    as : "rides"
+                }
+            },
+            {
+                $unwind : {
+                    path : "$rides",
+                    preserveNullAndEmptyArrays : true
+                }
+            }
+        ])
+        const offers = await request_offer_model.aggregatePaginate(aggregate , {page , limit})
+        res.json({ 'status': true , data : offers })
+    } catch (e) {
+        console.log(e)
+        next(e)
+    }
+})
+
+router.put('/change-offer_status/:id' , changeRideOfferStatus() , handel_validation_errors , async (req, res, next) => {
+    const {status } = req.body
+    const {id} = req.params
+    const offer = await request_offer_model.findOneAndUpdate({_id : id} , {status} , {new : true})
+    res.json({ 'status': true , data : offer })
+})
+
 
 router.delete('/delete-ride-request/:requestId', verifyToken, async (req, res, next) => {
     try {

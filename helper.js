@@ -38,7 +38,7 @@ export const verifyToken = async (req, res, next) => {
     try {
 
         const authorization = req.headers?.authorization
-
+        
         if (authorization) {
             jwt.verify(authorization.split(' ')[1], process.env.SECRET_KEY, async (err, decodedToken) => {
                 if((err?.name == "TokenExpiredError")) {

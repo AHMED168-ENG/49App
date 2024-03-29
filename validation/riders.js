@@ -46,6 +46,14 @@ export function acceptRideOfferValidation() {
       }))
     ];
   }
+export function changeRideOfferStatus() {
+    return [
+        check("status").notEmpty().withMessage(JSON.stringify({
+          ar: "قم بادخال الحاله",
+          en: "Enter status"
+      }))
+    ];
+  }
 
 export function addNormalRide() {
     return [

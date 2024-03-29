@@ -199,7 +199,6 @@ export const register = async (req, res, next) => {
             en : "there is email account already existed",
             ar : "هذا الايميل مسجل بالفعل"
         }))
-        console.log(hashCode)
         let user = await user_model.create({...body , password : bcrypt.hashSync(body.password , 12) , hash_code : hashCode})
         let token = generateToken(
             user,
