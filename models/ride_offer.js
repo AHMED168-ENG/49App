@@ -8,7 +8,7 @@ const schema = new mongoose.Schema({
     to : { type: mongoose.Schema.Types.ObjectId, required: true , ref : "users" },
     from : { type: mongoose.Schema.Types.ObjectId, required: true , ref : "users" },
     price_offer: { type: Number, default: false },
-    ride_id : {type: mongoose.Schema.Types.ObjectId, required: true , ref : "riders" },
+    ride_id : {type: mongoose.Schema.Types.ObjectId, required: true , ref : "rides" },
     is_accept : {type : Boolean , default : false}
 }, { versionKey: false, timestamps: true })
 

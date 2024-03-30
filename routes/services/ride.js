@@ -1007,7 +1007,6 @@ router.post('/send-ride-offer/:adId' , sendRideValidation() , handel_validation_
         const { language } = req.headers
         const { price } = req.body  
         const { adId } = req.params 
-
         const user = await user_model.findById(req.user.id).select('first_name profile_picture')
 
         if (!user) return next({ 'status': 404, 'message': language == 'ar' ? 'لم يتم العثور على السمتخدم' : 'The User is not Exist' })
@@ -1081,7 +1080,8 @@ router.post('/send-client-offer/:adId' , sendClientOfferValidation() , handel_va
         const ad = await ride_model.findOne({ _id: adId, is_start: false, is_completed: false, is_canceled: false })
 
         if (!ad) return next({ 'status': 404, 'message': language == 'ar' ? 'لم يتم العثور على الاعلان' : 'The Ad is not Exist' })
-        const rider = await rider_model.findOne({ user_id: user.id, is_approved: true, is_active: true, category_id: ad.category_id })
+        // category_id: ad.category_id
+        const rider = await rider_model.findOne({ user_id: user.id, is_approved: true, is_active: true, })
 
         if (!rider) return next({ 'status': 404, 'message': language == 'ar' ? 'لم يتم العثور على البيانات' : 'The rider is not Exist' })
 
@@ -1129,29 +1129,28 @@ router.post('/send-client-offer/:adId' , sendClientOfferValidation() , handel_va
     }
 })
 
-router.post('/accept-ride-offer/:offer' , verifyToken, async (req, res, next) => {
+router.post('/accept-ride-offer/:offerId' , verifyToken, async (req, res, next) => {
     try {
 
         const { language } = req.headers
         const { offerId } = req.params 
         const offerData = await request_offer_model.findOne({_id : offerId , to : req.user.id}).populate("ride_id")
         if (!offerData) return next({ 'status': 404, 'message': language == 'ar' ? 'لم يتم العثور على الاعلان' : 'The Ad is not Exist' })
-
         if (offerData.ride_id.is_completed == true) return next({ 'status': 400, 'message': language == 'ar' ? 'الاعلان بالفعل مزود بمقدم خدمة' : 'The Ad is Already has service provider' })
         const user = await user_model.findById(offerData.from).select('_id language')
 
         if (!user) return next({ 'status': 404, 'message': language == 'ar' ? 'لم يتم العثور على المستخدم' : 'The User is not Exist' })
 
-        ride_model.updateOne({ _id: offerData.ride_id.id }, { rider_id: offerData.from, is_start: true, is_completed: true, price: offerData.price }).exec()
+        ride_model.updateOne({ _id: offerData.ride_id.id }, { rider_id: offerData.from, is_start: true, is_completed: true, price: offerData.price_offer }).exec()
 
-        const rider = await rider_model.findOneAndUpdate({ user_id: offerData.from }, { $inc: { profit: offerData.price, trips: 1 } }).exec()
+        const rider = await rider_model.findOneAndUpdate({ user_id: offerData.from }, { $inc: { profit: offerData.price_offer, trips: 1 } }).exec()
         
         const titleAr = 'تم قبول عرض السعر'
         const titleEn = 'The Price Offer Accepted'
-        const bodyEn = `Price Offer ${offerData.price} for Ride ${offerData.ride_id.to} is Accepted, you can contact the customer now `
-        const bodyAr = `تم قبول عرض السعر ${offerData.price} مقابل لرحلة ${offerData.ride_id.to} ، يمكنك الاتصال بالعميل الآن`
+        const bodyEn = `Price Offer ${offerData.price_offer} for Ride ${offerData.ride_id.to} is Accepted, you can contact the customer now `
+        const bodyAr = `تم قبول عرض السعر ${offerData.price_offer} مقابل لرحلة ${offerData.ride_id.to} ، يمكنك الاتصال بالعميل الآن`
 
-        await notification_model.deleteMany({ direction: ad.id, is_accepted: false }).exec()
+        await notification_model.deleteMany({ direction: offerData.ride_id.id, is_accepted: false }).exec()
         await request_offer_model.updateOne({_id : offerId} , {is_accept : true})
         await request_offer_model.deleteMany({
             is_accept : false,
@@ -1160,11 +1159,11 @@ router.post('/accept-ride-offer/:offer' , verifyToken, async (req, res, next) =>
         const notificationObject = new notification_model({
             receiver_id: offerData.from,
             user_id: req.user.id,
-            sub_category_id: ad.category_id,
+            sub_category_id: offerData.ride_id.category_id,
             tab: 2,
             text_ar: bodyAr,
             text_en: bodyEn,
-            direction: ad.id,
+            direction: offerData.ride_id.id,
             type: 10003,
             ad_owner: req.user.id,
             is_accepted: true,
@@ -1186,11 +1185,11 @@ router.post('/accept-ride-offer/:offer' , verifyToken, async (req, res, next) =>
         const notificationClientObject = new notification_model({
             receiver_id: req.user.id,
             user_id: offerData.from,
-            sub_category_id: ad.category_id,
+            sub_category_id: offerData.ride_id.category_id,
             tab: 2,
             text_ar: bodyClientAr,
             text_en: bodyClientEn,
-            direction: ad.id,
+            direction: offerData.ride_id.id,
             type: 10003,
             ad_owner: req.user.id,
             is_accepted: true,
@@ -1209,29 +1208,28 @@ router.post('/accept-ride-offer/:offer' , verifyToken, async (req, res, next) =>
     }
 })
 
-router.post('/reject-ride-offer/:offer' , verifyToken, async (req, res, next) => {
+router.post('/reject-ride-offer/:offerId' , verifyToken, async (req, res, next) => {
 
     try {
 
         const { language } = req.headers
         const { offerId } = req.params  
-        const offerData = await request_offer_model.findOne({_id : offerId , to : req.user.id}).populate("ride_id")
-
+        const offerData = await request_offer_model.findOne({_id : offerId , to : req.user.id}).populate(["ride_id" , "from"] )
         if (!offerData) return next({ 'status': 404, 'message': language == 'ar' ? 'لم يتم العثور على الاعلان' : 'The Ad is not Exist' })
-
+        await request_offer_model.updateOne({_id : offerId , to : req.user.id} , {is_accept: false }).populate("ride_id")
         const titleAr = 'تم رفض عرض السعر'
         const titleEn = 'The Price Offer rejected'
-        const bodyEn = `Price Offer ${notification.request_price} for Ride ${ad.to} is rejected, you can add another offer now `
-        const bodyAr = `تم رفض عرض السعر ${notification.request_price} مقابل لرحلة ${ad.to} ، يمكنك ارسال عرض طلب اخر`
+        const bodyEn = `Price Offer ${offerData.price_offer} for Ride ${ offerData.ride_id.to} is rejected, you can add another offer now `
+        const bodyAr = `تم رفض عرض السعر ${offerData.price_offer} مقابل لرحلة ${ offerData.ride_id.to} ، يمكنك ارسال عرض طلب اخر`
 
         const notificationObject = new notification_model({
-            receiver_id: offerData.from,
+            receiver_id: offerData.from.id,
             user_id: req.user.id,
-            sub_category_id: ad.category_id,
+            sub_category_id: offerData.ride_id.category_id,
             tab: 2,
             text_ar: bodyAr,
             text_en: bodyEn,
-            direction: ad.id,
+            direction:  offerData.ride_id.id,
             type: 10003,
             ad_owner: req.user.id,
             is_accepted: true,
@@ -1241,9 +1239,8 @@ router.post('/reject-ride-offer/:offer' , verifyToken, async (req, res, next) =>
 
         notificationObject.save()
 
-
-        auth_model.find({ 'user_id': user.id }).distinct('fcm').then(
-            fcm => sendNotifications(fcm, user.language == 'ar' ? titleAr : titleEn, user.language == 'ar' ? bodyAr : bodyEn, 10003))
+        auth_model.find({ 'user_id': offerData.from.id }).distinct('fcm').then(
+            fcm => sendNotifications(fcm, offerData.from.language == 'ar' ? titleAr : titleEn, offerData.from.language == 'ar' ? bodyAr : bodyEn, 10003))
 
         res.json({ 'status': true })
     } catch (e) {
@@ -1259,7 +1256,6 @@ router.get('/get-requests-offers' , verifyToken , async (req, res, next) => {
         const aggregate = request_offer_model.aggregate([
             {   
                 $match : {
-                    status : true,
                     to : new mongoose.Types.ObjectId(req.user.id)
                 }
             },
