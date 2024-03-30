@@ -9,7 +9,7 @@ const schema = new mongoose.Schema({
     from : { type: mongoose.Schema.Types.ObjectId, required: true , ref : "users" },
     price_offer: { type: Number, default: false },
     ride_id : {type: mongoose.Schema.Types.ObjectId, required: true , ref : "riders" },
-    status : {type : Boolean , default : true}
+    is_accept : {type : Boolean , default : false}
 }, { versionKey: false, timestamps: true })
 
 schema.plugin(mongooseAggregatePaginate);
