@@ -1107,9 +1107,7 @@ router.post('/send-ride-offer/:adId' , sendRideValidation() , handel_validation_
 router.post('/send-client-offer/:adId' , sendClientOfferValidation() , handel_validation_errors , verifyToken, async (req, res, next) => {
 
     try {
-
         const { language } = req.headers
-
         const { price , riderId } = req.body  
         const { adId } = req.params 
 
@@ -1527,13 +1525,10 @@ router.post('/come-with-me-request', verifyToken, async (req, res, next) => {
     try {
 
         const { language } = req.headers
-
         const { ad_id ,phone} = req.body
-
         if (!ad_id) return next('Bad Request')
-
         const result = await come_with_me_ride_model.findOne({ _id: ad_id, requests: { $nin: [req.user.id] } }).select(comeWithMeTripKeys)
-
+        
         if (result && result.user_id != req.user.id) {
 
             come_with_me_ride_model.updateOne(
@@ -1580,6 +1575,7 @@ router.post('/come-with-me-request', verifyToken, async (req, res, next) => {
                 )
             }
         }
+
         res.json({
             'status': result != null,
         })

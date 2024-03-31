@@ -41,7 +41,6 @@ import appRadio from './routes/app_radio.js'
 
 import chat from './routes/social/chat.js'
 import contests from './routes/contests.js'
-import term_condition from './routes/terms&conditions.js'
 
 import dashboardAuth from './routes/dashboard/auth.js'
 import dashboardSuperAdmin from './routes/dashboard/super_admin.js'
@@ -114,7 +113,6 @@ firebaseAdmin.initializeApp({
   credential: firebaseAdmin.credential.cert(serviceAccount)
 });
 
-app.use('/term-condition', term_condition);
 app.use('/auth', auth);
 app.use('/profile', profile);
 app.use('/ads', ads);
