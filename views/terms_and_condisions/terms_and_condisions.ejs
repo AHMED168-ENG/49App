@@ -1,0 +1,803 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Terms and Service</title>
+    <link rel="stylesheet" href="./index.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Josefin+Sans:wght@500;700&display=swap');
+
+::-webkit-scrollbar {
+    width: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: #242836;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #333541;
+}
+
+* {
+
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+
+}
+
+body,html {
+
+    width: 100%;
+    min-height: 100%;
+    background-color: #242836;
+
+}
+
+.main-header {
+
+    width: 100%;
+    height: 75px;
+    background-color: #181A24;
+    display: block;
+
+}
+
+.main-header ul.header-options {
+
+    width: 100%;
+    height: 100%;
+    list-style: none;
+    display: flex;
+    align-items: center;
+    justify-content: space-around;
+    padding-right: 100px;
+
+}
+
+.main-header ul.header-options li {
+    display: inline-block;
+}
+
+.main-header ul.header-options li.title {
+
+    font-size: 18px;
+    color: #fff;
+    font-family: Arial;
+    cursor: pointer;
+
+}
+
+.header-mobile {
+
+    width: 100%;
+    height: 75px;
+    background-color: #181A24;
+    text-align: center;
+    display: none;
+}
+
+.title-mobile {
+    font-size: 18px;
+    color: #fff;
+    font-family: Arial;
+    cursor: pointer;
+    padding-top: 30px;
+}
+
+a {
+    text-decoration: none;
+    font-size: 16px;
+    color: #6D6F79;
+    font-family: Arial;
+    cursor: pointer;
+}
+
+a:hover {
+    font-size: 16px;
+    color: #9598a7;
+}
+
+
+.card {
+    margin-top: 100px;
+    margin-bottom: 100px;
+    width: 1200px;
+    border-radius: 30px;
+    background-color: #333541;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.card .primary-heading {
+    text-align: center;
+    font-family: josefin sans;
+    color: white;
+    padding-top: 50px ;
+    font-size: 4em;
+}
+
+.paragraph {
+    font-family: josefin sans;
+    color: rgb(179, 179, 179);
+    margin-left: 50px;
+    margin-right: 25px;
+    padding-top: 50px;
+    font-size: 1.5em;
+    line-height: 1.3em;
+    font-weight: 500;
+}
+.heading{
+    font-size: 2em;
+    font-family: josefin sans;
+    color: white;
+    margin-left: 50px;
+    margin-right: 25px;
+    padding-top: 50px;
+    line-height: 1.3em;
+    font-weight: 500;
+}
+
+.bold {
+    font-weight: 700;
+    color: white;
+}
+
+.footer-heading {
+    text-align: center;
+    font-family: josefin sans;
+    color: white;
+    margin-bottom: 50px;
+    font-size: 2em;
+    line-height: 35px;
+}
+
+@media only screen and (max-width: 1218px) {
+    .card {
+        margin-top: 100px;
+        margin-bottom: 100px;
+        height : 2050px;
+        width: 1000px;
+        border-radius: 30px;
+        background-color: #333541;
+        margin-left: auto;
+        margin-right: auto;
+    }
+}
+
+@media only screen and (max-width: 1012px) {
+    .card {
+        margin-top: 100px;
+        margin-bottom: 100px;
+        height : 2350px;
+        width: 800px;
+        border-radius: 30px;
+        background-color: #333541;
+        margin-left: auto;
+        margin-right: auto;
+    }
+}
+
+@media only screen and (max-width: 832px) {
+    .card {
+        margin-top: 100px;
+        margin-bottom: 100px;
+        height : 2950px;
+        width: 600px;
+        border-radius: 30px;
+        background-color: #333541;
+        margin-left: auto;
+        margin-right: auto;
+    }
+    .card .primary-heading {
+        font-size: 3.5em;
+    }
+
+    .footer-heading {
+        font-size: 1.5em;
+    }
+}
+
+@media only screen and (max-width: 626px) {
+    .card {
+        margin-top: 100px;
+        margin-bottom: 100px;
+        height : 3850px;
+        width: 450px;
+        border-radius: 30px;
+        background-color: #333541;
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+    .header-mobile {
+        display: block;
+    }
+
+    .main-header {
+        display: none;
+    }
+
+    .card .primary-heading {
+        font-size: 3em;
+    }
+}
+
+@media only screen and (max-width: 480px) {
+    .card {
+        margin-top: 100px;
+        margin-bottom: 100px;
+        height : 5050px;
+        width: 350px;
+        border-radius: 30px;
+        background-color: #333541;
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+    .card .primary-heading {
+        font-size: 2em;
+    }
+}
+
+@media only screen and (max-width: 365px) {
+    .card {
+        margin-top: 100px;
+        margin-bottom: 100px;
+        height : 6300px;
+        width: 290px;
+        border-radius: 30px;
+        background-color: #333541;
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+    .card .primary-heading {
+        font-size: 2em;
+    }
+}
+    </style>
+</head>
+<body>
+    <!-- <header class="main-header dark-theme">
+
+        <ul class="header-options">
+    
+             <li class="title"> beCoditive API </li>
+            <li class="option"> <a href="https://api.becoditive.xyz"> API </a></li>
+            <li class="option"> <a href="https://apidocs.becoditive.xyz"> DOCS </a> </li>
+            <li class="option"> <a href="https://github.com/beCoditive/beCoditive-API"> GITHUB </a> </li>
+            <li class="option"> <a href="https://discord.gg/BgWv28uQD4"> DISCORD </a> </li>
+        </ul>
+    
+    </header> -->
+
+    <header class="header-mobile dark-theme">
+            <h3 class="title-mobile"> beCoditive API </h3>
+    </header>
+
+    <section id="terms-of-service">
+        <div class="card">
+            <h1 class="primary-heading">Terms of Service</h1>
+            <ul class="paragraph">
+                <li>  Application 49 is an Egyptian application that is subject to the Egyptian commercial law,
+                    a 100% Egyptian joint stock company, and it is one of the most important applications
+                    provided, which contributes to the introduction of many services in one application by
+                    integrating technology and digital solutions in social, service, charitable and
+                    entertainment projects. We are proud of that and look forward to Facing challenges and
+                    creating new opportunities, taking into account the safety, security and well-being of its
+                    users, so that the application becomes the most widely traded application in order to
+                    achieve a link between millions of users worldwide. </li>
+                    <br>
+                <li>
+                    Application 49 does not participate in any communications between the user and agents
+                    and does not participate in any part of the transaction and does not interfere in any way
+                    in such transactions. It is not a party to any of the security systems and it is only a means
+                    of communication and communication between customers to secure an open electronic
+                    community To all countries of the world without any conditions, restrictions, commission
+                    or otherwise in the event of sale, purchase, delivery, exit or any other means of
+                    entertainment.
+                </li>
+                <br>
+                <li>
+                    Application 49 does not participate in any communications between the user and agents
+                    and does not participate in any part of the transaction and does not interfere in any way
+                    in such transactions. It is not a party to any of the security systems and it is only a means
+                    of communication and communication between customers to secure an open electronic
+                    community To all countries of the world without any conditions, restrictions, commission
+                    or otherwise in the event of sale, purchase, delivery, exit or any other means of
+                    entertainment.
+                </li>
+            </ul>
+            <h3 class="text-capitalize heading">ABBREVIATIONS/MEANINGS: </h3>
+            <ul class="paragraph">
+                <li>Terms and Conditions referred to as the Terms of Use for Users and all local and
+                    international laws, regulations, and laws. </li>
+                    <br>
+                <li>
+                    Words such as "we", "us", "our" mean App49 and its affiliates.
+                </li>
+                <br>
+                <li>
+                    The terms “you” and “yours” are any person or entity that views, uses, accesses, or
+                    otherwise uses the Website or the Service, including people browsing the Website and its
+                    content, placing any advertisements or content on the Website, or posting Comments or
+                    any content or responses to any advertisements or content on the Website. 
+                </li>
+                <br>
+                <li>
+                    The 49’s application provides a set of online resources that include classified
+                    advertisements and services hereinafter collectively referred to: the “Service” (on the
+                    website and related sites com.49hub and the mobile application of the Platform)
+                    hereinafter collectively referred to as: “The 49’s application” .  
+                </li>
+            </ul>
+            <h3 class="text-capitalize heading">REVISIONS AND TYPOS:</h3>
+            <ul class="paragraph">
+                <li> The materials appearing on our website may include technical, typographical, or
+                    photographic errors. We do not guarantee the accuracy, completeness or timeliness of
+                    any materials on our website, and we may make changes to the materials on the site at
+                    any time without prior notice.  
+                </li>
+            </ul>
+            <h3 class="text-capitalize heading">WHAT DATA DO WE COLLECT? </h3>
+            <ul class="paragraph">
+                <li>The 49’s application does not initially force users to register in the application, but rather
+                    allows them to access and browse our services at any time without any condition or
+                    restriction. 
+                </li>
+                <br>
+                <li> Application 49 asks users to register in the application after browsing and verification and
+                    the desire of those towards them to benefit from the services/advertisements, and the
+                    registration shall be in accordance with the rules and conditions specified by the
+                    application 49 according to the country of registration. 
+                </li>
+                <br>
+                <li>User registration is by using his Google account: name, nickname, email address, and cell
+                    phone number in some countries that support the OTP feature. 
+                </li>
+                <br>
+                <li>Application 49 does not track your current location and does not use it in any way to direct
+                    advertising, promotional, service or intellectual campaigns, except in one case only, which
+                    is the user's registration of his current location in services that require location
+                    identification, and that is at the request of the user and his personal responsibility. 
+                </li>
+                <br>
+                <li> When you use the 49 app's chat feature to communicate with other users, we collect
+                    information that you choose to provide to other users through this feature. 
+                </li>
+                <br>
+                <li>The user has complete freedom to determine the information that he shares with people
+                    on the The 49’s application and can change / delete what has been published at any time
+                    through the servers of the application 49 and can even delete his account at the time he
+                    wants.
+                </li>
+            </ul>
+            <h3 class="text-capitalize heading">DISCLAIMER / TERMS OF USE / SERVICE
+            DESCRIPTION / CONTENT POLICY:  </h3>
+            <ul class="paragraph">
+                <li>Implementation 49 is not partially or fully responsible for the loss of important or
+                    unimportant personal items during the customers' use of the services/transactions and
+                    that all personal belongings fall under the full responsibility of their owner at any time of
+                    the implementation of the operations. 
+                </li>
+                <br>
+                <li>Under no circumstances shall The 49’s application or its officers, directors, employees or
+                    agents be liable for any direct, indirect, incidental, special, consequential or exemplary
+                    damages even if the Application has been informed of the possibility of such damages
+                    resulting in any way It is forbidden to use the electronic application or service. 
+                </li>
+                <br>
+                <li>It is the responsibility of the user to evaluate the users with whom he interacted
+                    transparently on the advertisement / service provided by them, and this helps us to revise
+                    the users, because the application automatically bans users after receiving your
+                    evaluations / complaints after deciding and reviewing. 
+                </li>
+                <br>
+                <li>The 49’s application will not be responsible for user submissions, defamation, aggressive
+                    or illegal behavior of a user or any third party, and you bear the sole risk or damage for
+                    all of the above. 
+                </li>
+                <br>
+                <li>Application 49 does not provide any decisions or guarantees that the electronic
+                    application does not fit the service in other sites, those who use the electronic application
+                    from other different countries do so of their own free will and under the responsibility of
+                    their own risk, as they comply with local and international law. 
+                </li>
+                <br>
+                <li>The 49’s application is not responsible for your relationship with any organizations and/or
+                    individuals and/or services or through the service. This includes, but is not limited to,
+                    payment for and delivery of goods, loss of belongings, self-harm in any way, no donations,
+                    assistance, or any of the services provided Via the Application, and any other conditions,
+                    warranties or representations related to any interaction you may have with other
+                    organizations and/or individuals and not with the Application or any liability of the Application, and this interaction between you and these organizations and/or individuals
+                    is limited to you only. 
+                </li>
+                <br>
+                <li>The user acknowledges / agrees / absolves that Application 49 is not responsible,
+                    employees, agents or successors from any and all claims, claims and actual and
+                    consequential damages of every kind or nature, known or unknown, suspected or not,
+                    made or not disclosed, arising in any way form of and relating to such disputes and/or our
+                    Service and that it is not a party to transactions/advertisements, directory information,
+                    listings/commercial information, messages between users including but not limited to,
+                    emails sent from outside of our domain or other communication through The Application
+                    between Users, offers, comments, user postings, files, images, graphics, video, sounds,
+                    listings of works/information, directory information, or any other material made available
+                    through Application 49. 
+                </li>
+                <br>
+                <li>The user acknowledges and agrees that he uses the service and the application at his own
+                    risk. The user is responsible for/assuming the responsibility for submitting private
+                    inquiries and the responsibility of seeking the assistance of surveyors/brokers/any person
+                    who can assist with the service provided and/or obtaining legal advice before committing
+                    to any purchase, and responsibility Ensure to act in good faith towards any third parties.
+                    Evaluate and bear all risks associated with the use of any content that it may be exposed
+                    to, whether it is offensive, indecent, inaccurate, misleading, unacceptable or
+                    objectionable and may rely on the said content, and that The 49’s application does not
+                    provide No guarantee / does not bear responsibility for the accuracy or completeness of
+                    information / preservation of details that are produced directly by customers and / or
+                    other parties under any circumstances and that he is not responsible in any way for the
+                    content or for any loss or damage of any kind that occurs as a result of dealing And that
+                    he will not bear any responsibility towards any of the parties, and in the event of any
+                    resulting damage, he must seek the assistance of the competent security authorities. 
+                </li>
+                <br>
+                <li>The user is solely responsible for compliance with the tax registration at the tax authority
+                    in the event that goods, services and other taxable activities are offered without any
+                    liability on the application 49. 
+                </li>
+                <br>
+                <li>The user acknowledges and agrees that he is solely responsible for his own content that
+                    has been placed, sent through or linked to the Service and the consequences of placing,
+                    transmitting, linking or publishing it and that he is the one who developed the contents
+                    such as description and/or images in accordance with the instructions and instructions
+                    for placing the advertisement on the application. 
+                </li>
+                <br>
+                <li>The user acknowledges and agrees to give The 49’s application the full right and freedom
+                    to use the information and/or photographs published on the website, store, assemble
+                    and modify it by a special database by the application. 
+                </li>
+                <br>
+                <li>User acknowledges and agrees to grant Application 49 all copyrights to the said Content
+                    and to grant it a final, irrevocable, irrevocable, perpetual, worldwide, exclusive, royaltyfree, sublicense, or transferable license to use, reproduce , distribute, prepare derivative
+                    works for the purpose of promoting and redistributing part or all of the Website, the
+                    content on it and derivative works therein, in any media format and through any media
+                    channels known now or hereafter. Moreover, giving the application the right to initiate
+                    any legal action in accordance with copyright laws and other laws in the countries of the
+                    world. Thus, the user gives up his right to the intellectual property rights to this content
+                    and you return to the application and the said license granted by the user expires once
+                    he or the application removes or deletes this content. 
+                </li>
+                <br>
+                <li>The user acknowledges and agrees to give the application 49 all rights to display such
+                    goods and services and to present them on the application that complies with the
+                    stipulated conditions. However, the application performs a pre-check or approval of the
+                    content. 49 App shall have the right, in its sole and absolute discretion, to refuse, delete
+                    or move any Content that violates these Terms. 
+                </li>
+                <br>
+                <li>When the Application or Service is used by third parties under this Service, App49 may in
+                    its sole discretion, make a video of your photographs or videos and upload such video via
+                    YouTube or any other media or service provider in its sole discretion. 
+                </li>
+                <br>
+                <li>The user acknowledges and agrees to give the The 49’s application all the rights to
+                    announce any details of the identity / contact numbers or the identity of another person
+                    / contact numbers of any other person on any advertisement / video with content, but
+                    the details below the publication / advertisement, it is renewed.  
+                </li>
+                <br>
+                <li>The application and the content available through the website may contain links to other
+                    websites of third parties, which may be subject to the terms, conditions and other policies
+                    of these websites. Therefore, the application of 49 does not make any representation or
+                    warranty regarding the accuracy or correctness of the information on any of the websites
+                    of the parties. The third, and your linking to any other sites is entirely at your own risk,
+                    and The 49’s application disclaims any liability in this regard. 
+                </li>
+                <br>
+                <li>In the event of any of the above-mentioned violations or infringements, please refer to
+                    the competent/responsible authorities in your country
+                </li>
+                
+                
+            </ul>
+            <h3 class="text-capitalize heading"> BEHAVIORS: </h3>
+            <ul class="paragraph">
+                <li>Not to violate any law or legal rules or to engage in any criminal or tortious activity;
+                    Including child pornography, pornography, drug trafficking, pornography, child
+                    molestation and stalking, copyright infringement, fraud and harmful, abusive, illegal and
+                    harassing, degrading, intimidating, threatening, and defaming situations obscene,
+                    intrusive into another's privacy or other rights, hateful toward any individual or group of
+                    individuals on the basis of religion, gender, sexual orientation, age, or ethnicity, racially
+                    objectionable, disparaging, encouraging money laundering, illegal gambling, or other
+                    harmful Legal or what could harm minors in any way or otherwise illegal in any way.                         
+                </li>
+                <br>
+                <li>
+                    That the copyright and patents are protected by trade secrets or trademarks, including
+                    privacy and publicity rights, are first subject to other intellectual property or proprietary
+                    rights of a third party, or content that you do not have the right to display under, including
+                    privacy and publicity rights unless you are the owner of these rights or you have obtained
+                    permission or a license from the rightful owner to post the material and grant Application
+                    49 all of the license rights granted therein. 
+                </li>
+                <br>
+                <li>
+                    It is not permissible to attempt to impersonate another person or user in order to harass,
+                    through any means of communication or to any of its employees / agents affiliated with
+                    the application of 49 or any of those who participate in providing any part of the services
+                    provided
+                </li>
+                <br>
+                <li>
+                    Not to post personal or identifying information about another person without the express
+                    consent of that person. Not to impersonate any person or entity, or claim forgery or
+                    affiliation with a person or entity, or deceive or mislead the addressee about the origin of
+                    these messages or the delivery of any insulting or threatening information 49 of its nature,
+                    or information that is false, deceptive, misleading, evasive, or constitutes fraudulent. Or
+                    lures any person to buy or sell any products, services, or services performed through the
+                    application with an immoral or illegal purpose. 
+                </li>
+                <br>
+                <li>
+                    Not to send unsolicited spam email with advertisements or other unsolicited
+                    communications to email addresses registered in the Application or through Application
+                    49 computer systems. Application 49 monitors email usage using human monitoring
+                    devices or automated software to report certain associated words By spamming or
+                    scams in e-mail messages that are sent between one user to another in the e-mail
+                    system that performs spying operations on users or clients. 
+                </li>
+                <br>
+                <li>
+                    Not to use misleading email addresses or content, or forged addresses or manipulated
+                    identifiers to disguise the origin of content transmitted through the Service. 
+                </li>
+                <br>
+                <li>
+                    Not to use cases that constitute or contain “network marketing”, “multi-level
+                    marketing”, “Ponzi chain and pyramid schemes”, “affiliate marketing”, “referral code
+                    link”, “chain messages” or unsolicited advertisements of a commercial nature. 
+                </li>
+                <br>
+                <li>
+                    Not to advertise any illegal services or sell any items that are prohibited or prohibited
+                    under applicable law or regulated by applicable local jurisdiction law. 
+                </li>
+                <br>
+                <li>Not to use contents that contain software viruses or any other computer code, files or
+                    programs designed to interrupt, destroy or limit the functionality of any computer
+                    program, hardware, telecommunications equipment, or any other computer resource,
+                    or otherwise disrupt the normal flow of dialogue with an excessive number of messages
+                    to the Service, or adversely affect the ability of other users to use the Service. 
+                </li>
+                <br>
+                <li>
+                    Not to contact any person who has asked not to be contacted, or to make unsolicited
+                    contact with any person for a commercial purpose, in particular, not to contact any user
+                    to post an advertisement on a third party website or to place any advertisement on that
+                    user's behalf or to “stalk” harass any person, and not make any defamatory or
+                    defamatory comments or posts to or against any person. 
+                </li>
+                <br>
+                <li>
+                    Not to collect personal data about users or other entities for commercial or illegal
+                    purposes, not to use data extraction tools or the like to download or scrape data from
+                    the Service except for Internet search engines. 
+                </li>
+                <br>
+                <li>
+                    Not to use any form of automated device or means, including robots, or computer
+                    software sometimes referred to as “pointing tools” that enables the use of the
+                    Application 49 “pointing system” or other community control systems without
+                    introducing all word manually by human intervention that begins with the signal
+                    “automatic pointing device” or use any such tool to remove advertisements of
+                    competitors and other third parties. or use any automated posting device in connection
+                    with bulk postings or to provide automatic posting at specified times or intervals. 
+                </li>
+                <br>
+                <li>Not to attempt to gain unauthorized access to computer systems owned or controlled
+                    by Application 49 or to engage in any activity that disrupts, lowers the quality of
+                    Application 49 and interferes with the performance or functionality of the Service or
+                    Application 49. 
+                </li>
+                <br>
+                <li>Not to place Content outside of the local area or not relevant to the local area, not to
+                    place Content repeatedly or similarly, or to impose unreasonable or disproportionately
+                    large loads on our servers and other infrastructure. 
+                </li>
+                <br>
+                <li>The site may not be used in any way that is inconsistent with any or all applicable laws
+                    and regulations, or suspected of illegal operations, which will be subject to dealing with
+                    them in a strict legal manner. 
+                </li>
+            </ul>
+            <h3 class="text-capitalize heading"> FEATURED ADS / PAID POSTS:</h3>
+            <ul class="paragraph">
+                <br>
+                <li>The 49's Application may offer services known as “Featured Ads” where users may pay a
+                    non-refundable fee to post advertisements/services in the Application and therefore
+                    their viewing is likely to increase. 
+                </li>
+                <li>The 49’s application may charge a fee to publish content in some areas of the service.
+                    The fee allows the publication of certain content in a certain area. Any such fee is not
+                    refundable in the event that any content is removed from the service due to content
+                    violation of established behaviors. 
+                </li>
+            </ul>
+            <h3 class="text-capitalize heading"> PUBLISHING AGENTS: 
+            </h3>
+            <ul class="paragraph">
+                <br>
+                <li>The term “publishing agent” refers to a third-party agent, service, or intermediary that
+                    applies to post Content on the Service on behalf of others.  
+                </li><br>
+                <li>Publishing agents are not permitted to access the Service or to post content on behalf of
+                    others, directly or indirectly, except with the express consent or license of Application
+                    49.  
+                </li>
+            </ul>
+            <h3 class="text-capitalize heading">INTELLECTUAL PROPERTY RIGHTS AND
+                VIOLATIONS: </h3>
+            <ul class="paragraph">
+                <br>
+                <li>The content of Application 49 and the trademarks, service marks and logos included in
+                    these Terms are owned by Application 49 or licensed to Application 49 and are subject
+                    to copyright and other intellectual property rights in all countries of the world.   
+                </li><br>
+                <li>Application 49 includes, without limitation, all content of the basic software, databases,
+                    functions, software, website designs, audio, video, text, photographs, all graphics, logos,
+                    designs, page headers, icons, texts and service names belonging to the The 49’s
+                    application are trademarks registered under public law or in any commercial form. To
+                    apply 49 in all countries of the world.  
+                </li><br>
+                <li>Trademarks and trade dress belonging to Application 49, including as part of trademarks
+                    and/or as part of domain names, may not be used in connection with any
+                    product/service in any manner likely to cause confusion and may not be
+                    copied/imitated, or used either in full or partially without prior written permission from
+                    the company that owns the application 49.   
+                </li><br>
+                <li>The content of The 49’s application on the website is provided to you “as is” for your
+                    information and personal use only and may not be used, copied, reproduced,
+                    distributed, transmitted, broadcast, displayed, sold, licensed or otherwise used for any
+                    other purposes whatsoever, without The prior written permission of the company that
+                    owns the application 49.   
+                </li><br>
+                <li>Systematic recovery of data or any other content from the site, creation or authorship,
+                    whether directly or indirectly, a collection, author, database or directory without the
+                    written permission of Application 49 is prohibited.   
+                </li><br>
+                <li>You are granted a limited license to access and use the Online Application and The 49’s
+                    application Content and to properly download or print a copy of any portion of the The
+                    49’s application Content only for your personal, non-commercial use.    
+                </li>
+                <br>
+                <li>The 49’s application is not responsible for any infringement of copyright or other
+                    intellectual property rights arising from materials published or transmitted through the
+                    Application or materials advertised on the Application by end users or any other third
+                    parties.    
+                </li>
+            
+            </ul>
+            <h3 class="text-capitalize heading">VIOLATION OF TERMS / RESTRICTION AND
+                TERMINATION OF SERVICE /
+                COMPENSATION: </h3>
+            <ul class="paragraph">
+                <br>
+                <li>Application 49 may set limits from time to time regarding use of the Service, including
+                    among other things, the maximum number of days Content will be maintained or
+                    retained by the Service and the maximum number and size of postings and emails.   
+                </li><br>
+                <li>Application 49 assumes no responsibility or liability for the deletion or failure to store
+                    any of its content and reserves the right, but not the obligation, to delete or deactivate
+                    your account, block your email or IP address, or terminate your access to or use of the
+                    Service or any part thereof on Immediately and without notice, remove and discard any
+                    non-compliant content within the Service uploaded by you for any reason or no reason
+                    at all in the event of non-compliance with the laws, legal rules, these Terms, or the Site's
+                    privacy policy. 
+                </li><br>
+                <li>It must be reported immediately in the event of exposure to damage through the user
+                    or the customer in the country in which he resides in order for immediate assistance
+                    legally, and the opposite may expose such violations sent to civil and criminal penalties,
+                    and this is done by contacting us via the use of e-mail, and that any refrain in Action by
+                    App 49 with respect to a breach by you does not waive our right to respond with respect
+                    to subsequent or similar breaches by you or others notwithstanding the above clauses and with respect to any other provision of these Terms and App 49 reserves the right to
+                    seek statutory remedies fair.  
+                </li><br>
+                <li>The user acknowledges that he may be exposed to content that is inaccurate, offensive,
+                    inappropriate, objectionable, defamatory, defamatory and agrees to waive and waive any
+                    legal or equitable rights / remedies and defends, indemnifies and keeps the application
+                    49 and its subsidiaries, affiliates, successors, assigns, directors and employees , agents,
+                    service providers and suppliers, against any/all claims, damages, liabilities, losses,
+                    liabilities, costs or debts and expenses, your violation of any provision of these Terms,
+                    your violation of any right of a third party, and any claim that your content caused In
+                    damages to a third party, this defense and indemnification obligation will survive the
+                    termination, modification or expiration of these Terms and your use of the Service and
+                    Application. 
+                        
+                </li><br>             
+            </ul>
+            <h3 class="text-capitalize heading">ABILITY TO ACCEPT TERMS OF
+                SERVICE/WAIVER: </h3>
+            <ul class="paragraph">
+                <br>
+                <li>The 49’s application is intended for adults only or above who are eligible to contract in
+                    accordance with applicable laws. If you use/access this application as a representative of
+                    any person/entity, you acknowledge that you are legally authorized to represent that
+                    person/entity.  
+                </li><br>
+                <li>Minors, i.e. users under 18 years of age, are allowed to enter the Application and use
+                    the Service only if their legal representatives consent or if it is related to an act or
+                    transaction that is a customary and acceptable standard of civil life and practice, you
+                    confirm that you are at least 18 years of age, and they comply They are bound by these
+                    terms. 
+                </li><br>
+                <li>It is not possible to transfer / waiver of ownership of these terms and any rights or
+                    licenses that have been granted under them, but it can be entrusted by the application
+                    without restrictions and that any waiver / transfer made by the user is null and without
+                    effect.
+                </li><br>           
+            </ul>
+            <h3 class="text-capitalize heading">PRIVACY/TERMS: 
+            </h3>
+            <ul class="paragraph">
+                <br>
+                <li>These terms and conditions apply to the The 49’s application website on iPhone, iPad,
+                    Android devices and the phone connected to the Internet browser. The English language
+                    will be the approved and applicable language in this regard in the event of any
+                    contradiction between the English version of the terms and any translation.  
+                </li><br>
+                <li>These terms and policies published on the application are written for complete and
+                    exclusive understanding and supersede all previous understandings, proposals,
+                    negotiations and discussions between all parties, whether written or oral. 
+                </li><br>
+                <li>The terms are subject to the laws of the Arab Republic of Egypt and international laws
+                    abroad, and any claim against the application is submitted exclusively to the competent
+                    authorities in the country in which you live. 
+                </li><br>           
+                <li>The application's failure to exercise or enforce any right or provision of the conditions
+                    does not constitute a waiver of this right or provision in the event that any of the
+                    conditions is invalid or unenforceable by a competent court. 
+                </li><br>           
+                <li>The two parties agree that the court / judicial body / authorized body responsible that
+                    they should seek to give effect to the intentions of the parties as contained in the
+                    judgment, if any provision / provisions of these terms are invalid, illegal or
+                    unenforceable and the validity, legality and enforcement of the remaining provisions of
+                    the Terms and conditions in any way or harm, these terms guarantee the interest of the
+                    parties and bind each of the parties' successors and appointees. 
+                </li><br>           
+                <li>The user is solely responsible for making all arrangements necessary for you to access
+                    the website, and to ensure that all persons who access the website through its internet
+                    connection are aware of the terms of this website, and abide by them. 
+                </li><br>           
+                <li>When the user accesses the application or uses the application or submits any content
+                    or materials to the site and when viewing or browsing and every visit he makes to the
+                    sites on the Internet will be subject to the terms of use in effect at that time, this means
+                    acceptance as a binding legal agreement between him and the application 49
+                    Unconditionally and that the continued use of the site now or after the modifications to
+                    the terms of use confirms that the user has read, accept, agree and abide by them. 
+                </li><br>           
+                <li> The user acknowledges and agrees to all fair use terms, privacy policies and terms and
+                    that he understands them and undertakes to abide by them and to review them in any
+                    change / update that occurs from time to time and he agrees to comply with any
+                    published guidelines that are applicable in accordance with Resolution 49 of the
+                    application alone. 49 On any provision or provision of these Terms, any guideline, or any
+                    changes made or dissatisfied with the Application or the Service in any way, its sole
+                    option is to immediately discontinue use of the Application.
+                </li><br>           
+                <li> Application 49 reserves the right to amend and revise the terms of use, conditions,
+                    service description and content policy from time to time to keep them updated in
+                    accordance with the terms of legal requirements and the way we operate our business
+                    and without prior notice
+                </li><br>           
+            </ul>
+        </div>
+    </section>
+    <footer>
+        <p class="footer-heading">© Copyright 2023-2024 49App. All rights reserved.</p>
+    </footer>
+</body>
+</html>
