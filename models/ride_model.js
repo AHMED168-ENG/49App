@@ -2,8 +2,8 @@ import mongoose from 'mongoose'
 
 const schema = new mongoose.Schema({
 
-    user_id: { type: String, required: true },
-    rider_id: { type: String , ref : "riders" },
+    user_id: { type: mongoose.Schema.ObjectId, required: true , ref : "users" },
+    rider_id: { type: mongoose.Schema.ObjectId , ref : "riders" },
     category_id: { type: String, required: true },
     from: { type: String, required: true },
     to: { type: String, required: true },

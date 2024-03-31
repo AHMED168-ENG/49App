@@ -524,10 +524,51 @@ router.get('/client-request' , verifyToken, async (req, res, next) => {
 router.get('/client-request/:id' , verifyToken, async (req, res, next) => {
 
     try {
-        const userRequest = await ride_model.findOne({
-            user_id : req.user.id,
-            _id : req.params.id
-        })
+        const userRequest = await ride_model.aggregate([
+            {
+                $match : {
+                    // user_id : new mongoose.Types.ObjectId(req.user.id),
+                    _id : new mongoose.Types.ObjectId(req.params.id)
+                }
+            },
+            {
+                $lookup : {
+                    from : "users",
+                    localField : "user_id",
+                    as : "user_id",
+                    foreignField : "_id"
+                }
+            },
+            {
+                $unwind : "$user_id"
+            },
+            {
+                $lookup : {
+                    from : "riders",
+                    localField : "rider_id",
+                    as : "rider_id",
+                    foreignField : "_id"
+                }
+            },
+            {
+                $unwind : "$rider_id"
+            },
+            {
+                $lookup : {
+                    from : "ride_offers",
+                    localField : "_id",
+                    as : "ride_offer",
+                    foreignField : "ride_id",
+                    pipeline : [
+                        {
+                            $match : {
+                                is_accept : true
+                            }
+                        }
+                    ]
+                }
+            },
+        ])
         res.json({ 'status': true , data : userRequest});
     } catch (e) {
         next(e)
@@ -1134,8 +1175,11 @@ router.post('/accept-ride-offer/:offerId' , verifyToken, async (req, res, next) 
 
         const { language } = req.headers
         const { offerId } = req.params 
+
         const offerData = await request_offer_model.findOne({_id : offerId , to : req.user.id}).populate("ride_id")
         if (!offerData) return next({ 'status': 404, 'message': language == 'ar' ? 'لم يتم العثور على الاعلان' : 'The Ad is not Exist' })
+        // const haveOffer =  await request_offer_model.findOne({to : req.user.id , is_accept : true , ride_id : offerData.ride_id})
+        // if(haveOffer) return next({ 'status': 404, 'message': language == 'ar' ? "انت بالفعل وافقت علي عرض طلب" : "You have already accepted my proposal." })
         if (offerData.ride_id.is_completed == true) return next({ 'status': 400, 'message': language == 'ar' ? 'الاعلان بالفعل مزود بمقدم خدمة' : 'The Ad is Already has service provider' })
         const user = await user_model.findById(offerData.from).select('_id language')
 
@@ -1214,7 +1258,7 @@ router.post('/reject-ride-offer/:offerId' , verifyToken, async (req, res, next) 
 
         const { language } = req.headers
         const { offerId } = req.params  
-        const offerData = await request_offer_model.findOne({_id : offerId , to : req.user.id}).populate(["ride_id" , "from"] )
+        const offerData = await request_offer_model.findOne({_id : offerId , to : req.user.id , is_accept : false}).populate(["ride_id" , "from"] )
         if (!offerData) return next({ 'status': 404, 'message': language == 'ar' ? 'لم يتم العثور على الاعلان' : 'The Ad is not Exist' })
         await request_offer_model.updateOne({_id : offerId , to : req.user.id} , {is_accept: false }).populate("ride_id")
         const titleAr = 'تم رفض عرض السعر'
