@@ -3,19 +3,12 @@ import mongoose from 'mongoose'
 
 const schema = new mongoose.Schema({
 
-    user_rating_id: { type: String, required: true },
-
-    user_id: { type: String, required: true },
-
-    category_id: { type: String, required: true },
-    ad_id: { type: String, required: true },
-
-    field_one: { type: Number, default: 5 },
-    field_two: { type: Number, default: 5 },
-    field_three: { type: Number, default: 5 },
+    user_rating_id: { type: mongoose.Schema.Types.ObjectId, required: true , ref : "users" },
+    user_id: { type: mongoose.Schema.Types.ObjectId, required: true , ref : "users" },
+    category_id: { type: mongoose.Schema.Types.ObjectId, required: true , ref : "sub_categories" },
+    request_id: { type: mongoose.Schema.Types.ObjectId, required: true , ref : "rides" },
     comment: { type: String, default: '' },
-
-
+    rate: { type: Number, default: 1 },
 }, { versionKey: false, timestamps: true })
 
 export default mongoose.model("ad_ratings", schema);

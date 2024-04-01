@@ -20,7 +20,7 @@ import pick_me_ride_model from '../../models/pick_me_ride_model.js';
 import axios from 'axios';
 import wallet_model from '../../models/wallet_model.js';
 import handel_validation_errors from '../../middleware/handelBodyError.js';
-import getLocation, { acceptRideOfferValidation, addNormalRide, changeRideOfferStatus, sendClientOfferValidation, sendRideValidation } from '../../validation/riders.js';
+import getLocation, { acceptRideOfferValidation, addNormalRide, addUserRating, changeRideOfferStatus, sendClientOfferValidation, sendRideValidation } from '../../validation/riders.js';
 import { updateUserLocation } from '../../validation/user.js';
 import mongoose from 'mongoose';
 
@@ -909,36 +909,44 @@ router.post('/complete-ride', verifyToken, async (req, res, next) => {
     }
 })
 
-router.post('/rating-ride', verifyToken, async (req, res, next) => {
+router.post('/rating-ride/:userId' , verifyToken, addUserRating() , handel_validation_errors, async (req, res, next) => {
 
     try {
+        const {category_id , comment , request_id , rate} = req.body
         const { language } = req.headers
-
-        const { field_one, field_two, field_three, comment, category_id, ad_id, user_id } = req.body
+        const {userId} = req.params
         if (comment.length > 100) return next({ 'stauts': 400, 'message': language == 'ar' ? 'أقصى عدد حروف للتعليق 100 حرف' : 'Max Comment length is 100 Letters' })
 
-        if (!category_id || !ad_id || !user_id) return next('Bad Request')
+        const theRate = {
+            user_rating_id: userId,
+            user_id: req.user.id,
+            category_id,
+            request_id,
+        }
+        if(comment) theRate.comment = comment
+        if(rate) theRate.rate = rate
+        await rating_model.create(theRate).then((result) => {
+            res.json({ 'status': true  , rate : result})
+        })
+    } catch (e) {
+        next(e)
+    }
+})
 
-        const category = await sub_category_model.findById(category_id).select('_id parent')
+router.get('/user-rating/:userId' , verifyToken, addUserRating() , handel_validation_errors, async (req, res, next) => {
 
-        if (category && category.parent == rideCategoryId) {
-
-
-            await rating_model.updateOne({ user_rating_id: req.user.id, category_id, ad_id, user_id }, { field_one, field_two, field_three, comment, }, { upsert: true, new: true, setDefaultsOnInsert: true })
-
-            updateRideRating(user_id, category_id)
-
-
-            res.json({ 'status': true })
-
-        } else return next('Bad Request')
+    try {
+        const {userId} = req.params
+        const rate = await rating_model.find({
+            user_rating_id : userId
+        }).populate(["user_rating_id" , "user_id" , "category_id" , "request_id"])
+        res.json({ 'status': true  , rate : rate})
 
     } catch (e) {
         next(e)
     }
 })
 
-// انا خلصت get order , cancel order , update order , get orders الخاصين بالمستخدم بس
 
 router.delete('/delete-rating-ride', verifyToken, async (req, res, next) => {
 

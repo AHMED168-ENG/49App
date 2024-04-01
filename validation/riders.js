@@ -38,6 +38,27 @@ export function sendClientOfferValidation() {
     ];
   }
 
+export function addUserRating() {
+    return [
+        check("rating").notEmpty().withMessage(JSON.stringify({
+          ar: "قم بادخال التقيم",
+          en: "Enter price"
+      })),
+      check("comment").notEmpty().withMessage(JSON.stringify({
+        ar: "قم بادخال التعليق",
+        en: "Enter comment"
+      })),
+      check("request_id").notEmpty().withMessage(JSON.stringify({
+        ar: "قم بادخال الطلب",
+        en: "Enter request "
+      })),
+      check("category_id").notEmpty().withMessage(JSON.stringify({
+        ar: "قم بادخال القسم",
+        en: "Enter category "
+      }))
+    ];
+  }
+
 export function acceptRideOfferValidation() {
     return [
         check("notificationId").notEmpty().withMessage(JSON.stringify({
