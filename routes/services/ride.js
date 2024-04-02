@@ -690,7 +690,7 @@ router.get('/rider-five-kilometers-away' , verifyToken , getLocation() , handel_
     } catch (e) { next(e) }
 })
 
-router.get('/rider-go-to-client/:rideId', verifyToken, async (req, res, next) => {
+router.post('/rider-go-to-client/:rideId', verifyToken, async (req, res, next) => {
 
     try {
 
@@ -728,11 +728,11 @@ router.get('/rider-go-to-client/:rideId', verifyToken, async (req, res, next) =>
             })
             return res.json({ 'status': true })
         }
-        return next('Bad Request')
+        return next('this ride not exist or not belong to you')
     } catch (e) { next(e) }
 })
 
-router.get('/send-arrived-to-client/:rideId', verifyToken, async (req, res, next) => {
+router.post('/send-arrived-to-client/:rideId', verifyToken, async (req, res, next) => {
 
     try {
 
@@ -759,14 +759,13 @@ router.get('/send-arrived-to-client/:rideId', verifyToken, async (req, res, next
             })
             return res.json({ 'status': true })
         }
-        return next('Bad Request')
+        return next('this ride not exist or not belong to you')
     } catch (e) { next(e) }
 })
 
-router.get('/client-not-arrived/:rideId', verifyToken, async (req, res, next) => {
+router.post('/client-not-arrived/:rideId', verifyToken, async (req, res, next) => {
 
     try {
-
         const financialPenalty = 10
 
         const ride = await ride_model.findOne({ _id: req.params.rideId, rider_id: req.user.id, is_start: false })
@@ -827,16 +826,16 @@ router.get('/client-not-arrived/:rideId', verifyToken, async (req, res, next) =>
             })
             return res.json({ 'status': true })
         }
-        return next('Bad Request')
+        return next('this ride not exist or not belong to you')
     } catch (e) { next(e) }
 })
 
-router.post('/start-ride', verifyToken, async (req, res, next) => {
+router.post('/start-ride/:id', verifyToken, async (req, res, next) => {
     try {
 
         const { language } = req.headers
 
-        const { id } = req.body
+        const { id } = req.params
 
         if (!id) return next('Bad Request')
 
@@ -865,14 +864,11 @@ router.post('/start-ride', verifyToken, async (req, res, next) => {
     }
 })
 
-router.post('/complete-ride', verifyToken, async (req, res, next) => {
+router.post('/complete-ride/:id', verifyToken, async (req, res, next) => {
     try {
 
         const { language } = req.headers
-
-        const { id } = req.body
-
-        if (!id) return next('Bad Request')
+        const { id } = req.params
 
         const ride = await ride_model.findOneAndUpdate({ _id: id, rider_id: req.user.id, is_completed: false, is_canceled: false, is_start: true }, { is_completed: true })
 
@@ -900,7 +896,7 @@ router.post('/complete-ride', verifyToken, async (req, res, next) => {
             },
         )
 
-        //sendCompleteRide(id, ride.user_id, ride.rider_id)
+        // sendCompleteRide(id, ride.user_id, ride.rider_id)
 
         res.json({ 'status': true })
 
@@ -946,7 +942,6 @@ router.get('/user-rating/:userId' , verifyToken, addUserRating() , handel_valida
         next(e)
     }
 })
-
 
 router.delete('/delete-rating-ride', verifyToken, async (req, res, next) => {
 
