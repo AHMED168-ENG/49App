@@ -31,7 +31,6 @@ router.get('/get', async (req, res, next) => {
     }
 })
 
-
 router.post('/pay', verifyToken, async (req, res, next) => {
 
     try {
@@ -100,4 +99,5 @@ router.post('/pay', verifyToken, async (req, res, next) => {
         next(e)
     }
 })
+
 export default router

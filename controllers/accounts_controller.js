@@ -14,7 +14,7 @@ export const calculateWithPaymob = async (amount, subCategoryId, userId, isCard)
     if (!subCategory || !appManager || !wallet) return
 
     const paymentGatewayCuts = (isCard == true ? appManager.pay_mob_constant : 0) + ((appManager.pay_mob_portion * amount) / 100)
-
+    
     const govermentFees = (amount * (appManager.vat / 100)) + ((amount * appManager.tax) / 100)
 
     const grossMoney = amount - paymentGatewayCuts - govermentFees

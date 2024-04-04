@@ -1,4 +1,6 @@
 import mongoose from 'mongoose'
+import mongoosePaginate from 'mongoose-paginate-v2';
+import mongooseAggregatePaginate from 'mongoose-aggregate-paginate-v2';
 
 const schema = new mongoose.Schema({
 
@@ -17,8 +19,7 @@ const schema = new mongoose.Schema({
     rider_lat: { type: Number },
     rider_lng: { type: Number },
 
-    destination_lat: { type: Number, required: true },
-    destination_lng: { type: Number, required: true },
+    location: { type: Object, default: { type: "Point", coordinates: [0, 0] } },
 
     is_start: { type: Boolean, default: false },
     is_completed: { type: Boolean, default: false },
@@ -33,4 +34,9 @@ const schema = new mongoose.Schema({
 
 }, { versionKey: false, timestamps: true })
 
+schema.index({
+    location: "2dsphere",
+})
+schema.plugin(mongoosePaginate);
+schema.plugin(mongooseAggregatePaginate);
 export default mongoose.model("rides", schema);

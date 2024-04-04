@@ -107,15 +107,15 @@ export function addNormalRide() {
           en: "Enter user_lat"
       })),
         
-      body("phone").notEmpty().withMessage(JSON.stringify({
-          ar: "قم بادخال المحمول",
-          en: "Enter phone"
-      })),
+      // body("phone").notEmpty().withMessage(JSON.stringify({
+      //     ar: "قم بادخال المحمول",
+      //     en: "Enter phone"
+      // })),
         
-      body("time").notEmpty().withMessage(JSON.stringify({
-          ar: "قم بادخال الوقت",
-          en: "Enter time"
-      })),
+        // body("time").notEmpty().withMessage(JSON.stringify({
+        //     ar: "قم بادخال الوقت",
+        //     en: "Enter time"
+        // })),
         body("price").notEmpty().withMessage(JSON.stringify({
           ar: "قم بادخال السعر",
           en: "Enter price"
@@ -125,10 +125,10 @@ export function addNormalRide() {
           en: "Enter passengers"
       })),
 
-      body("distance").notEmpty().withMessage(JSON.stringify({
-          ar: "قم بادخال المسافه",
-          en: "Enter distance"
-      })),
+      // body("distance").notEmpty().withMessage(JSON.stringify({
+      //     ar: "قم بادخال المسافه",
+      //     en: "Enter distance"
+      // })),
       
       body("from").notEmpty().withMessage(JSON.stringify({
           ar: "قم بادخال نقطه البدايه",

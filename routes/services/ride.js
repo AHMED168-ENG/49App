@@ -23,6 +23,7 @@ import handel_validation_errors from '../../middleware/handelBodyError.js';
 import getLocation, { acceptRideOfferValidation, addNormalRide, addUserRating, changeRideOfferStatus, sendClientOfferValidation, sendRideValidation } from '../../validation/riders.js';
 import { updateUserLocation } from '../../validation/user.js';
 import mongoose from 'mongoose';
+import { calculateDistance } from '../../utils/calculateDestance.js';
 
 
 const router = express.Router()
@@ -594,22 +595,66 @@ router.post('/new-ride-request' , addNormalRide() , handel_validation_errors , v
     try {
 
         const { language } = req.headers
-        const { phone, car_model_year, air_conditioner, category_id, from, to, distance, time, user_lat, user_lng, destination_lat, destination_lng, price, passengers } = req.body
+        const { car_model_year, air_conditioner, category_id, from, to, time, user_lat, user_lng, destination_lat, destination_lng, price, passengers } = req.body
         const info = await app_manager_model.findOne({}).select('ride_request_cash_back')
 
         const subCateogry = await sub_category_model.findOne({ _id: category_id, is_hidden: false, }).select('parent name_ar name_en parent')
         if (!subCateogry || subCateogry.parent != rideCategoryId) return next('Bad Request')
-
-        const user = await user_model.findById(req.user.id).select('country_code')
-        const allRides = await createOtherRequest(req.user.id, user?.country_code, subCateogry.parent, subCateogry.name_ar, subCateogry.name_en, category_id, from, to, distance, time, user_lat, user_lng, destination_lat, destination_lng, price, passengers, phone, language, air_conditioner, car_model_year )
+        const origin = `${parseFloat(user_lat)},${parseFloat(user_lng)}`;
+        const destination = `${parseFloat(destination_lat)},${parseFloat(destination_lng)}`;
+        
+        const url = `https://maps.googleapis.com/maps/api/distancematrix/json?origins=${origin}&destinations=${destination}&key=AIzaSyB0BtWBSQYdjvND0zL17L3dNdPJWZbG0EY`;
+          const response = await axios.get(url);
+          const distance = response.data.rows[0].elements[0].distance.text;
+          const duration = response.data.rows[0].elements[0].duration.text;
+        const user = await user_model.findById(req.user.id).select('country_code phone')
+        const ride = await createOtherRequest(req.user.id, user?.country_code, subCateogry.parent, subCateogry.name_ar, subCateogry.name_en, category_id, from, to, distance, duration, user_lat, user_lng, destination_lat, destination_lng, price, passengers, user.phone, language, air_conditioner, car_model_year )
         await ride_request_logs.create({
             user_id : req.user.id
         })
+
         if(info.ride_request_cash_back) {
             await requestCashBack(req.user.id , language)
         }
 
-        res.json({ 'status': true , allRides});
+        res.json({ 'status': true , ride});
+    } catch (e) {
+        next(e)
+    }
+})
+
+router.get('/rider-request' , getLocation() , handel_validation_errors , verifyToken, async (req, res, next) => {
+
+    try {
+        const { longitude, latitude } = req.query; // Get the longitude and latitude from the request query parameters
+        const info = await app_manager_model.findOne({}).select('ride_area_distance')
+        const page = req.query.page || process.env.page;
+        const limit = req.query.limit || process.env.limit;
+        const search = req.query.search?.trim();
+        const queryObj = {is_completed : false , is_start : false};
+        if(search){
+          queryObj.to = {'$regex' :  search, '$options' : 'i'}
+        }
+        const aggregate = ride_model.aggregate([
+            {
+              $geoNear: {
+                near: {
+                  type: 'Point',
+                  coordinates: [parseFloat(latitude), parseFloat(longitude)]
+                },
+                distanceField: 'location',
+                spherical: true,
+                maxDistance: info.ride_area_distance ?? process.env.maxDistance // 5 km in meters
+              }
+            },
+            // {
+            //     $match : queryObj
+            // },
+          ]);
+          const rides = await ride_model.aggregatePaginate(aggregate , {page , limit , sort : {
+            createdAt : -1,
+          }})
+          res.json(rides);
     } catch (e) {
         next(e)
     }
@@ -1105,8 +1150,8 @@ router.post('/send-ride-offer/:adId' , sendRideValidation() , handel_validation_
         console.log(e)
         next(e)
     }
-})
-
+})  
+    
 router.post('/send-client-offer/:adId' , sendClientOfferValidation() , handel_validation_errors , verifyToken, async (req, res, next) => {
 
     try {
