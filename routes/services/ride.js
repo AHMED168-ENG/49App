@@ -10,6 +10,7 @@ import auth_model from '../../models/auth_model.js'
 import ride_model from '../../models/ride_model.js';
 import rating_model from '../../models/rating_model.js';
 import ride_request_logs from '../../models/ride_request_logs.js';
+import ad_ratings from '../../models/rating_model.js';
 
 import { verifyToken, comeWithMeTripKeys, pickMeTripKeys, tryVerify } from '../../helper.js'
 import { sendNotifications } from '../../controllers/notification_controller.js'
@@ -541,7 +542,7 @@ router.get('/client-request/:id' , verifyToken, async (req, res, next) => {
                 }
             },
             {
-                $unwind : "$user_id"
+                $unwind : {path  : "$user_id" , preserveNullAndEmptyArrays : true},
             },
             {
                 $lookup : {
@@ -552,7 +553,7 @@ router.get('/client-request/:id' , verifyToken, async (req, res, next) => {
                 }
             },
             {
-                $unwind : "$rider_id"
+                $unwind : {path  : "$rider_id" , preserveNullAndEmptyArrays : true},
             },
             {
                 $lookup : {
@@ -570,7 +571,7 @@ router.get('/client-request/:id' , verifyToken, async (req, res, next) => {
                 }
             },
         ])
-        res.json({ 'status': true , data : userRequest});
+        res.json({ 'status': true , data : userRequest[0]});
     } catch (e) {
         next(e)
     }
@@ -581,9 +582,7 @@ router.put('/update-client-request/:id' , verifyToken, async (req, res, next) =>
     try {
         const {id} = req.params
         const body = req.body
-
         const userRequest = await ride_model.findOneAndUpdate({user_id : req.user.id , _id : id} , body , {new : true})
-
         res.json({ 'status': true , data : userRequest});
     } catch (e) {
         next(e)
@@ -1155,6 +1154,7 @@ router.post('/send-ride-offer/:adId' , sendRideValidation() , handel_validation_
 router.post('/send-client-offer/:adId' , sendClientOfferValidation() , handel_validation_errors , verifyToken, async (req, res, next) => {
 
     try {
+
         const { language } = req.headers
         const { price , riderId } = req.body  
         const { adId } = req.params 
@@ -1342,6 +1342,7 @@ router.post('/reject-ride-offer/:offerId' , verifyToken, async (req, res, next) 
 router.get('/get-requests-offers' , verifyToken , async (req, res, next) => {
 
     try {
+
         let {page = process.env.PAGE , limit = process.env.LIMIT} = req.query
         const aggregate = request_offer_model.aggregate([
             {   
@@ -1358,6 +1359,20 @@ router.get('/get-requests-offers' , verifyToken , async (req, res, next) => {
                 }
             },
             {
+                $lookup : {
+                    from : "rides",
+                    localField : "ride_id",
+                    foreignField : "_id",
+                    as : "ride_id"
+                }
+            },
+            {
+                $unwind : {
+                    path : "$ride_id",
+                    preserveNullAndEmptyArrays : true
+                }
+            },
+            {
                 $unwind : {
                     path : "$to",
                     preserveNullAndEmptyArrays : true
@@ -1368,7 +1383,17 @@ router.get('/get-requests-offers' , verifyToken , async (req, res, next) => {
                     from : "users",
                     localField : "from",
                     foreignField : "_id",
-                    as : "from"
+                    as : "from",
+                    pipeline : [
+                        {
+                            $lookup : {
+                                from : "ad_ratings",
+                                localField : "_id",
+                                foreignField : "user_id",
+                                as : "rate",
+                            }
+                        },
+                    ]
                 }
             },
             {
@@ -1378,21 +1403,39 @@ router.get('/get-requests-offers' , verifyToken , async (req, res, next) => {
                 }
             },
             {
-                $lookup : {
-                    from : "rides",
-                    localField : "ride_id",
-                    foreignField : "_id",
-                    as : "rides"
-                }
+                $unwind : "$from.rate"
             },
             {
-                $unwind : {
-                    path : "$rides",
-                    preserveNullAndEmptyArrays : true
+                $group : {
+                    _id : "$_id" , 
+                    total: { $sum: "$from.rate.rate" }, 
+                    count: { $sum: 1 } , 
+                    to : {$first : "$to"},
+                    from : {$first : "$from"},
+                    price_offer : {$first : "$price_offer"},
+                    ride_id : {$first : "$ride_id"},
+                    is_accept : {$first : "$is_accept"},
+                   
                 }
-            }
+            },
+            {$unset : "from.rate"},
         ])
+
+        
         const offers = await request_offer_model.aggregatePaginate(aggregate , {page , limit})
+
+        for(let x = 0 ; x < offers.docs.length ; x++) {
+            const origin = `${parseFloat(offers.docs[x].to.user_lat)},${parseFloat(offers.docs[x].to.user_lng)}`;
+            const destination = `${parseFloat(offers.docs[x].from.user_lat)},${parseFloat(offers.docs[x].from.user_lng)}`;
+            
+            const url = `https://maps.googleapis.com/maps/api/distancematrix/json?origins=${origin}&destinations=${destination}&key=AIzaSyB0BtWBSQYdjvND0zL17L3dNdPJWZbG0EY`;
+            const response = await axios.get(url);
+            const distance = response.data.rows[0].elements[0].distance.text;
+            const duration = response.data.rows[0].elements[0].duration.text;  
+            offers.docs[x].distance = distance
+            offers.docs[x].duration = duration
+        }
+
         res.json({ 'status': true , data : offers })
     } catch (e) {
         console.log(e)

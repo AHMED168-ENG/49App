@@ -14,7 +14,7 @@ export const calculateWithPaymob = async (amount, subCategoryId, userId, isCard)
     if (!subCategory || !appManager || !wallet) return
 
     const paymentGatewayCuts = (isCard == true ? appManager.pay_mob_constant : 0) + ((appManager.pay_mob_portion * amount) / 100)
-    
+
     const govermentFees = (amount * (appManager.vat / 100)) + ((amount * appManager.tax) / 100)
 
     const grossMoney = amount - paymentGatewayCuts - govermentFees
@@ -51,5 +51,23 @@ export const calculateWithPaymob = async (amount, subCategoryId, userId, isCard)
             total_over_head: overHeadFactor,
         }
     }).exec()
+
+}
+
+export const calculateWithPaymobForAllOperations = async (amount , userId, isCard) => {
+    
+    const appManager = await app_manager_model.findOne({})
+
+    const wallet = await wallet_model.findOne({ user_id: userId })
+
+    if (!appManager || !wallet) return
+
+    const paymentGatewayCuts = (isCard == true ? appManager.pay_mob_constant : 0) + ((appManager.pay_mob_portion * amount) / 100)
+
+    const govermentFees = (amount * (appManager.vat / 100)) + ((amount * appManager.tax) / 100)
+
+    const grossMoney = amount - paymentGatewayCuts - govermentFees
+
+    return grossMoney
 
 }

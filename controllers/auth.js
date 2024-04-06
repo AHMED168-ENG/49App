@@ -8,6 +8,7 @@ import { generateOtp } from '../utils/generateOtp.js'
 import app_manager_model from '../models/app_manager_model.js'
 import { SendMails } from '../gmail/mail.js'
 import { errorWithLanguages } from '../utils/errorWithLanguages.js'
+import wallet_model from "../models/wallet_model.js"
 
 const playStoreLink = 'https://play.google.com/store/apps/details?id=com.fourtyninehub.fourtynine'
 const appleStoreLink = 'https://apps.apple.com/us/app/49-app/id1632305652'
@@ -63,10 +64,10 @@ const generateTokenForResetPassword = (user , expirationDate ) => {
 }
 
 /** ------------------------------------------------------  
- * @desc forget user password 
+ * @desc forget user password
  * @route /auth
  * @method post
- * @access private forget user password 
+ * @access private forget user password
  /**  ------------------------------------------------------  */
 export const forgetPassword = async(req , res , next) => {
     try {
@@ -186,7 +187,6 @@ export const refererGift = async (req, res, next) => {
     }
 }
 
-
 export const register = async (req, res, next) => {
     try {
         var hashCode = Math.floor(Math.random() * 9000000000000)
@@ -207,6 +207,12 @@ export const register = async (req, res, next) => {
         );
 
         let auth = await auth_model.create({fcm : body.fcm , user_id : user.id , device_id : body.device_id})
+        const wallet = await wallet_model.findOne({user_id : user.id})
+        if(!wallet) {
+            await wallet_model.create({
+                user_id : user.id,
+            })
+        }
 
         SendMails({
             email : body.email,

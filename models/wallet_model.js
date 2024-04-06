@@ -21,7 +21,7 @@ const schema = new mongoose.Schema({
 
     free_click_storage: { type: Number, default: 0 }, // client have free click if he move it dont give hime gift
 
-    referral_storage: { type: Number, default: 0 }, // 
+    referral_storage: { type: Number, default: 0 },
     referral_cash_back: { type: Number, default: 0 },
 
     total_payment: { type: Number, default: 0 },
@@ -34,9 +34,24 @@ const schema = new mongoose.Schema({
     total_views: { type: Number, default: 0 },
     total_shares: { type: Number, default: 0 },
 
-    today_likes: { type: Number, default: 0 },
-    today_views: { type: Number, default: 0 },
-    today_shares: { type: Number, default: 0 },
+    today_likes: { 
+        type: Number,
+        default: 0
+    },
+
+    today_views: { 
+        type: Number, 
+        default: 0 
+    },
+    
+    today_shares: { 
+        type: Number, 
+        default: 0 
+    },
+    user_wallet : {
+        type : Number,
+        default : 0
+    }
 
 }, { versionKey: false, timestamps: true })
 

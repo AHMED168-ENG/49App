@@ -12,7 +12,7 @@ const schema = new mongoose.Schema({
     tab: { type: Number, required: true },
     type: { type: Number, default: 0 },
     direction: { type: String, },
-
+    
     attachment: { type: String, },
     main_category_id: { type: String, },
     sub_category_id: { type: String, },

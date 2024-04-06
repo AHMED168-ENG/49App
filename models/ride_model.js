@@ -27,7 +27,7 @@ const schema = new mongoose.Schema({
 
     passengers: { type: Number, default: 0 },
 
-    is_user_get_cashback: { type: Boolean, default: false },
+    is_user_get_cashback : { type: Boolean, default: false },
     is_rider_get_cashback: { type: Boolean, default: false },
     phone : {type:String},
     

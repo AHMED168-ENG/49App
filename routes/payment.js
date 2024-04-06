@@ -10,7 +10,7 @@ import auth_model from '../models/auth_model.js'
 import wallet_model from '../models/wallet_model.js'
 import dynamic_ad_model from '../models/dynamic_ad_model.js'
 import rider_model from '../models/rider_model.js'
-import { calculateWithPaymob } from '../controllers/accounts_controller.js'
+import { calculateWithPaymob, calculateWithPaymobForAllOperations } from '../controllers/accounts_controller.js'
 import { appRadioCategoryId, foodCategoryId, healthCategoryId, profileViewCategoryId } from '../controllers/ride_controller.js'
 import restaurant_model from '../models/restaurant_model.js'
 import doctor_model from '../models/doctor_model.js'
@@ -18,11 +18,13 @@ import gift_model from '../models/gift_model.js'
 import { giftCashBack } from '../controllers/cash_back_controller.js'
 import app_radio_model from '../models/app_radio_model.js'
 import axios from 'axios'
+import { chargeMony, sendMonyToUser } from '../validation/charging-wallet.js'
+import handel_validation_errors from '../middleware/handelBodyError.js'
+import app_manager_model from '../models/app_manager_model.js'
 
 const router = express.Router()
 
 router.post('/callback', async (req, res, next) => {
-
     try {
         const { hmac } = req.query
         const { id, success, payment_key_claims } = req.body.obj
@@ -190,9 +192,7 @@ router.post('/callback', async (req, res, next) => {
 })
 
 router.get('/callback', async (req, res, next) => {
-
     try {
-
         const { hmac, id } = req.query
 
         if (!hmac || !id || req.query.success == 'false') {
@@ -211,5 +211,32 @@ router.get('/callback', async (req, res, next) => {
         next(e)
     }
 })
+
+// *********** charging wallet ********************//
+// router.post('/charging-wallet' , chargeMony() , handel_validation_errors() , async (req, res, next) => {
+//     try {
+//         const {amount, isCard} = req.body
+//         const gorseMony = calculateWithPaymobForAllOperations(amount , req.user.id, isCard)
+//         await user_wallet.updateOne({user_id : req.user.id} , {user_wallet : gorseMony})
+//         return gorseMony
+//     } catch (e) {
+//         next(e)
+//     }
+// })
+// *********** charging wallet ********************//
+
+// *********** send mony to user ********************//
+// router.post('/send-mony-to-user' , sendMonyToUser() , handel_validation_errors() , async (req, res, next) => {
+//     try {
+//         let {amount, user_id} = req.body    
+//         const appManager = await app_manager_model.findOne({})
+//         amount -= appManager.step_value
+//         const user = await user_wallet.findOneAndUpdate({user_id : user_id} , {user_wallet : {$inc : amount}} , {new : true})
+//         return user
+//     } catch (e) {
+//         next(e)
+//     }
+// })
+// *********** send mony to user ********************//
 
 export default router

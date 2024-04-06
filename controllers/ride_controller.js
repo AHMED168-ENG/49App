@@ -34,7 +34,6 @@ export async function createOtherRequest(userId, country_code, mainCategoryId, c
         var bodyEn = `${cateogryNameEn} ride from ${from} to ${to} , distance ${distance}, duration ${time}, passengers ${passengers}, price offer ${price}`
         var bodyAr = `رحلة ${cateogryNameAr} من ${from} الى ${to}, مسافة ${distance}, مدة ${time}, ركاب ${passengers}, عرض سعر ${price}`
 
-        console.log( )
         const object = new ride_model(
             {
                 category_id,
