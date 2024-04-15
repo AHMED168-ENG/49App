@@ -328,11 +328,8 @@ router.get('/rider-details', verifyToken, async (req, res, next) => {
 router.put('/update-rider-location' , getLocation() , handel_validation_errors, verifyToken, async (req, res, next) => {
 
     try {
-
         const { longitude , latitude } = req.body
-
         const result = await rider_model.findOneAndUpdate({ user_id: req.user.id, is_approved: true, is_active: true }, { "location.coordinates" : [parseFloat(longitude), parseFloat(latitude)] }).select('_id')
-
         if (!result) next({ 'status': 404, 'message': 'Not Found' })
 
         res.json({
@@ -1452,7 +1449,6 @@ router.post('/send-client-offer/:adId' , sendClientOfferValidation() , handel_va
         next(e)
     }
 })
-
 
 
 router.post('/reject-ride-offer/:offerId' , verifyToken, async (req, res, next) => {

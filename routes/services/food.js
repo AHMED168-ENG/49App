@@ -19,19 +19,17 @@ import { sendNotifications } from '../../controllers/notification_controller.js'
 
 const router = express.Router()
 
-router.post('/register', verifyToken, async (req, res, next) => {
+router.post('/register', verifyToken , async (req, res, next) => {
 
     try {
 
         const { language } = req.headers
-
         const { category_id, name, location, work_from, work_to, available_day, pictures } = req.body
-
         const user = await user_model.findById(req.user.id).select('_id country_code')
 
         if (!user) return next({
             'status': 400,
-            'message': language == 'ar' ? 'المستخدم غير موجود' : 'The User is Not Exist',
+            'message' : language == 'ar' ? 'المستخدم غير موجود' : 'The User is Not Exist',
         })
 
         const result = await restaurant_model.findOne({ user_id: req.user.id })
