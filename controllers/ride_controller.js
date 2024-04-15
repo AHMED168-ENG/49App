@@ -26,7 +26,7 @@ export const appRadioCategoryId = '62fe5a9b67834d48be806da2';
 export const profileViewCategoryId = '62ef7cf658c90d4a7ed48120';
 
 
-export async function createOtherRequest(userId, country_code, mainCategoryId, cateogryNameAr, cateogryNameEn, category_id, from, to, distance, time, lat, lng, destination_lat, destination_lng, price, passengers, phone, language, air_conditioner, car_model_year) {
+export async function createOtherRequest(userId, country_code, mainCategoryId, cateogryNameAr, cateogryNameEn, category_id, from, to, distance, time, lat, lng, destination_lat, destination_lng, price, passengers, phone, language, air_conditioner, car_model_year , auto_accept) {
     try {
 
         var titleAr = 'طلب جديد'
@@ -50,6 +50,7 @@ export async function createOtherRequest(userId, country_code, mainCategoryId, c
                 user_lng: lng,
                 price: price,
                 phone,
+                auto_accept
             }
         )
 

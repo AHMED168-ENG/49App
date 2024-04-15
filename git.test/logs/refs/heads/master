@@ -1,0 +1,17 @@
+0000000000000000000000000000000000000000 8801d94f47ad1a58910f7efbe51c7bbbbf2e1f07 ahmed zaky <aalsaeed@nadeer.com.sa> 1712394404 +0200	commit (initial): first commit2
+8801d94f47ad1a58910f7efbe51c7bbbbf2e1f07 ce2fe31802ff3122be1204d60eef0617d7e45c9d ahmed zaky <aalsaeed@nadeer.com.sa> 1712394490 +0200	commit: updates
+ce2fe31802ff3122be1204d60eef0617d7e45c9d a439aaf07e0bc27c234f954e4dd8db212e28e994 ahmed zaky <aalsaeed@nadeer.com.sa> 1712394629 +0200	commit: 2 update
+a439aaf07e0bc27c234f954e4dd8db212e28e994 99c529704a3d98d6537265a04decc8eacd5eb34d ahmed zaky <aalsaeed@nadeer.com.sa> 1712394691 +0200	commit: updates
+99c529704a3d98d6537265a04decc8eacd5eb34d 4d4350d462d96956350f5f3ef982b0220eb62861 ahmed zaky <aalsaeed@nadeer.com.sa> 1712513016 +0200	commit: get-expected-price
+4d4350d462d96956350f5f3ef982b0220eb62861 846f7d4b947e12be73d42704688497b523ce1195 ahmed zaky <aalsaeed@nadeer.com.sa> 1712553216 +0200	commit: add price_per_km field in database
+846f7d4b947e12be73d42704688497b523ce1195 7f88c6f7b5eb4e08a67cd4949cbdec32aa54b56a ahmed zaky <aalsaeed@nadeer.com.sa> 1712569324 +0200	commit: updates
+7f88c6f7b5eb4e08a67cd4949cbdec32aa54b56a ab6bd6cd1fa2f99539625ad981707bc53043dae9 ahmed zaky <aalsaeed@nadeer.com.sa> 1713089549 +0200	commit: updates
+ab6bd6cd1fa2f99539625ad981707bc53043dae9 0e4ffb0e5ac121de5f1c9875a44878c927227fc1 ahmed zaky <aalsaeed@nadeer.com.sa> 1713101716 +0200	commit: updates
+0e4ffb0e5ac121de5f1c9875a44878c927227fc1 5765467ad3a851dadbfbe1611b3a3960f495a2d2 ahmed zaky <aalsaeed@nadeer.com.sa> 1713102758 +0200	commit: updates on get-expected-price fn
+5765467ad3a851dadbfbe1611b3a3960f495a2d2 da495be782984db769672770f44b693cac52ed32 ahmed zaky <aalsaeed@nadeer.com.sa> 1713107054 +0200	commit: updates
+da495be782984db769672770f44b693cac52ed32 b8bb1206f6043bfcf6a21b83c35200d45f74e708 ahmed zaky <aalsaeed@nadeer.com.sa> 1713107103 +0200	commit: updates
+b8bb1206f6043bfcf6a21b83c35200d45f74e708 8e0ad132446c7b7809cf4360d07f85685d0cc4e0 ahmed zaky <aalsaeed@nadeer.com.sa> 1713108107 +0200	commit: add accept-ride-request to ride api
+8e0ad132446c7b7809cf4360d07f85685d0cc4e0 4b56b3dbc8d1b4c50248c33e86224274d6a29bb7 ahmed zaky <aalsaeed@nadeer.com.sa> 1713109865 +0200	commit: updates
+4b56b3dbc8d1b4c50248c33e86224274d6a29bb7 1562878ed720a065059b8427d6f8020fe20fef2f ahmed zaky <aalsaeed@nadeer.com.sa> 1713112715 +0200	commit: add filteration on get-requests-offers
+1562878ed720a065059b8427d6f8020fe20fef2f e499c3bcb5f9d1c9060baadf60a4da624360d290 ahmed zaky <aalsaeed@nadeer.com.sa> 1713124333 +0200	commit: add api tracking-route
+e499c3bcb5f9d1c9060baadf60a4da624360d290 8df891adc29b1aa69d7779f7d06994b62b4b5c01 ahmed zaky <aalsaeed@nadeer.com.sa> 1713195088 +0200	commit: updates

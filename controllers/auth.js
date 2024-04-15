@@ -26,7 +26,7 @@ export const login = async (req, res, next) => {
                 en : "your account not active check your email or call organization admin",
                 ar : "حسابك غير نشط، تحقق من بريدك الإلكتروني أو اتصل بمسؤول المؤسسة"
             }))
-            let token = generateToken(user , keepLogin , "7d")
+            let token = generateToken(user , keepLogin , "9999999d")
             return res.status(httpStatus.OK).json({
                 status : true,
                 data : {

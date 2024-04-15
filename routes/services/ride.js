@@ -21,7 +21,7 @@ import pick_me_ride_model from '../../models/pick_me_ride_model.js';
 import axios from 'axios';
 import wallet_model from '../../models/wallet_model.js';
 import handel_validation_errors from '../../middleware/handelBodyError.js';
-import getLocation, { acceptRideOfferValidation, addNormalRide, addUserRating, changeRideOfferStatus, sendClientOfferValidation, sendRideValidation } from '../../validation/riders.js';
+import getLocation, { acceptRideOfferValidation, addNormalRide, addUserRating, changeRideOfferStatus, getExpectedPrice, sendClientOfferValidation, sendRideValidation } from '../../validation/riders.js';
 import { updateUserLocation } from '../../validation/user.js';
 import mongoose from 'mongoose';
 import { calculateDistance } from '../../utils/calculateDestance.js';
@@ -155,12 +155,13 @@ router.post('/get-high-low-price', async (req, res, next) => {
 
 
         const extraPrice = category == scooterCategoryId ? 5 : 10
+        const info = await app_manager_model.findOne({}).select('price_per_km')
 
         res.json({
             'status': true,
             'data': {
-                'high': parseFloat((high ? high.pricing_per_km : (category == scooterCategoryId ? 2.5 : 4)) * (parseFloat(distance) + 1.5)) + extraPrice,
-                'low': parseFloat((low ? low.pricing_per_km : (category == scooterCategoryId ? 2.5 : 4)) * (parseFloat(distance) + 1.5)) + extraPrice,
+                'high': parseFloat((high ? high.pricing_per_km : (category == scooterCategoryId ? 2.5 : info.price_per_km)) * (parseFloat(distance) + 1.5)) + extraPrice,
+                'low': parseFloat((low ? low.pricing_per_km : (category == scooterCategoryId ? 2.5 : info.price_per_km)) * (parseFloat(distance) + 1.5)) + extraPrice,
             }
         })
     } catch (e) {
@@ -293,7 +294,25 @@ router.post('/update-phone', verifyToken, async (req, res, next) => {
 router.get('/rider-details', verifyToken, async (req, res, next) => {
 
     try {
-        const result = await rider_model.findOne({ user_id: req.user.id, is_approved: true, is_active: true })
+        const query = {is_approved: true, is_active: true }
+        if(req.query.userId) {
+            query.user_id = new mongoose.Types.ObjectId(req.query.userId)
+        } else {
+            query.user_id = new mongoose.Types.ObjectId(req.user.id) 
+        }
+        const result = await rider_model.aggregate([
+            {
+                $match : query
+            },
+            {
+                $lookup : {
+                    from : "ad_ratings",
+                    localField : "user_id",
+                    as : "rating",
+                    foreignField : "user_id"
+                }
+            },
+        ])
 
         res.json({
             'status': true,
@@ -514,9 +533,50 @@ router.get('/get-rider-rides', verifyToken, async (req, res, next) => {
 router.get('/client-request' , verifyToken, async (req, res, next) => {
 
     try {
-        const userRequest = await ride_model.find({
-            user_id : req.user.id
-        })
+        const userRequest = await ride_model.aggregate([
+            {
+                $match : {
+                    user_id : new mongoose.Types.ObjectId(req.user.id),
+                }
+            },
+            {
+                $lookup : {
+                    from : "users",
+                    localField : "user_id",
+                    as : "user_id",
+                    foreignField : "_id"
+                }
+            },
+            {
+                $unwind : {path  : "$user_id" , preserveNullAndEmptyArrays : true},
+            },
+            {
+                $lookup : {
+                    from : "riders",
+                    localField : "rider_id",
+                    as : "rider_id",
+                    foreignField : "_id"
+                }
+            },
+            {
+                $unwind : {path  : "$rider_id" , preserveNullAndEmptyArrays : true},
+            },
+            {
+                $lookup : {
+                    from : "ride_offers",
+                    localField : "_id",
+                    as : "ride_offer",
+                    foreignField : "ride_id",
+                    pipeline : [
+                        {
+                            $match : {
+                                is_accept : true
+                            }
+                        }
+                    ]
+                }
+            },
+        ])
         res.json({ 'status': true , data : userRequest});
     } catch (e) {
         next(e)
@@ -529,7 +589,7 @@ router.get('/client-request/:id' , verifyToken, async (req, res, next) => {
         const userRequest = await ride_model.aggregate([
             {
                 $match : {
-                    // user_id : new mongoose.Types.ObjectId(req.user.id),
+                    user_id : new mongoose.Types.ObjectId(req.user.id),
                     _id : new mongoose.Types.ObjectId(req.params.id)
                 }
             },
@@ -594,7 +654,7 @@ router.post('/new-ride-request' , addNormalRide() , handel_validation_errors , v
     try {
 
         const { language } = req.headers
-        const { car_model_year, air_conditioner, category_id, from, to, time, user_lat, user_lng, destination_lat, destination_lng, price, passengers } = req.body
+        const { car_model_year, air_conditioner, category_id, from, to, time, user_lat, user_lng, destination_lat, destination_lng, price, passengers , auto_accept = false } = req.body
         const info = await app_manager_model.findOne({}).select('ride_request_cash_back')
 
         const subCateogry = await sub_category_model.findOne({ _id: category_id, is_hidden: false, }).select('parent name_ar name_en parent')
@@ -607,7 +667,7 @@ router.post('/new-ride-request' , addNormalRide() , handel_validation_errors , v
           const distance = response.data.rows[0].elements[0].distance.text;
           const duration = response.data.rows[0].elements[0].duration.text;
         const user = await user_model.findById(req.user.id).select('country_code phone')
-        const ride = await createOtherRequest(req.user.id, user?.country_code, subCateogry.parent, subCateogry.name_ar, subCateogry.name_en, category_id, from, to, distance, duration, user_lat, user_lng, destination_lat, destination_lng, price, passengers, user.phone, language, air_conditioner, car_model_year )
+        const ride = await createOtherRequest(req.user.id, user?.country_code, subCateogry.parent, subCateogry.name_ar, subCateogry.name_en, category_id, from, to, distance, duration, user_lat, user_lng, destination_lat, destination_lng, price, passengers, user.phone, language, air_conditioner, car_model_year , auto_accept)
         await ride_request_logs.create({
             user_id : req.user.id
         })
@@ -617,6 +677,183 @@ router.post('/new-ride-request' , addNormalRide() , handel_validation_errors , v
         }
 
         res.json({ 'status': true , ride});
+    } catch (e) {
+        next(e)
+    }
+})
+
+router.post('/accept-ride-request/:requestId' , verifyToken, async (req, res, next) => {
+    try {
+
+        const { language } = req.headers
+        const { requestId } = req.params 
+        const userId = req.user.id
+        const rideData = await ride_model.findOne({_id : requestId })
+        if (!rideData.auto_accept) return next({ 'status': 404, 'message': language == 'ar' ? "لا يمكنك الموافقه علي هذه الطلب يجب ارسال طلب اولا الي المستخدم " : 'You cannot approve this request. A request must first be sent to the user' })
+        if (rideData.rider_id) return next({ 'status': 400, 'message': language == 'ar' ? 'الاعلان بالفعل مزود بمقدم خدمة' : 'The Ad is Already has service provider' })
+
+        ride_model.updateOne({ _id: requestId }, { rider_id: userId, is_start: true, is_completed: true, price: rideData.price }).exec()
+
+        const rider = await rider_model.findOneAndUpdate({ user_id: userId }, { $inc: { profit: rideData.price, trips: 1 } }).exec()
+        
+
+        const titleClientAr = 'تواصل مع الكابتن'
+        const titleClientEn = 'Contact the captain.'
+        const bodyClientAr = `الرجاء التواصل مع الكابتن بخصوص رحلتك`
+        const bodyClientEn = 'Please contact the captain regarding your ride'
+
+        const notificationClientObject = new notification_model({
+            receiver_id: rideData.user_id,
+            user_id: userId,
+            sub_category_id: rideData.category_id,
+            tab: 2,
+            text_ar: bodyClientAr,
+            text_en: bodyClientEn,
+            direction: rideData.id,
+            type: 10003,
+            ad_owner: rideData.user_id,
+            is_accepted: true,
+            phone: rider.phone,
+        })
+
+        notificationClientObject.save()
+        auth_model.find({ 'user_id': rideData.user_id }).distinct('fcm').then(
+            fcm => sendNotifications(fcm, language == 'ar' ? titleClientAr : titleClientEn, language == 'ar' ? bodyClientAr : bodyClientEn, 10003))
+
+        res.json({ 'status': true })
+    } catch (e) {
+        console.log(e)
+        next(e)
+    }
+})
+
+router.post('/accept-ride-offer/:offerId' , verifyToken, async (req, res, next) => {
+    try {
+
+        const { language } = req.headers
+        const { offerId } = req.params 
+
+        const offerData = await request_offer_model.findOne({_id : offerId , to : req.user.id}).populate("ride_id")
+        if (!offerData) return next({ 'status': 404, 'message': language == 'ar' ? 'لم يتم العثور على الاعلان' : 'The Ad is not Exist' })
+        // const haveOffer =  await request_offer_model.findOne({to : req.user.id , is_accept : true , ride_id : offerData.ride_id})
+        // if(haveOffer) return next({ 'status': 404, 'message': language == 'ar' ? "انت بالفعل وافقت علي عرض طلب" : "You have already accepted my proposal." })
+        if (offerData.ride_id.is_completed == true) return next({ 'status': 400, 'message': language == 'ar' ? 'الاعلان بالفعل مزود بمقدم خدمة' : 'The Ad is Already has service provider' })
+        const user = await user_model.findById(offerData.from).select('_id language')
+
+        if (!user) return next({ 'status': 404, 'message': language == 'ar' ? 'لم يتم العثور على المستخدم' : 'The User is not Exist' })
+
+        ride_model.updateOne({ _id: offerData.ride_id.id }, { rider_id: offerData.from, is_start: true, is_completed: true, price: offerData.price_offer }).exec()
+
+        const rider = await rider_model.findOneAndUpdate({ user_id: offerData.from }, { $inc: { profit: offerData.price_offer, trips: 1 } }).exec()
+        
+        const titleAr = 'تم قبول عرض السعر'
+        const titleEn = 'The Price Offer Accepted'
+        const bodyEn = `Price Offer ${offerData.price_offer} for Ride ${offerData.ride_id.to} is Accepted, you can contact the customer now `
+        const bodyAr = `تم قبول عرض السعر ${offerData.price_offer} مقابل لرحلة ${offerData.ride_id.to} ، يمكنك الاتصال بالعميل الآن`
+
+        await notification_model.deleteMany({ direction: offerData.ride_id.id, is_accepted: false }).exec()
+        await request_offer_model.updateOne({_id : offerId} , {is_accept : true})
+        await request_offer_model.deleteMany({
+            is_accept : false,
+            ride_id : offerData.ride_id.id
+        })
+        const notificationObject = new notification_model({
+            receiver_id: offerData.from,
+            user_id: req.user.id,
+            sub_category_id: offerData.ride_id.category_id,
+            tab: 2,
+            text_ar: bodyAr,
+            text_en: bodyEn,
+            direction: offerData.ride_id.id,
+            type: 10003,
+            ad_owner: req.user.id,
+            is_accepted: true,
+            main_category_id: offerData.ride_id.category_id,
+            phone: offerData.ride_id.phone,
+        })
+
+        notificationObject.save()
+
+        auth_model.find({ 'user_id': user.id }).distinct('fcm').then(
+            fcm => sendNotifications(fcm, user.language == 'ar' ? titleAr : titleEn, user.language == 'ar' ? bodyAr : bodyEn, 10003))
+
+
+        const titleClientAr = 'تواصل مع الكابتن'
+        const titleClientEn = 'Contact the captain.'
+        const bodyClientAr = `الرجاء التواصل مع الكابتن بخصوص رحلتك`
+        const bodyClientEn = 'Please contact the captain regarding your ride'
+
+        const notificationClientObject = new notification_model({
+            receiver_id: req.user.id,
+            user_id: offerData.from,
+            sub_category_id: offerData.ride_id.category_id,
+            tab: 2,
+            text_ar: bodyClientAr,
+            text_en: bodyClientEn,
+            direction: offerData.ride_id.id,
+            type: 10003,
+            ad_owner: req.user.id,
+            is_accepted: true,
+            main_category_id: offerData.ride_id.category_id,
+            phone: rider.phone,
+        })
+
+        notificationClientObject.save()
+        auth_model.find({ 'user_id': req.user.id }).distinct('fcm').then(
+            fcm => sendNotifications(fcm, language == 'ar' ? titleClientAr : titleClientEn, language == 'ar' ? bodyClientAr : bodyClientEn, 10003))
+
+        res.json({ 'status': true })
+    } catch (e) {
+        console.log(e)
+        next(e)
+    }
+})
+
+router.get('/get-expected-price' , getExpectedPrice() , handel_validation_errors , async (req, res, next) => {
+    try {
+        const { user_longitude , user_latitude , location_longitude , location_latitude} = req.query
+        const info = await app_manager_model.findOne({}).select('price_per_km')
+        const origin  = `${parseFloat(user_latitude)},${parseFloat(user_longitude)}`;
+        const destination = `${parseFloat(location_latitude)},${parseFloat(location_longitude)}`;
+        
+        const url = `https://maps.googleapis.com/maps/api/distancematrix/json?origins=${origin}&destinations=${destination}&key=AIzaSyB0BtWBSQYdjvND0zL17L3dNdPJWZbG0EY`;
+          const response = await axios.get(url);
+          const distance = response.data.rows[0].elements[0].distance.text;
+          const duration = response.data.rows[0].elements[0].duration.text;
+          let price = 0
+        if(distance.indexOf("km") != -1) {
+
+            price = parseFloat(distance.replaceAll("," , "")) * info.price_per_km
+        } else {
+            price = (parseFloat(distance.replaceAll("," , "")) / 1000) * info.price_per_km
+        } 
+        res.json({ 'status': true , price  , distance : distance , duration});
+    } catch (e) {
+        next(e)
+    }
+})
+
+router.get('/tracking-route/:requestId' , async (req, res, next) => {
+    try {
+        const { requestId } = req.params
+        const { language } = req.headers
+        const ride = await ride_model.findOne({_id : requestId}).populate("rider_id")
+        if(!ride) return next({ 'status': 404, 'message': language == 'ar' ? "هذه الطلب غير موجود " : 'This request does not exist' })
+        if(!ride.rider_id) return next({ 'status': 404, 'message': language == 'ar' ? "هذه الطلب غير مزود بخادم" : 'This request is not server-served' })
+        const origin  = `${parseFloat(ride.rider_id.location.coordinates[1])},${parseFloat(ride.rider_id.location.coordinates[0])}`;
+        const destination  = `${parseFloat(ride.location.coordinates[1])},${parseFloat(ride.location.coordinates[0])}`;
+        
+        const url = `https://maps.googleapis.com/maps/api/distancematrix/json?origins=${origin}&destinations=${destination}&key=AIzaSyB0BtWBSQYdjvND0zL17L3dNdPJWZbG0EY`;
+          const response = await axios.get(url);
+          const distance = response.data.rows[0].elements[0].distance.text;
+          const duration = response.data.rows[0].elements[0].duration.text;
+          let distanceMt = 0
+        if(distance.indexOf("km") != -1) {
+            distanceMt += (parseFloat(distance) * 1000)
+        } else {
+            distanceMt += distance
+        } 
+        res.json({ 'status': true , distance : distanceMt , duration , ride_location : ride.rider_id.location});
     } catch (e) {
         next(e)
     }
@@ -1216,87 +1453,7 @@ router.post('/send-client-offer/:adId' , sendClientOfferValidation() , handel_va
     }
 })
 
-router.post('/accept-ride-offer/:offerId' , verifyToken, async (req, res, next) => {
-    try {
 
-        const { language } = req.headers
-        const { offerId } = req.params 
-
-        const offerData = await request_offer_model.findOne({_id : offerId , to : req.user.id}).populate("ride_id")
-        if (!offerData) return next({ 'status': 404, 'message': language == 'ar' ? 'لم يتم العثور على الاعلان' : 'The Ad is not Exist' })
-        // const haveOffer =  await request_offer_model.findOne({to : req.user.id , is_accept : true , ride_id : offerData.ride_id})
-        // if(haveOffer) return next({ 'status': 404, 'message': language == 'ar' ? "انت بالفعل وافقت علي عرض طلب" : "You have already accepted my proposal." })
-        if (offerData.ride_id.is_completed == true) return next({ 'status': 400, 'message': language == 'ar' ? 'الاعلان بالفعل مزود بمقدم خدمة' : 'The Ad is Already has service provider' })
-        const user = await user_model.findById(offerData.from).select('_id language')
-
-        if (!user) return next({ 'status': 404, 'message': language == 'ar' ? 'لم يتم العثور على المستخدم' : 'The User is not Exist' })
-
-        ride_model.updateOne({ _id: offerData.ride_id.id }, { rider_id: offerData.from, is_start: true, is_completed: true, price: offerData.price_offer }).exec()
-
-        const rider = await rider_model.findOneAndUpdate({ user_id: offerData.from }, { $inc: { profit: offerData.price_offer, trips: 1 } }).exec()
-        
-        const titleAr = 'تم قبول عرض السعر'
-        const titleEn = 'The Price Offer Accepted'
-        const bodyEn = `Price Offer ${offerData.price_offer} for Ride ${offerData.ride_id.to} is Accepted, you can contact the customer now `
-        const bodyAr = `تم قبول عرض السعر ${offerData.price_offer} مقابل لرحلة ${offerData.ride_id.to} ، يمكنك الاتصال بالعميل الآن`
-
-        await notification_model.deleteMany({ direction: offerData.ride_id.id, is_accepted: false }).exec()
-        await request_offer_model.updateOne({_id : offerId} , {is_accept : true})
-        await request_offer_model.deleteMany({
-            is_accept : false,
-            ride_id : offerData.ride_id.id
-        })
-        const notificationObject = new notification_model({
-            receiver_id: offerData.from,
-            user_id: req.user.id,
-            sub_category_id: offerData.ride_id.category_id,
-            tab: 2,
-            text_ar: bodyAr,
-            text_en: bodyEn,
-            direction: offerData.ride_id.id,
-            type: 10003,
-            ad_owner: req.user.id,
-            is_accepted: true,
-            main_category_id: rideCategoryId,
-            phone: offerData.ride_id.phone,
-        })
-
-        notificationObject.save()
-
-        auth_model.find({ 'user_id': user.id }).distinct('fcm').then(
-            fcm => sendNotifications(fcm, user.language == 'ar' ? titleAr : titleEn, user.language == 'ar' ? bodyAr : bodyEn, 10003))
-
-
-        const titleClientAr = 'تواصل مع الكابتن'
-        const titleClientEn = 'Contact the captain.'
-        const bodyClientAr = `الرجاء التواصل مع الكابتن بخصوص رحلتك`
-        const bodyClientEn = 'Please contact the captain regarding your ride'
-
-        const notificationClientObject = new notification_model({
-            receiver_id: req.user.id,
-            user_id: offerData.from,
-            sub_category_id: offerData.ride_id.category_id,
-            tab: 2,
-            text_ar: bodyClientAr,
-            text_en: bodyClientEn,
-            direction: offerData.ride_id.id,
-            type: 10003,
-            ad_owner: req.user.id,
-            is_accepted: true,
-            main_category_id: rideCategoryId,
-            phone: rider.phone,
-        })
-
-        notificationClientObject.save()
-        auth_model.find({ 'user_id': req.user.id }).distinct('fcm').then(
-            fcm => sendNotifications(fcm, language == 'ar' ? titleClientAr : titleClientEn, language == 'ar' ? bodyClientAr : bodyClientEn, 10003))
-
-        res.json({ 'status': true })
-    } catch (e) {
-        console.log(e)
-        next(e)
-    }
-})
 
 router.post('/reject-ride-offer/:offerId' , verifyToken, async (req, res, next) => {
 
@@ -1343,12 +1500,14 @@ router.get('/get-requests-offers' , verifyToken , async (req, res, next) => {
 
     try {
 
-        let {page = process.env.PAGE , limit = process.env.LIMIT} = req.query
+        let {page = process.env.PAGE , limit = process.env.LIMIT , ride_id} = req.query
+        const query = {to : new mongoose.Types.ObjectId(req.user.id)}
+        if(ride_id) {
+            query.ride_id = new mongoose.Types.ObjectId(ride_id)
+        }
         const aggregate = request_offer_model.aggregate([
             {   
-                $match : {
-                    to : new mongoose.Types.ObjectId(req.user.id)
-                }
+                $match : query
             },
             {
                 $lookup : {
@@ -1420,7 +1579,6 @@ router.get('/get-requests-offers' , verifyToken , async (req, res, next) => {
             },
             {$unset : "from.rate"},
         ])
-
         
         const offers = await request_offer_model.aggregatePaginate(aggregate , {page , limit})
 

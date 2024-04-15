@@ -320,9 +320,8 @@ router.get('/restaurants/:categoryId', verifyToken, async (req, res, next) => {
 router.get('/food-items/:restaurantId', verifyToken, async (req, res, next) => {
 
     try {
-
+        
         const result = await food_model.find({ restaurant_id: req.params.restaurantId, is_approved: true })
-
         res.json({
             'status': true,
             'data': result,

@@ -1,4 +1,4 @@
-import { body, check, query } from "express-validator";
+import { body, check, param, query } from "express-validator";
 
 
 
@@ -138,6 +138,27 @@ export function addNormalRide() {
       body("to").notEmpty().withMessage(JSON.stringify({
           ar: "قم بادخال نقطه البدايه",
           en: "Enter to"
+      })),
+    ];
+  }
+
+export function getExpectedPrice() {
+    return [
+      query("user_longitude").notEmpty().withMessage(JSON.stringify({
+        ar: "قم بادخال خط الطول",
+        en: "Enter longitude"
+      })),
+        query("user_latitude").notEmpty().withMessage(JSON.stringify({
+          ar: "قم بادخال خط الطول",
+          en: "Enter latitude"
+      })),
+      query("location_longitude").notEmpty().withMessage(JSON.stringify({
+        ar: "قم بادخال خط الطول",
+        en: "Enter longitude"
+      })),
+        query("location_latitude").notEmpty().withMessage(JSON.stringify({
+          ar: "قم بادخال خط الطول",
+          en: "Enter latitude"
       })),
     ];
   }

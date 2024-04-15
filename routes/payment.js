@@ -1,7 +1,7 @@
 import express from 'express'
 import { getPaymobToken, getHMACByOrderId } from '../controllers/paymob_controller.js'
 import { sendNotifications } from '../controllers/notification_controller.js'
-import { serverURL } from '../helper.js'
+import { serverURL, verifyToken } from '../helper.js'
 import subscription_model from '../models/subscription_model.js'
 import notification_model from '../models/notification_model.js'
 import sub_category_model from '../models/sub_category_model.js'
@@ -59,7 +59,7 @@ router.post('/callback', async (req, res, next) => {
                         text_ar: bodyAr,
                         text_en: bodyEn,
                         receiver_id: user.id,
-                        tab: 1,
+                        tab: 1, 
                         user_id: sender.id,
                         type: 9,
                         direction: sender.id,
@@ -70,10 +70,10 @@ router.post('/callback', async (req, res, next) => {
                     auth_model.find({ user_id: user.id }).distinct('fcm').then(fcm => {
                         if (fcm.length > 0) {
                             sendNotifications(
-                                fcm,
+                                fcm, 
                                 user.language == 'ar' ? titleAr : titleEn,
                                 user.language == 'ar' ? bodyAr : bodyEn,
-                                9,
+                                9,      
                                 sender.id,
                             )
                         }
@@ -213,30 +213,77 @@ router.get('/callback', async (req, res, next) => {
 })
 
 // *********** charging wallet ********************//
-// router.post('/charging-wallet' , chargeMony() , handel_validation_errors() , async (req, res, next) => {
-//     try {
-//         const {amount, isCard} = req.body
-//         const gorseMony = calculateWithPaymobForAllOperations(amount , req.user.id, isCard)
-//         await user_wallet.updateOne({user_id : req.user.id} , {user_wallet : gorseMony})
-//         return gorseMony
-//     } catch (e) {
-//         next(e)
-//     }
-// })
+router.post('/charging-wallet' , chargeMony() , handel_validation_errors , verifyToken , async (req, res, next) => {
+    try {
+        const {amount} = req.body
+        const gorseMony = await calculateWithPaymobForAllOperations(amount , req.user.id, true)
+        var bodyEn = `your card charging with ${amount}`
+        var bodyAr = `تم شحن الكرت ب ${amount}`
+        var titleAr = `charge mony wallet`
+        var titleEn = `شحن الاموال`
+
+        const notificationObject = new notification_model({
+            receiver_id: req.user.id,
+            user_id: req.user.id,
+            tab: 4,
+            text_ar: bodyAr,
+            text_en: bodyEn,
+        })
+        notificationObject.save()
+        Promise.all([
+            user_model.findById(req.user.id).select('language'),
+            auth_model.find({ 'user_id': req.user.id }).distinct('fcm'),
+        ]
+        ).then(r => {
+            const user = r[0]
+            const fcm = r[1]
+            sendNotifications(fcm, user.language == 'ar' ? titleAr : titleEn, user.language == 'ar' ? bodyAr : bodyEn, 10001)
+        })
+        let wallet = await wallet_model.findOne({user_id : req.user.id})
+        if(!wallet) {
+            await wallet_model.create({
+                user_id : req.user.id,
+            })
+        }
+
+        wallet = await wallet_model.findOneAndUpdate({user_id : req.user.id} , {user_wallet : gorseMony} , {new : true})
+        res.json({ 'status': true , gorseMony , wallet })
+
+    } catch (e) {
+        next(e)
+    }
+})
 // *********** charging wallet ********************//
 
 // *********** send mony to user ********************//
-// router.post('/send-mony-to-user' , sendMonyToUser() , handel_validation_errors() , async (req, res, next) => {
-//     try {
-//         let {amount, user_id} = req.body    
-//         const appManager = await app_manager_model.findOne({})
-//         amount -= appManager.step_value
-//         const user = await user_wallet.findOneAndUpdate({user_id : user_id} , {user_wallet : {$inc : amount}} , {new : true})
-//         return user
-//     } catch (e) {
-//         next(e)
-//     }
-// })
+router.post('/send-mony-to-user/:user_id' , sendMonyToUser() , handel_validation_errors , verifyToken , async (req, res, next) => {
+    try {
+        let {amount} = req.body
+        let {user_id} = req.params
+        const userWallet = await wallet_model.findOne({user_id : req.user.id}) 
+        if(userWallet.user_wallet < amount) return next('you not have enough mony')
+        const appManager = await app_manager_model.findOne({})
+        const userWalletBefore = await wallet_model.findOneAndUpdate({user_id : req.user.id} , {$inc : {user_wallet : -parseFloat((amount + appManager.step_value))}} , {new : true})
+        const userWalletAfter = await wallet_model.findOneAndUpdate({user_id : user_id} , {$inc : {user_wallet : amount}} , {new : true})
+        res.json({ 'status': true , userWallet : userWalletBefore })
+    } catch (e) {
+        next(e)
+    }
+})
 // *********** send mony to user ********************//
+
+// *********** get mony balance ********************//
+router.post('/get-user-balance' , sendMonyToUser() , handel_validation_errors , verifyToken , async (req, res, next) => {
+    try {
+        const appManager = await app_manager_model.findOne({})
+        const userWallet = await wallet_model.findOne({user_id : req.user.id})
+        if(userWallet.balance < (1000 + appManager.step_value)) return next('you cant not get balance now try again when you arrived to 1002')
+        const userWalletAfter = await wallet_model.findOneAndUpdate({user_id : req.user.id} , {user_wallet : {$inc : 1000} , balance : 0} , {new : true})
+        return userWalletAfter
+    } catch (e) {
+        next(e)
+    }
+})
+// *********** get mony balance ********************//
 
 export default router

@@ -8,8 +8,7 @@ const schema = new mongoose.Schema({
     category: { type: Number, required: true },
     voice: { type: String },
     video: { type: String },
-    picture: { type: String, required: true },
-
+    picture: { type: String , required: true },
     days: { type: Number, required: true },
     is_active: { type: Boolean, required: true },
 

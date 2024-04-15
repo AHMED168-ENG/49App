@@ -21,15 +21,14 @@ router.post('/register', verifyToken, async (req, res, next) => {
     try {
 
         const { language } = req.headers
-
-        const { category_id, specialty, location, work_from, work_to, available_day, examination_price, waiting_time, pictures } = req.body
+        const { category_id, specialty, location, work_from, work_to , available_day , examination_price, waiting_time , pictures } = req.body
 
         const picture = pictures[0]
 
         const id_front = pictures[1]
         const id_behind = pictures[2]
 
-        const practice_license_front = pictures[3]
+        const practice_license_front = pictures[3] 
         const practice_license_behind = pictures[4]
 
         const user = await user_model.findById(req.user.id).select('_id country_code')

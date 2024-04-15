@@ -30,6 +30,9 @@ const schema = new mongoose.Schema({
     is_user_get_cashback : { type: Boolean, default: false },
     is_rider_get_cashback: { type: Boolean, default: false },
     phone : {type:String},
+    auto_accept : {
+        type: Boolean, default: false
+    }
     
 
 }, { versionKey: false, timestamps: true })

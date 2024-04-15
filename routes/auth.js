@@ -29,7 +29,7 @@ router.post(
     handel_validation_errors,
     resetPassword
 )
-    
+
 router.post('/social-login', socialLogin)
 
 router.get('/welcome-gift', welcomeGift)

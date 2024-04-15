@@ -57,6 +57,7 @@ export async function uploadSingleFile(item, deleteFile) {
 
     return bucketParams.Key
 }
+
 async function getFileStreamRelease(req, res, next) {
 
     if (req.tempPaths)
@@ -114,5 +115,4 @@ const storage = multer.diskStorage({
 
 export const downloadFiles = multer({ storage: storage })
 export const uploadFiles = getFileStream
-
 export const uploadFilesRelease = getFileStreamRelease

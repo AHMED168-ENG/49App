@@ -60,15 +60,13 @@ const schema = new Schema({
     ride_technical_examination_center_location: { type: String },
     ride_drug_analysis_center_phone: { type: String },
     ride_drug_analysis_center_location: { type: String },
-    /////////
 
     gift_gross_money: { type: Number, default: 0 },
     gift_portion: { type: Number, default: 0 },
     gift_provider_portion: { type: Number, default: 0 },
     gift_payment_factor: { type: Number, default: 0 },
     gift_over_head_factor: { type: Number, default: 0 },
-
-
+    
     ride_area_distance: { type: Number, default: 5000 },
     ride_request_duration: { type: Number, default: 10 },
     is_monthly_contest_available: { type: Boolean, default: false },
@@ -76,8 +74,8 @@ const schema = new Schema({
     monthly_contest_reward: { type: Number, default: 0 },
     instant_pay_number: { type: String },
     high_cost_per_kilo: { type: Number , default : 5 }, // this for hight price per mail  
+    price_per_km : {type: Number , default : 4 },
     low_cost_per_kilo: { type: Number , default : 3 }, // this for lowest price per mail 
-
     ride_request_cash_back : {type : Boolean , default : true}
     
 }, { versionKey: false, timestamps: true })
