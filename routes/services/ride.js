@@ -324,7 +324,7 @@ router.get('/rider-details', verifyToken, async (req, res, next) => {
     }
 })
 
-// update rider phon
+// update rider phone
 router.put('/update-rider-location' , getLocation() , handel_validation_errors, verifyToken, async (req, res, next) => {
 
     try {
