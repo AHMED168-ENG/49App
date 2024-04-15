@@ -294,12 +294,15 @@ router.post('/update-phone', verifyToken, async (req, res, next) => {
 router.get('/rider-details', verifyToken, async (req, res, next) => {
 
     try {
+
         const query = {is_approved: true, is_active: true }
+        
         if(req.query.userId) {
             query.user_id = new mongoose.Types.ObjectId(req.query.userId)
         } else {
             query.user_id = new mongoose.Types.ObjectId(req.user.id) 
         }
+
         const result = await rider_model.aggregate([
             {
                 $match : query
@@ -528,7 +531,7 @@ router.get('/get-rider-rides', verifyToken, async (req, res, next) => {
 ///////////////////////////////////////////////// CLEINT /////////////////////////////////////////////////////////////
 
 router.get('/client-request' , verifyToken, async (req, res, next) => {
-
+    console.log(req.user.id)
     try {
         const userRequest = await ride_model.aggregate([
             {
@@ -541,7 +544,15 @@ router.get('/client-request' , verifyToken, async (req, res, next) => {
                     from : "users",
                     localField : "user_id",
                     as : "user_id",
-                    foreignField : "_id"
+                    foreignField : "_id",
+                    pipeline : [
+                        {
+                            $project : {
+                                first_name : 1,
+                                last_name : 1,
+                            }
+                        }
+                    ]
                 }
             },
             {
@@ -549,10 +560,42 @@ router.get('/client-request' , verifyToken, async (req, res, next) => {
             },
             {
                 $lookup : {
+                    from : "sub_categories",
+                    localField : "category_id",
+                    as : "category_id",
+                    foreignField : "_id",
+
+                }
+            },
+            {
+                $unwind : {path  : "$category_id" , preserveNullAndEmptyArrays : true},
+            },
+            {
+                $lookup : {
                     from : "riders",
                     localField : "rider_id",
                     as : "rider_id",
-                    foreignField : "_id"
+                    foreignField : "_id",
+                    pipeline : [
+                        {
+                            $lookup : {
+                                from : "users",
+                                localField : "user_id",
+                                as : "user_id",
+                                foreignField : "_id"
+                            }
+                        },
+                        {
+                            $unwind : {path  : "$user_id" , preserveNullAndEmptyArrays : true},
+                        },
+                        {
+                            $project : {
+                                "user_id.first_name" : 1,
+                                "user_id.last_name" : 1,
+                            }
+                        }
+                    
+                    ]
                 }
             },
             {
@@ -603,10 +646,22 @@ router.get('/client-request/:id' , verifyToken, async (req, res, next) => {
             },
             {
                 $lookup : {
+                    from : "sub_categories",
+                    localField : "category_id",
+                    as : "category_id",
+                    foreignField : "_id"
+                }
+            },
+            {
+                $unwind : {path  : "$category_id" , preserveNullAndEmptyArrays : true},
+            },
+            {
+                $lookup : {
                     from : "riders",
                     localField : "rider_id",
                     as : "rider_id",
-                    foreignField : "_id"
+                    foreignField : "_id",
+
                 }
             },
             {
