@@ -616,6 +616,68 @@ router.get('/client-request' , verifyToken, async (req, res, next) => {
     }
 })
 
+router.get('/requests-of-rider' , verifyToken, async (req, res, next) => {
+    try {
+        const riderRequest = await ride_model.aggregate([
+            {
+                $match : {
+                    rider_id : new mongoose.Types.ObjectId(req.user.id),
+                }
+            },
+            {
+                $lookup : {
+                    from : "users",
+                    localField : "user_id",
+                    as : "user_id",
+                    foreignField : "_id",
+                    pipeline : [
+                        {
+                            $project : {
+                                first_name : 1,
+                                last_name : 1,
+                            }
+                        }
+                    ]
+                }
+            },
+            {
+                $unwind : {path  : "$user_id" , preserveNullAndEmptyArrays : true},
+            },
+            {
+                $lookup : {
+                    from : "sub_categories",
+                    localField : "category_id",
+                    as : "category_id",
+                    foreignField : "_id",
+
+                }
+            },
+            {
+                $unwind : {path  : "$category_id" , preserveNullAndEmptyArrays : true},
+            },
+
+            {
+                $lookup : {
+                    from : "ride_offers",
+                    localField : "_id",
+                    as : "ride_offer",
+                    foreignField : "ride_id",
+                    pipeline : [
+                        {
+                            $match : {
+                                is_accept : true
+                            }
+                        }
+                    ]
+                }
+            },
+        ])
+        res.json({ 'status': true , data : riderRequest});
+    } catch (e) {
+        next(e)
+    }
+})
+
 router.get('/client-request/:id' , verifyToken, async (req, res, next) => {
 
     try {
@@ -802,6 +864,7 @@ router.post('/accept-ride-offer/:offerId' , verifyToken, async (req, res, next) 
             is_accept : false,
             ride_id : offerData.ride_id.id
         })
+        
         const notificationObject = new notification_model({
             receiver_id: offerData.from,
             user_id: req.user.id,
@@ -1507,7 +1570,6 @@ router.post('/send-client-offer/:adId' , sendClientOfferValidation() , handel_va
         next(e)
     }
 })
-
 
 router.post('/reject-ride-offer/:offerId' , verifyToken, async (req, res, next) => {
 
