@@ -596,4 +596,5 @@ router.get('/get-doctor/:id', verifyToken, async (req, res, next) => {
 
     } catch (e) { next(e) }
 })
+
 export default router
