@@ -935,7 +935,10 @@ router.get('/rider-request' , getLocation() , handel_validation_errors , verifyT
                     as : "user_id",
                     foreignField : "_id",
                 }
-            }
+            },
+            {
+                $unwind : {path  : "$user_id" , preserveNullAndEmptyArrays : true},
+            },
           ]);
           const rides = await ride_model.aggregatePaginate(aggregate , {page , limit , sort : {
             createdAt : -1,
