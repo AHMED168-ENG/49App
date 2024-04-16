@@ -294,12 +294,15 @@ router.post('/update-phone', verifyToken, async (req, res, next) => {
 router.get('/rider-details', verifyToken, async (req, res, next) => {
 
     try {
+
         const query = {is_approved: true, is_active: true }
+        
         if(req.query.userId) {
             query.user_id = new mongoose.Types.ObjectId(req.query.userId)
         } else {
             query.user_id = new mongoose.Types.ObjectId(req.user.id) 
         }
+
         const result = await rider_model.aggregate([
             {
                 $match : query
@@ -528,7 +531,6 @@ router.get('/get-rider-rides', verifyToken, async (req, res, next) => {
 ///////////////////////////////////////////////// CLEINT /////////////////////////////////////////////////////////////
 
 router.get('/client-request' , verifyToken, async (req, res, next) => {
-
     try {
         const userRequest = await ride_model.aggregate([
             {
@@ -541,7 +543,15 @@ router.get('/client-request' , verifyToken, async (req, res, next) => {
                     from : "users",
                     localField : "user_id",
                     as : "user_id",
-                    foreignField : "_id"
+                    foreignField : "_id",
+                    pipeline : [
+                        {
+                            $project : {
+                                first_name : 1,
+                                last_name : 1,
+                            }
+                        }
+                    ]
                 }
             },
             {
@@ -549,10 +559,36 @@ router.get('/client-request' , verifyToken, async (req, res, next) => {
             },
             {
                 $lookup : {
+                    from : "sub_categories",
+                    localField : "category_id",
+                    as : "category_id",
+                    foreignField : "_id",
+
+                }
+            },
+            {
+                $unwind : {path  : "$category_id" , preserveNullAndEmptyArrays : true},
+            },
+            {
+                $lookup : {
                     from : "riders",
                     localField : "rider_id",
                     as : "rider_id",
-                    foreignField : "_id"
+                    foreignField : "_id",
+                    pipeline : [
+                        {
+                            $lookup : {
+                                from : "users",
+                                localField : "user_id",
+                                as : "user_id",
+                                foreignField : "_id"
+                            }
+                        },
+                        {
+                            $unwind : {path  : "$user_id" , preserveNullAndEmptyArrays : true},
+                        },
+                    
+                    ]
                 }
             },
             {
@@ -575,6 +611,68 @@ router.get('/client-request' , verifyToken, async (req, res, next) => {
             },
         ])
         res.json({ 'status': true , data : userRequest});
+    } catch (e) {
+        next(e)
+    }
+})
+
+router.get('/requests-of-rider' , verifyToken, async (req, res, next) => {
+    try {
+        const riderRequest = await ride_model.aggregate([
+            {
+                $match : {
+                    rider_id : new mongoose.Types.ObjectId(req.user.id),
+                }
+            },
+            {
+                $lookup : {
+                    from : "users",
+                    localField : "user_id",
+                    as : "user_id",
+                    foreignField : "_id",
+                    pipeline : [
+                        {
+                            $project : {
+                                first_name : 1,
+                                last_name : 1,
+                            }
+                        }
+                    ]
+                }
+            },
+            {
+                $unwind : {path  : "$user_id" , preserveNullAndEmptyArrays : true},
+            },
+            {
+                $lookup : {
+                    from : "sub_categories",
+                    localField : "category_id",
+                    as : "category_id",
+                    foreignField : "_id",
+
+                }
+            },
+            {
+                $unwind : {path  : "$category_id" , preserveNullAndEmptyArrays : true},
+            },
+
+            {
+                $lookup : {
+                    from : "ride_offers",
+                    localField : "_id",
+                    as : "ride_offer",
+                    foreignField : "ride_id",
+                    pipeline : [
+                        {
+                            $match : {
+                                is_accept : true
+                            }
+                        }
+                    ]
+                }
+            },
+        ])
+        res.json({ 'status': true , data : riderRequest});
     } catch (e) {
         next(e)
     }
@@ -603,10 +701,22 @@ router.get('/client-request/:id' , verifyToken, async (req, res, next) => {
             },
             {
                 $lookup : {
+                    from : "sub_categories",
+                    localField : "category_id",
+                    as : "category_id",
+                    foreignField : "_id"
+                }
+            },
+            {
+                $unwind : {path  : "$category_id" , preserveNullAndEmptyArrays : true},
+            },
+            {
+                $lookup : {
                     from : "riders",
                     localField : "rider_id",
                     as : "rider_id",
-                    foreignField : "_id"
+                    foreignField : "_id",
+
                 }
             },
             {
@@ -754,6 +864,7 @@ router.post('/accept-ride-offer/:offerId' , verifyToken, async (req, res, next) 
             is_accept : false,
             ride_id : offerData.ride_id.id
         })
+        
         const notificationObject = new notification_model({
             receiver_id: offerData.from,
             user_id: req.user.id,
@@ -875,14 +986,22 @@ router.get('/rider-request' , getLocation() , handel_validation_errors , verifyT
                   type: 'Point',
                   coordinates: [parseFloat(latitude), parseFloat(longitude)]
                 },
-                distanceField: 'location',
+                distanceField: 'distance',
                 spherical: true,
                 maxDistance: info.ride_area_distance ?? process.env.maxDistance // 5 km in meters
               }
             },
-            // {
-            //     $match : queryObj
-            // },
+            {
+                $lookup : {
+                    from : "users",
+                    localField : "user_id",
+                    as : "user_id",
+                    foreignField : "_id",
+                }
+            },
+            {
+                $unwind : {path  : "$user_id" , preserveNullAndEmptyArrays : true},
+            },
           ]);
           const rides = await ride_model.aggregatePaginate(aggregate , {page , limit , sort : {
             createdAt : -1,
@@ -944,25 +1063,27 @@ router.get('/rider-five-kilometers-away' , verifyToken , getLocation() , handel_
         if(search){
           queryObj.car_brand = {'$regex' :  search, '$options' : 'i'}
         }
+        console.log(parseFloat(latitude) , parseFloat(longitude))
         const aggregate = rider_model.aggregate([
      
             {
               $geoNear: {
                 near: {
                   type: 'Point',
-                  coordinates: [parseFloat(longitude), parseFloat(latitude)]
+                  coordinates: [parseFloat(latitude) , parseFloat(longitude)]
                 },
-                distanceField: 'location',
+                distanceField: 'distance',
                 spherical: true,
                 maxDistance: info.ride_area_distance ?? process.env.maxDistance // 5 km in meters
               }
             },
-            {
-                $match : queryObj
-            },
+            // {
+            //     $match : queryObj
+            // },
+
           ]);
           const riders = await rider_model.aggregatePaginate(aggregate , {page , limit , sort : {
-            createdAt : -1,
+            createdAt : 1,
           }})
           res.json(riders);
     } catch (e) { next(e) }
@@ -1449,7 +1570,6 @@ router.post('/send-client-offer/:adId' , sendClientOfferValidation() , handel_va
         next(e)
     }
 })
-
 
 router.post('/reject-ride-offer/:offerId' , verifyToken, async (req, res, next) => {
 

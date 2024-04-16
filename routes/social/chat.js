@@ -212,8 +212,6 @@ router.get('/get-message-total-reactions/:id', verifyToken, async (req, res, nex
 
 router.get('/get-message-reactions/:id', verifyToken, async (req, res, next) => {
 
-
-
     try {
 
         const { language } = req.headers
@@ -266,8 +264,6 @@ router.get('/get-message-reactions/:id', verifyToken, async (req, res, next) => 
     }
 })
 
-
-/////
 
 router.get('/get-groups', verifyToken, async (req, res, next) => {
 
