@@ -51,13 +51,11 @@ const schema = new mongoose.Schema({
 
 }, { versionKey: false, timestamps: true })
 
-schema.plugin(mongoosePaginate);
-schema.plugin(mongooseAggregatePaginate);
-
-const model = mongoose.model("riders", schema);
-
 schema.index({
     location: "2dsphere",
 })
 
-export default model
+schema.plugin(mongoosePaginate);
+schema.plugin(mongooseAggregatePaginate);
+
+export default mongoose.model("riders", schema);

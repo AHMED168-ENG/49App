@@ -531,7 +531,6 @@ router.get('/get-rider-rides', verifyToken, async (req, res, next) => {
 ///////////////////////////////////////////////// CLEINT /////////////////////////////////////////////////////////////
 
 router.get('/client-request' , verifyToken, async (req, res, next) => {
-    console.log(req.user.id)
     try {
         const userRequest = await ride_model.aggregate([
             {
@@ -588,12 +587,6 @@ router.get('/client-request' , verifyToken, async (req, res, next) => {
                         {
                             $unwind : {path  : "$user_id" , preserveNullAndEmptyArrays : true},
                         },
-                        {
-                            $project : {
-                                "user_id.first_name" : 1,
-                                "user_id.last_name" : 1,
-                            }
-                        }
                     
                     ]
                 }
@@ -930,14 +923,19 @@ router.get('/rider-request' , getLocation() , handel_validation_errors , verifyT
                   type: 'Point',
                   coordinates: [parseFloat(latitude), parseFloat(longitude)]
                 },
-                distanceField: 'location',
+                distanceField: 'distance',
                 spherical: true,
                 maxDistance: info.ride_area_distance ?? process.env.maxDistance // 5 km in meters
               }
             },
-            // {
-            //     $match : queryObj
-            // },
+            {
+                $lookup : {
+                    from : "users",
+                    localField : "user_id",
+                    as : "user_id",
+                    foreignField : "_id",
+                }
+            }
           ]);
           const rides = await ride_model.aggregatePaginate(aggregate , {page , limit , sort : {
             createdAt : -1,
@@ -999,25 +997,27 @@ router.get('/rider-five-kilometers-away' , verifyToken , getLocation() , handel_
         if(search){
           queryObj.car_brand = {'$regex' :  search, '$options' : 'i'}
         }
+        console.log(parseFloat(latitude) , parseFloat(longitude))
         const aggregate = rider_model.aggregate([
      
             {
               $geoNear: {
                 near: {
                   type: 'Point',
-                  coordinates: [parseFloat(longitude), parseFloat(latitude)]
+                  coordinates: [parseFloat(latitude) , parseFloat(longitude)]
                 },
-                distanceField: 'location',
+                distanceField: 'distance',
                 spherical: true,
                 maxDistance: info.ride_area_distance ?? process.env.maxDistance // 5 km in meters
               }
             },
-            {
-                $match : queryObj
-            },
+            // {
+            //     $match : queryObj
+            // },
+
           ]);
           const riders = await rider_model.aggregatePaginate(aggregate , {page , limit , sort : {
-            createdAt : -1,
+            createdAt : 1,
           }})
           res.json(riders);
     } catch (e) { next(e) }
