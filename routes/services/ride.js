@@ -134,9 +134,6 @@ router.post('/register-rider', verifyToken, async (req, res, next) => {
 
 // get the highest and the lowest price for this distance in all riders
 
-/**
- * 
- */
 router.post('/get-high-low-price', async (req, res, next) => {
 
     try {
@@ -571,7 +568,7 @@ router.get('/client-request' , verifyToken, async (req, res, next) => {
             },
             {
                 $lookup : {
-                    from : "riders",
+                    from : "users",
                     localField : "rider_id",
                     as : "rider_id",
                     foreignField : "_id",
@@ -645,6 +642,17 @@ router.get('/requests-of-rider' , verifyToken, async (req, res, next) => {
             },
             {
                 $lookup : {
+                    from : "users",
+                    localField : "rider_id",
+                    as : "rider_id",
+                    foreignField : "_id",
+                }
+            },
+            {
+                $unwind : {path  : "$rider_id" , preserveNullAndEmptyArrays : true},
+            },
+            {
+                $lookup : {
                     from : "sub_categories",
                     localField : "category_id",
                     as : "category_id",
@@ -712,7 +720,7 @@ router.get('/client-request/:id' , verifyToken, async (req, res, next) => {
             },
             {
                 $lookup : {
-                    from : "riders",
+                    from : "users",
                     localField : "rider_id",
                     as : "rider_id",
                     foreignField : "_id",

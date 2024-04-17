@@ -17,13 +17,13 @@ function getLocation() {
 
 
 export function sendRideValidation() {
-    return [
-        check("price").notEmpty().withMessage(JSON.stringify({
-          ar: "قم بادخال السعر",
-          en: "Enter price"
-      }))
-    ];
-  }
+  return [
+      check("price").notEmpty().withMessage(JSON.stringify({
+        ar: "قم بادخال السعر",
+        en: "Enter price"
+    }))
+  ];
+}
 
 export function sendClientOfferValidation() {
     return [
