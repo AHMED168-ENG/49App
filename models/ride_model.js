@@ -6,7 +6,7 @@ const schema = new mongoose.Schema({
 
     user_id: { type: mongoose.Schema.ObjectId, required: true , ref : "users" },
     rider_id: { type: mongoose.Schema.ObjectId , ref : "riders" },
-    category_id: { type: String, required: true },
+    category_id: { type: mongoose.Schema.ObjectId, required: true , ref : "sub_categories" },
     from: { type: String, required: true },
     to: { type: String, required: true },
     distance: { type: String, required: true },
