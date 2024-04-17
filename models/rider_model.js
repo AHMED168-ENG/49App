@@ -5,7 +5,7 @@ import mongooseAggregatePaginate from 'mongoose-aggregate-paginate-v2';
 const schema = new mongoose.Schema({
     category_id: { type: String, required: true },
 
-    user_id: { type: String, required: true, unique: true, },
+    user_id: { type: mongoose.Schema.ObjectId, required: true, ref:"users" },
     car_pictures: { type: Array, required: true, },
 
     id_front: { type: String, required: true },
@@ -51,13 +51,11 @@ const schema = new mongoose.Schema({
 
 }, { versionKey: false, timestamps: true })
 
-schema.plugin(mongoosePaginate);
-schema.plugin(mongooseAggregatePaginate);
-
-const model = mongoose.model("riders", schema);
-
 schema.index({
     location: "2dsphere",
 })
 
-export default model
+schema.plugin(mongoosePaginate);
+schema.plugin(mongooseAggregatePaginate);
+
+export default mongoose.model("riders", schema);
