@@ -70,7 +70,6 @@ export const requestLoadingValidation = () => {
     ]
 }
 
-if (!adId || !price) return next('Bad Request')
 
 export const validateLoadingOffer =  ()=>{
     return [
