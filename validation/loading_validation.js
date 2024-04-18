@@ -32,14 +32,14 @@ export const validationLoadingRating = () => {
         check("category_id").notEmpty().withMessage(JSON.stringify({
             "ar" : "ادخل القسم الخاص السيارة",
             "en" : "enter car type",
-        })),    
+        })),
         check("ad_id").notEmpty().withMessage(JSON.stringify({
             "ar" : "ادخل السيارة",
             "en" : "enter car type",
-        })),        
+        })),
         check("user_id").notEmpty().withMessage(JSON.stringify({
             "ar" : "ادخل المستخدم",
-            "en" : "enter user",        
+            "en" : "enter user",
         })),
     ]
 }
@@ -57,7 +57,7 @@ export const requestLoadingValidation = () => {
         })),
         check("delivery_point").notEmpty().withMessage(JSON.stringify({
             "ar" : "ادخل مكان الوصول",
-            "en" : "enter delivery point",        
+            "en" : "enter delivery point",
         })),
         check("price").notEmpty().withMessage(JSON.stringify({
             "ar" : "ادخل السعر",
@@ -67,7 +67,7 @@ export const requestLoadingValidation = () => {
             "ar" : "ادخل الموعد",
             "en" : "enter time",
         })),
-    ]    
+    ]
 }
 
 if (!adId || !price) return next('Bad Request')
