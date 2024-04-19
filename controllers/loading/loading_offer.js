@@ -206,6 +206,7 @@ export const acceptLoadingOffer = asyncWrapper(async (req, res, next) => {
             notification_model.findOne({ _id: notificationId, receiver_id: req.user.id })
         ])
 
+
         if (!ad) return next({ 'status': 404, 'message': language == 'ar' ? 'لم يتم العثور على الاعلان' : 'The Ad is not Exist' })
         if (ad.is_completed == true) return next({ 'status': 400, 'message': language == 'ar' ? 'الاعلان بالفعل مزود بمقدم خدمة' : 'The Ad is Already has service provider' })
         if (!notification) return next({ 'status': 404, 'message': language == 'ar' ? 'لم يتم العثور على العرض' : 'The Offer is not Exist' })

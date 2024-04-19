@@ -15,6 +15,7 @@ const sendSmtpEmail = new SibApiV3Sdk.SendSmtpEmail()
 
 
 export const sendAnyEmail = (data) => {
+
     sendSmtpEmail.templateId = 4
     sendSmtpEmail.subject = data.subject
     sendSmtpEmail.sender = {
