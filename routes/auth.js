@@ -16,10 +16,11 @@ import {
   loginUserValidation,
   resetPasswordValidation,
 } from "../validation/user.js";
+import { validateRegisterInput } from "../validation/auth.js";
 
 const router = express.Router();
 
-router.post("/register", registerController);
+router.post("/register", validateRegisterInput, registerController);
 router.post("/login", loginUserValidation(), handel_validation_errors, login);
 
 router.post(
