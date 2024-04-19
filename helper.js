@@ -39,6 +39,9 @@ export const createToken = (id, auth, authDate, isSuperAdmin, isAdmin) => {
     )
 }
 
+/**
+ * @deprecated This function is deprecated from refactor ver. 0.1 Use isAuthenticated
+ */
 export const verifyToken = async (req, res, next) => {
 
     try {

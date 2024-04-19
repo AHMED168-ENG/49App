@@ -4,18 +4,17 @@ import {
   registerController,
   verifyEmailController,
   loginController,
+  refreshTokenController,
   checkOtp,
   forgetPassword,
   refererGift,
   resetPassword,
   socialLogin,
   welcomeGift,
-  refreshTokenController,
 } from "../controllers/auth.js";
 import {
   checkOtpValidation,
   forgetPasswordValidation,
-  loginUserValidation,
   resetPasswordValidation,
 } from "../validation/user.js";
 import {
@@ -33,7 +32,11 @@ router.post("/verify/email", validateVerifyEmailInput, verifyEmailController);
 
 router.post("/login", validateLoginInput, loginController);
 
-router.post("/refresh/token", validateRefreshTokenInput, refreshTokenController);
+router.post(
+  "/refresh/token",
+  validateRefreshTokenInput,
+  refreshTokenController
+);
 
 router.post(
   "/forget-password",
