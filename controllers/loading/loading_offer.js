@@ -132,7 +132,7 @@ export const makeRequestForLoading = asyncWrapper( async (req, res, next) => {
 })
 
 /** ------------------------------------------------------  
- * @desc send loading offer
+ * @desc send loading offer by rider 
  * @route /send-loading-offer
  * @method post
  * @returns {status}
@@ -189,44 +189,49 @@ export const sendLoadingOffer = asyncWrapper( async (req, res, next) => {
         res.json({ 'status': true })
 })
 
+/** ------------------------------------------------------  
+ * @desc accept loading offer by user 
+ * @route /accept-loading-offer
+ * @method post
+ * @returns {status}
+ /**  ------------------------------------------------------  */
 export const acceptLoadingOffer = asyncWrapper(async (req, res, next) => {
         const { language } = req.headers
 
         const { adId, notificationId } = req.body
-        console.log("here");
-        const ad = await loading_trip_model.findOne({ _id: adId, user_id: req.user.id })
+
+        const [ad , notification] = await Promise.all([
+            loading_trip_model.findOne({ _id: adId, user_id: req.user.id }),
+            // get notification model when receiver (user not rider) and notification id
+            notification_model.findOne({ _id: notificationId, receiver_id: req.user.id })
+        ])
 
         if (!ad) return next({ 'status': 404, 'message': language == 'ar' ? 'لم يتم العثور على الاعلان' : 'The Ad is not Exist' })
-
         if (ad.is_completed == true) return next({ 'status': 400, 'message': language == 'ar' ? 'الاعلان بالفعل مزود بمقدم خدمة' : 'The Ad is Already has service provider' })
-
-        const notification = await notification_model.findOne({ _id: notificationId, receiver_id: req.user.id })
-
         if (!notification) return next({ 'status': 404, 'message': language == 'ar' ? 'لم يتم العثور على العرض' : 'The Offer is not Exist' })
 
+        // find rider in user model by using notification.user_id (rider)
         const user = await user_model.findById(notification.user_id).select('_id language')
 
         if (!user) return next({ 'status': 404, 'message': language == 'ar' ? 'لم يتم العثور على المستخدم' : 'The User is not Exist' })
 
-        loading_trip_model.updateOne({ _id: ad.id }, { rider_id: user.id, is_completed: true, price: notification.request_price }).exec()
-
-        loading_model.updateOne({ user_id: user.id }, { $inc: { profit: notification.request_price, trips: 1 } }).exec()
-
-
-        const titleAr = 'تم قبول عرض السعر'
-        const titleEn = 'The Price Offer Accepted'
-        const bodyEn = `Price Offer ${notification.request_price} for Loading ${ad.delivery_point} is Accepted, you can contact the customer now `
-        const bodyAr = `تم قبول عرض السعر ${notification.request_price} مقابل لرحلة ${ad.delivery_point} ، يمكنك الاتصال بالعميل الآن`
-
+        Promise.all([
+            loading_trip_model.updateOne({ _id: ad.id }, { rider_id: user.id, is_completed: true, price: notification.request_price }).exec(),
+            // in loading_model user_id is the rider
+            // what is profit and trips
+            loading_model.updateOne({ user_id: user.id }, { $inc: { profit: notification.request_price, trips: 1 } }).exec()
+        ])
+        // when i accept rider offer i remove all notification related with this advertisement
         await notification_model.deleteMany({ direction: ad.id }).exec()
 
-        const notificationObject = new notification_model({
+        // Send notification
+        const notificationObject = await create.notification_model({
             receiver_id: user.id,
             user_id: req.user.id,
             sub_category_id: ad.category_id,
             tab: 2,
-            text_ar: bodyAr,
-            text_en: bodyEn,
+            text_ar: `تم قبول عرض السعر ${notification.request_price} مقابل لرحلة ${ad.delivery_point} ، يمكنك الاتصال بالعميل الآن`,
+            text_en: `Price Offer ${notification.request_price} for Loading ${ad.delivery_point} is Accepted, you can contact the customer now `,
             direction: ad.id,
             type: 10006,
             ad_owner: req.user.id,
@@ -235,12 +240,11 @@ export const acceptLoadingOffer = asyncWrapper(async (req, res, next) => {
             is_accepted: true,
         })
 
-        notificationObject.save()
-
-
-        auth_model.find({ 'user_id': user.id }).distinct('fcm').then(
-            fcm => sendNotifications(fcm, user.language == 'ar' ? titleAr : titleEn, user.language == 'ar' ? bodyAr : bodyEn, 10006))
-
+        // Send notification
+        const title = language == 'ar' ? 'تم قبول عرض السعر' : 'The Price Offer Accepted';
+        const body = language == 'ar' ? notificationObject.text_ar : notificationObject.text_en;
+        const fcmTokens = await auth_model.find({ 'user_id': user.id }).distinct('fcm');
+        sendNotifications(fcmTokens, title, body, 10006);
         res.json({ 'status': true })
 })
 
