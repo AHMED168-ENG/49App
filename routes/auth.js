@@ -8,6 +8,7 @@ import {
   registerController,
   resetPassword,
   socialLogin,
+  verifyEmailController,
   welcomeGift,
 } from "../controllers/auth.js";
 import {
@@ -16,11 +17,17 @@ import {
   loginUserValidation,
   resetPasswordValidation,
 } from "../validation/user.js";
-import { validateRegisterInput } from "../validation/auth.js";
+import {
+  validateRegisterInput,
+  validateVerifyEmailInput,
+} from "../validation/auth.js";
 
 const router = express.Router();
 
 router.post("/register", validateRegisterInput, registerController);
+
+router.post("/verify/email", validateVerifyEmailInput, verifyEmailController);
+
 router.post("/login", loginUserValidation(), handel_validation_errors, login);
 
 router.post(

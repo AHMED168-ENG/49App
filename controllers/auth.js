@@ -13,6 +13,7 @@ import { passwordToHash } from "../utils/password-to-hash.js";
 import { plainTextToHash } from "../utils/plain-text-to-hash.js";
 import { sendAnyEmail } from "../gmail/send_email.js";
 import { randomBytes } from "crypto";
+import { comparePlainTextToHash } from "../utils/compare-plain-text-to-hash.js";
 
 const playStoreLink =
   "https://play.google.com/store/apps/details?id=com.fourtyninehub.fourtynine";
@@ -80,6 +81,51 @@ export const registerController = async ({ body }, res, next) => {
     // --> 10) return response to client
     return res.status(httpStatus.CREATED).json({
       message: "OTP sent to your email",
+      success: true,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const verifyEmailController = async ({ body }, res, next) => {
+  try {
+    // --> 1) get data from body
+    const { email, otp } = body;
+
+    // --> 2) check if email exists in DB
+    const isUserExists = await user_model.findOne({ email });
+
+    if (!isUserExists) {
+      return res.status(httpStatus.NOT_FOUND).json({
+        message: "Email is invalid",
+        success: false,
+      });
+    }
+
+    // --> 3) check if this user have otp in database
+    if (!isUserExists.otp) {
+      return res.status(httpStatus.NOT_FOUND).json({
+        message: "OTP is invalid",
+        success: false,
+      });
+    }
+
+    // --> 4) check if hashed otp is correct
+    const isOtpCorrect = await comparePlainTextToHash(otp, isUserExists.otp);
+
+    if (!isOtpCorrect) {
+      return res.status(httpStatus.UNAUTHORIZED).json({
+        message: "OTP is invalid",
+        success: false,
+      });
+    }
+
+    // --> 5) update isEmailVerified to true and delete otp
+    await user_model.updateOne({ email }, { isEmailVerified: true, otp: null });
+
+    return res.status(httpStatus.OK).json({
+      message: "Email verified successfully",
       success: true,
     });
   } catch (error) {
