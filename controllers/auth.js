@@ -9,11 +9,12 @@ import app_manager_model from "../models/app_manager_model.js";
 import { SendMails } from "../gmail/mail.js";
 import { errorWithLanguages } from "../utils/errorWithLanguages.js";
 import wallet_model from "../models/wallet_model.js";
-import { passwordToHash } from "../utils/password-to-hash.js";
+import { comparePlainTextToHash } from "../utils/compare-plain-text-to-hash.js";
+import { comparePasswordToHash } from "../utils/compare-password-to-hash.js";
 import { plainTextToHash } from "../utils/plain-text-to-hash.js";
+import { passwordToHash } from "../utils/password-to-hash.js";
 import { sendAnyEmail } from "../gmail/send_email.js";
 import { randomBytes } from "crypto";
-import { comparePlainTextToHash } from "../utils/compare-plain-text-to-hash.js";
 
 const playStoreLink =
   "https://play.google.com/store/apps/details?id=com.fourtyninehub.fourtynine";
@@ -133,8 +134,82 @@ export const verifyEmailController = async ({ body }, res, next) => {
   }
 };
 
+export const loginController = async ({ body }, res, next) => {
+  try {
+    // --> 1) get data from body
+    const { email, password, keepLogin } = body;
+
+    // --> 2) check if email exists
+    const isUserExists = await user_model
+      .findOne({ email })
+      .select("_id password isEmailVerified is_locked");
+
+    if (!isUserExists) {
+      return res.status(httpStatus.NOT_FOUND).json({
+        message: "Email or password incorrect",
+        success: false,
+      });
+    }
+
+    // --> 3) check if password is correct
+    const isPasswordCorrect = await comparePasswordToHash(
+      password,
+      isUserExists.password
+    );
+
+    if (!isPasswordCorrect) {
+      return res.status(httpStatus.UNAUTHORIZED).json({
+        message: "Email or password incorrect",
+        success: false,
+      });
+    }
+
+    // --> 4) check if email verified
+    if (!isUserExists.isEmailVerified) {
+      return res.status(httpStatus.UNAUTHORIZED).json({
+        message:
+          "Your email has not been confirmed yet. You cannot login until you confirm your email",
+        success: false,
+      });
+    }
+
+    // --> 5) check if user locked
+    if (isUserExists.is_locked) {
+      return res.status(httpStatus.UNAUTHORIZED).json({
+        message: "Your account has been locked. Please contact support",
+        success: false,
+      });
+    }
+
+    // --> 6) generate access token
+    const accessToken = jwt.sign({}, process.env.ACCESS_TOKEN_SECRET, {
+      expiresIn: process.env.EXPIRED_ACCESS_TOKEN,
+      subject: isUserExists._id.toString(),
+    });
+
+    // --> 7) generate refresh token
+    const refreshToken = jwt.sign({}, process.env.REFRESH_TOKEN_SECRET, {
+      expiresIn: process.env.EXPIRED_REFRESH_TOKEN,
+      subject: isUserExists._id.toString(),
+    });
+
+    // --> 8) return response to client
+    res.status(httpStatus.OK).json({
+      message: "Login successfully",
+      success: true,
+      data: {
+        accessToken,
+        refreshToken,
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 /**
  * login organization operation
+ * @deprecated This function is deprecated from refactor ver. 0.1 Use loginController
  */
 export const login = async (req, res, next) => {
   try {

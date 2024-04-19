@@ -141,4 +141,54 @@ const validateVerifyEmailInput = [
   validatorHandlerMiddleware,
 ];
 
-export { validateRegisterInput, validateVerifyEmailInput };
+const validateLoginInput = [
+  body("email")
+    .isEmail()
+    .normalizeEmail()
+    .withMessage(
+      returnValidationMessageToClient({
+        en: "invalid email",
+        ar: "البريد الالكتروني غير صالح",
+      })
+    )
+    .isLength({ min: 3, max: 128 })
+    .withMessage(
+      returnValidationMessageToClient({
+        en: "email must be between 3 and 128 characters",
+        ar: "البريد الالكتروني يجب الا يقل عن 3 و يزيد عن 128 حرف",
+      })
+    ),
+
+  body("password")
+    .isString()
+    .withMessage(
+      returnValidationMessageToClient({
+        en: "Sorry, the password name type must be text",
+        ar: "كلمة المرور يجب ان تكون نوعه من نوع نص",
+      })
+    )
+    .notEmpty()
+    .withMessage(
+      returnValidationMessageToClient({
+        en: "Sorry, you cannot leave the password field blank",
+        ar: "لا يمكنك ترك حقل كلمة المرور فارغا",
+      })
+    )
+    .isLength({ min: 8, max: 64 })
+    .withMessage(
+      returnValidationMessageToClient({
+        en: "password must be between 8 and 64 characters",
+        ar: "كلمة المرور يجب الا يقل عن 8 و يزيد عن 64 حرف",
+      })
+    ),
+
+  checkExact([], {
+    message: returnValidationMessageToClient({
+      en: "Sorry, you are trying to enter fields that are not required",
+      ar: "لقد قمت بادخال حقول غير مطلوبة",
+    }),
+  }),
+  validatorHandlerMiddleware,
+];
+
+export { validateRegisterInput, validateVerifyEmailInput, validateLoginInput };

@@ -1,14 +1,14 @@
 import express from "express";
 import handel_validation_errors from "../middleware/handelBodyError.js";
 import {
+  registerController,
+  verifyEmailController,
+  loginController,
   checkOtp,
   forgetPassword,
-  login,
   refererGift,
-  registerController,
   resetPassword,
   socialLogin,
-  verifyEmailController,
   welcomeGift,
 } from "../controllers/auth.js";
 import {
@@ -18,6 +18,7 @@ import {
   resetPasswordValidation,
 } from "../validation/user.js";
 import {
+  validateLoginInput,
   validateRegisterInput,
   validateVerifyEmailInput,
 } from "../validation/auth.js";
@@ -28,7 +29,7 @@ router.post("/register", validateRegisterInput, registerController);
 
 router.post("/verify/email", validateVerifyEmailInput, verifyEmailController);
 
-router.post("/login", loginUserValidation(), handel_validation_errors, login);
+router.post("/login", validateLoginInput, loginController);
 
 router.post(
   "/forget-password",
