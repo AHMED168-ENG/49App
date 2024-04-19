@@ -10,6 +10,7 @@ import {
   resetPassword,
   socialLogin,
   welcomeGift,
+  refreshTokenController,
 } from "../controllers/auth.js";
 import {
   checkOtpValidation,
@@ -19,6 +20,7 @@ import {
 } from "../validation/user.js";
 import {
   validateLoginInput,
+  validateRefreshTokenInput,
   validateRegisterInput,
   validateVerifyEmailInput,
 } from "../validation/auth.js";
@@ -30,6 +32,8 @@ router.post("/register", validateRegisterInput, registerController);
 router.post("/verify/email", validateVerifyEmailInput, verifyEmailController);
 
 router.post("/login", validateLoginInput, loginController);
+
+router.post("/refresh/token", validateRefreshTokenInput, refreshTokenController);
 
 router.post(
   "/forget-password",

@@ -191,4 +191,28 @@ const validateLoginInput = [
   validatorHandlerMiddleware,
 ];
 
-export { validateRegisterInput, validateVerifyEmailInput, validateLoginInput };
+const validateRefreshTokenInput = [
+  body("refreshToken")
+    .isJWT()
+    .withMessage(
+      returnValidationMessageToClient({
+        en: "invalid refresh token",
+        ar: "الرمز المرجعي غير صالح",
+      })
+    ),
+
+  checkExact([], {
+    message: returnValidationMessageToClient({
+      en: "Sorry, you are trying to enter fields that are not required",
+      ar: "لقد قمت بادخال حقول غير مطلوبة",
+    }),
+  }),
+  validatorHandlerMiddleware,
+];
+
+export {
+  validateRegisterInput,
+  validateVerifyEmailInput,
+  validateLoginInput,
+  validateRefreshTokenInput,
+};

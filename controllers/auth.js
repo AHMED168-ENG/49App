@@ -15,6 +15,7 @@ import { plainTextToHash } from "../utils/plain-text-to-hash.js";
 import { passwordToHash } from "../utils/password-to-hash.js";
 import { sendAnyEmail } from "../gmail/send_email.js";
 import { randomBytes } from "crypto";
+import { verifyToken } from "../utils/verify-token.js";
 
 const playStoreLink =
   "https://play.google.com/store/apps/details?id=com.fourtyninehub.fourtynine";
@@ -200,6 +201,46 @@ export const loginController = async ({ body }, res, next) => {
       data: {
         accessToken,
         refreshToken,
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const refreshTokenController = async ({ body }, res, next) => {
+  try {
+    // --> 1) get refresh token form body
+    const { refreshToken } = body;
+
+    // --> 1) check if refresh token verify (no change happens, expired token)
+    const decoded = await verifyToken(
+      refreshToken,
+      process.env.REFRESH_TOKEN_SECRET
+    );
+
+    // --> 2) check if user not delete account after create refresh token
+    const isUserExists = await user_model.findById(decoded.sub);
+
+    if (!isUserExists) {
+      return res.status(httpStatus.UNAUTHORIZED).json({
+        message: "Unauthorized",
+        success: false,
+      });
+    }
+
+    // --> 3) generate token access token
+    const accessToken = jwt.sign({}, process.env.ACCESS_TOKEN_SECRET, {
+      expiresIn: process.env.EXPIRED_ACCESS_TOKEN,
+      subject: isUserExists._id.toString(),
+    });
+
+    // --> 4) return response to client
+    res.status(httpStatus.OK).json({
+      message: "Refresh token successfully",
+      success: true,
+      data: {
+        accessToken,
       },
     });
   } catch (error) {
