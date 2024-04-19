@@ -1,148 +1,172 @@
 import asyncWrapper from "../../utils/asyncWrapper.js";
-
 import loading_model from '../../models/loading_model.js';
 import user_model from '../../models/user_model.js'
 import sub_category_model from '../../models/sub_category_model.js'
 import notification_model from '../../models/notification_model.js'
 import auth_model from '../../models/auth_model.js'
-
 import loading_trip_model from '../../models/loading_trip_model.js';
 import rating_model from '../../models/rating_model.js';
-
 import { loadingCategoryId } from '../../controllers/ride_controller.js';
 import { sendNotifications } from '../../controllers/notification_controller.js';
 import { requestCashBack } from '../../controllers/cash_back_controller.js';
 
+
+
+// ad : its advertisement id 
+// loading_model : model store on it rider about loading
+
+/** ------------------------------------------------------  
+ * @desc rider get loading tripe by id
+ * @route /get-loading-trips
+ * @method get
+ * @returns {status , data}
+ * @warning : model loading_trip_model do not have sub_category_name
+ * @warning : model loading_trip_model do not have rating
+ * @warning : model rating_model do not have ad_id
+ /**  ------------------------------------------------------  */
 export const getLoadingTrip = asyncWrapper(async (req, res, next) => {
-    const { page } = req.query
+    const { page } = req.query;
+    // get all loading trip for rider using rider_id   
+    const result = await loading_trip_model.find({ rider_id: req.user.id, is_completed: true })
+        .sort({ createdAt: -1, _id: 1 })
+        .skip((((page ?? 1) - 1) * 20))
+        .limit(20);
 
-    const result = await loading_trip_model.find({ rider_id: req.user.id, is_completed: true }).sort({ createdAt: -1, _id: 1 }).skip((((page ?? 1) - 1) * 20)).limit(20)
-    // get rating for each trip
-    const ratings = await rating_model.find({ user_id: req.user.id, ad_id: { $in: result.map(e => e.id) } })
-
-    //  example result
-    // { id: 1, trip_name: "Trip 1", _doc: { sub_category_name: '', rating: { ad_id: 1, rating: 4.5 } } },
+    // get rating for each trip 
+    const ratings = await rating_model.find({ user_id: req.user.id, ad_id: { $in: result.map(e => e.id) } });
+    // Iterate through each loading trip and add ratings
     for (const ride of result) {
-        ride._doc.sub_category_name = ''
+        console.log("here" , ride);
+        ride._doc.sub_category_name = ''; // Initialize sub_category_name property to an empty string
+
+        // Iterate through each rating to find matching ad_id
         for (const rating of ratings) {
-            if (rating.ad_id == ride.id) {
-                ride._doc.rating = rating
-                break
+            console.log("here" , rating.ad_id,  ride.id);
+            if (rating.ad_id == ride.id){
+                ride._doc.rating = rating; 
+                break; 
             }
         }
     }
-    res.json({ 'status': true, 'data': result })
-})
+    // Send response with status and data
+    res.json({ 'status': true, 'data': result });
+});
 
+/** ------------------------------------------------------  
+ * @desc make request for loading
+ * @route /new-loading-request
+ * @method post
+ * @returns {status}
+ /**  ------------------------------------------------------  */
 export const makeRequestForLoading = asyncWrapper( async (req, res, next) => {
         const { language } = req.headers
 
         const { category_id, receipt_point, delivery_point, desc, price, time, phone } = req.body
 
-        const user = await user_model.findById(req.user.id).select('country_code')
-
-        if (!user) return next({ 'status': 404, 'message': language == 'ar' ? 'لم يتم العثور على المستخدم' : 'The User is not Exist' })
-
-        const category = await sub_category_model.findById(category_id).select('name_ar name_en')
-
-        if (!category) return next({ 'status': 404, 'message': language == 'ar' ? 'لم يتم العثور على القسم' : 'The Category is not Exist' })
-
-        const object = new loading_trip_model({
+        const [user, category] = await Promise.all([
+            // get user whose request for loading and category
+            user_model.findById(req.user.id).select('country_code'),
+            sub_category_model.findById(category_id).select('name_ar name_en')
+        ]);
+    
+        if (!user) return next({ status: 404, message: language === 'ar' ? 'لم يتم العثور على المستخدم' : 'The User is not Exist' });
+        if (!category) return next({ status: 404, message: language === 'ar' ? 'لم يتم العثور على القسم' : 'The Category is not Exist' });
+    
+        // create loading trip using user_id and category after checking
+        const loadingTrip = await loading_trip_model.create({
             user_id: req.user.id,
             category_id,
             receipt_point,
-            delivery_point, desc, price, time,
-        })
-
-        const loadingTrip = await object.save()
-
-
-        const titleAr = 'طلب جديد'
-        const titleEn = 'New Request'
-        const bodyEn = `${category.name_en} Loading from ${receipt_point} to ${delivery_point} , Description ${desc}, Date ${time}, price offer ${price}`
-        const bodyAr = `تحميلة ${category.name_ar} من ${receipt_point} الى ${delivery_point}, الوصف ${desc}, الميعاد ${time}, عرض سعر ${price}`
-
-        var count = 0
-
+            delivery_point,
+            desc,
+            price,
+            time,
+        });
+        console.log("first",loadingTrip);
+        //  cashback  logic for request loading 
         requestCashBack(req.user.id, language)
+        // get riders from loading model
+        const riders = await loading_model.find({
+            is_active: true,
+            is_approved: true,
+            country_code: user.country_code,
+            category_id,
+            user_id: { $ne: req.user.id }
+        }).limit(100).select('user_id');
+        console.log("second",riders);
 
-        while (count != -1) {
-
-            const riders = await loading_model.find({
-                is_active: true,
-                is_approved: true,
-                country_code: user.country_code,
-                category_id,
-                user_id: { $ne: req.user.id }
-            }).skip((count * 100)).limit(100).select('user_id')
-
-
-            for (const rider of riders) {
-
-                const notificationObject = new notification_model({
-                    receiver_id: rider.user_id,
-                    user_id: req.user.id,
-                    sub_category_id: category_id,
-                    tab: 2,
-                    text_ar: bodyAr,
-                    text_en: bodyEn,
-                    direction: loadingTrip.id,
-                    main_category_id: loadingCategoryId,
-                    type: 10004,
-                    phone,
-                })
-
-                notificationObject.save()
-
-                Promise.all([
-                    user_model.findById(rider.user_id).select('language'),
-                    auth_model.find({ 'user_id': rider.user_id }).distinct('fcm'),
-                ]
-                ).then(r => {
-                    const user = r[0]
-                    const fcm = r[1]
-                    sendNotifications(fcm, user.language == 'ar' ? titleAr : titleEn, user.language == 'ar' ? bodyAr : bodyEn, 10004)
-                })
-            }
-
-            if (riders.length == 100) count++
-            else count = -1
-        }
+        const MessageUserRequestEn = `${category.name_en} Loading from ${receipt_point} to ${delivery_point} , Description ${desc}, Date ${time}, price offer ${price}`
+        const MessageUserRequestAr = `تحميلة ${category.name_ar} من ${receipt_point} الى ${delivery_point}, الوصف ${desc}, الميعاد ${time}, عرض سعر ${price}`
+        // process notifications with riders
+        const notificationObjects = riders.map(rider => ({
+            receiver_id: rider.user_id,
+            user_id: req.user.id,
+            sub_category_id: category_id,
+            tab: 2,
+            text_ar: MessageUserRequestAr,
+            text_en: MessageUserRequestEn,
+            direction: loadingTrip.id,
+            main_category_id: loadingCategoryId,
+            type: 10004,
+            phone,
+        }));
+        console.log("third",notificationObjects);
+        // Save notifications in one process using insertMany
+        const notification = await notification_model.insertMany(notificationObjects);
+        console.log("fourth",notification);
+        // Send notifications asynchronously
+        await Promise.all(riders.map(async rider => {
+            const [user, fcmTokens] = await Promise.all([
+                // get language for rider 
+                user_model.findById(rider.user_id).select('language'),
+                //and get fcm for notification in mobile 
+                auth_model.find({ 'user_id': rider.user_id }).distinct('fcm')
+            ]);
+            const [title, body] = user.language === 'ar' ? ['طلب جديد', notificationObjects[0].text_ar] : ['New Request', notificationObjects[0].text_en];
+            console.log("fifth",title, body);
+            sendNotifications(fcmTokens, title, body, 10004);
+        }));
         res.json({
             'status': true,
         })
 })
 
+/** ------------------------------------------------------  
+ * @desc send loading offer
+ * @route /send-loading-offer
+ * @method post
+ * @returns {status}
+ * @desc adId is advertisement id
+ /**  ------------------------------------------------------  */
 export const sendLoadingOffer = asyncWrapper( async (req, res, next) => {
         const { language } = req.headers
-
         const { adId, price } = req.body
-        // get user sign in
-        const user = await user_model.findById(req.user.id).select('first_name profile_picture')
 
+        const [user, ad]= await Promise.all([
+            //get rider info
+             user_model.findById(req.user.id).select('first_name profile_picture'),
+            // get advertisement data
+             loading_trip_model.findOne({ _id: adId, is_completed: false })
+        ])
         if (!user) return next({ 'status': 404, 'message': language == 'ar' ? 'لم يتم العثور على السمتخدم' : 'The User is not Exist' })
-        // get advertisement data
-        const ad = await loading_trip_model.findOne({ _id: adId, is_completed: false })
-
         if (!ad) return next({ 'status': 404, 'message': language == 'ar' ? 'لم يتم العثور على الاعلان' : 'The Ad is not Exist' })
-        // get rider data 
+
+        // check if rider exit in loading_model
         const rider = await loading_model.findOne({ user_id: req.user.id, is_approved: true, is_active: true, category_id: ad.category_id })
 
         if (!rider) return next({ 'status': 404, 'message': language == 'ar' ? 'لم يتم العثور على البيانات' : 'The Data is not Exist' })
 
-        const titleAr = 'عرض سعر جديد'
-        const titleEn = 'New Offer'
-        const bodyEn = `New Offer (${ad.delivery_point}), From ${user.first_name}, price offer ${price}, rating ${rider.rating}`
-        const bodyAr = `عرض جديد ${ad.delivery_point} ,من ${user.first_name},عرض السعر ${price}, التقييم ${rider.rating}`
+        const NewOfferMessageEN = `New Offer (${ad.delivery_point}), From ${user.first_name}, price offer ${price}, rating ${rider.rating}`
+        const NewOfferMessageAr = `عرض جديد ${ad.delivery_point} ,من ${user.first_name},عرض السعر ${price}, التقييم ${rider.rating}`
 
-
-        const notificationObject = new notification_model({
+        // create notification model
+        const notificationObject = await  notification_model.create({
             receiver_id: ad.user_id,
             user_id: req.user.id,
             sub_category_id: ad.category_id,
             tab: 2,
-            text_ar: bodyAr,
-            text_en: bodyEn,
+            text_ar: NewOfferMessageAr,
+            text_en: NewOfferMessageEN,
             direction: ad.id,
             main_category_id: loadingCategoryId,
             type: 10005,
@@ -151,18 +175,17 @@ export const sendLoadingOffer = asyncWrapper( async (req, res, next) => {
             request_price: price,
             phone: rider.phone,
         })
+        console.log("first" , notificationObject);
 
-        notificationObject.save()
-
-        Promise.all([
+        // send notification for user who send request loading
+        const [adUser, fcmTokens] = await Promise.all([
             user_model.findById(ad.user_id).select('language'),
-            auth_model.find({ 'user_id': ad.user_id }).distinct('fcm'),
-        ]
-        ).then(r => {
-            const user = r[0]
-            const fcm = r[1]
-            sendNotifications(fcm, user.language == 'ar' ? titleAr : titleEn, user.language == 'ar' ? bodyAr : bodyEn, 10005)
-        })
+            auth_model.find({ 'user_id': ad.user_id }).distinct('fcm')
+        ]);
+
+        console.log("second",adUser, fcmTokens);
+        // Send notifications 
+        sendNotifications(fcmTokens, adUser.language === 'ar' ? 'عرض سعر جديد' : 'New Offer', adUser.language === 'ar' ? NewOfferMessageAr : NewOfferMessageEN, 10005);
         res.json({ 'status': true })
 })
 
@@ -170,7 +193,7 @@ export const acceptLoadingOffer = asyncWrapper(async (req, res, next) => {
         const { language } = req.headers
 
         const { adId, notificationId } = req.body
-
+        console.log("here");
         const ad = await loading_trip_model.findOne({ _id: adId, user_id: req.user.id })
 
         if (!ad) return next({ 'status': 404, 'message': language == 'ar' ? 'لم يتم العثور على الاعلان' : 'The Ad is not Exist' })
@@ -305,3 +328,5 @@ export const getAllUserLoading = asyncWrapper(async (req, res, next) => {
 
         res.json({ 'status': true, 'data': result })
 })
+
+
