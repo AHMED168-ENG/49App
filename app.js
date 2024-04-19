@@ -1,60 +1,63 @@
-import express from 'express';
-import createError from 'http-errors';
-import morgan from 'morgan';
-import mongoose from 'mongoose'
+import express from "express";
+import createError from "http-errors";
+import morgan from "morgan";
+import mongoose from "mongoose";
 import firebaseAdmin from "firebase-admin";
-import dynamic_prop_model from './models/dynamic_prop_model.js';
-import { runEvery12AM, checkUsersBalanceStorage, calcFiveAndTenYears } from './controllers/cron_controller.js';
-import cron from 'node-cron';
-import http from 'http';
-import path from 'path';
-import { fileURLToPath } from 'url';
-import dontenv from 'dotenv'
+import dynamic_prop_model from "./models/dynamic_prop_model.js";
+import {
+  runEvery12AM,
+  checkUsersBalanceStorage,
+  calcFiveAndTenYears,
+} from "./controllers/cron_controller.js";
+import cron from "node-cron";
+import http from "http";
+import path from "path";
+import { fileURLToPath } from "url";
+import dontenv from "dotenv";
 
-import auth from './routes/auth.js'
-import profile from './routes/user_profile.js'
-import ads from './routes/ad.js'
-import favorites from './routes/favorite.js'
-import notifications from './routes/notification.js'
-import cashBack from './routes/cash_back.js'
-import subscriptions from './routes/subscription.js'
-import payment from './routes/payment.js'
-import addressRoute from './routes/address.js'
+import auth from "./routes/auth.js";
+import profile from "./routes/user_profile.js";
+import ads from "./routes/ad.js";
+import favorites from "./routes/favorite.js";
+import notifications from "./routes/notification.js";
+import cashBack from "./routes/cash_back.js";
+import subscriptions from "./routes/subscription.js";
+import payment from "./routes/payment.js";
+import addressRoute from "./routes/address.js";
 
-import ride from './routes/services/ride.js'
-import food from './routes/services/food.js'
-import health from './routes/services/health.js'
+import ride from "./routes/services/ride.js";
+import food from "./routes/services/food.js";
+import health from "./routes/services/health.js";
 
-import loading from './routes/services/loading.js'
-import posts from './routes/social/post.js'
-import categories from './routes/categories.js'
+import loading from "./routes/services/loading.js";
+import posts from "./routes/social/post.js";
+import categories from "./routes/categories.js";
 
-import report from './routes/social/report.js'
-import search from './routes/social/search.js'
-import peerProfile from './routes/social/peer_profile.js'
-import hiddenOpinion from './routes/social/hidden_opinion.js'
-import list from './routes/social/list.js'
-import tinder from './routes/social/tinder.js'
-import gift from './routes/social/gift.js'
-import reel from './routes/social/reel.js'
-import appRadio from './routes/app_radio.js'
+import report from "./routes/social/report.js";
+import search from "./routes/social/search.js";
+import peerProfile from "./routes/social/peer_profile.js";
+import hiddenOpinion from "./routes/social/hidden_opinion.js";
+import list from "./routes/social/list.js";
+import tinder from "./routes/social/tinder.js";
+import gift from "./routes/social/gift.js";
+import reel from "./routes/social/reel.js";
+import appRadio from "./routes/app_radio.js";
 
-import chat from './routes/social/chat.js'
-import contests from './routes/contests.js'
+import chat from "./routes/social/chat.js";
+import contests from "./routes/contests.js";
 
-import dashboardAuth from './routes/dashboard/auth.js'
-import dashboardSuperAdmin from './routes/dashboard/super_admin.js'
-import dashboardAdmin from './routes/dashboard/admin.js'
-import { getPublicIPAddress } from './helper.js';
-import payout from './routes/payout.js'
-import { calculateWithPaymob } from './controllers/accounts_controller.js';
-import { rideCategoryId } from './controllers/ride_controller.js';
-import rider_model from './models/rider_model.js';
-import user_model from './models/user_model.js';
-import { sendNotification } from './controllers/notification_controller.js';
-import come_with_me_ride_model from './models/come_with_me_ride_model.js';
-import pick_me_ride_model from './models/pick_me_ride_model.js';
-
+import dashboardAuth from "./routes/dashboard/auth.js";
+import dashboardSuperAdmin from "./routes/dashboard/super_admin.js";
+import dashboardAdmin from "./routes/dashboard/admin.js";
+import { getPublicIPAddress } from "./helper.js";
+import payout from "./routes/payout.js";
+import { calculateWithPaymob } from "./controllers/accounts_controller.js";
+import { rideCategoryId } from "./controllers/ride_controller.js";
+import rider_model from "./models/rider_model.js";
+import user_model from "./models/user_model.js";
+import { sendNotification } from "./controllers/notification_controller.js";
+import come_with_me_ride_model from "./models/come_with_me_ride_model.js";
+import pick_me_ride_model from "./models/pick_me_ride_model.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -64,87 +67,85 @@ const server = http.createServer(app);
 
 const serviceAccount = __dirname + "/serviceAccountKey.json";
 
-dontenv.config()
+dontenv.config();
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
-app.use(morgan('dev'));
-app.set('views', path.join(__dirname, 'views')); 
-app.set('view engine', 'ejs');
+app.use(morgan("dev"));
+app.set("views", path.join(__dirname, "views"));
+app.set("view engine", "ejs");
 
-mongoose.connect(process.env.MONGODB_URI,
-  {
+mongoose
+  .connect(process.env.MONGODB_URI_REFACTOR, {
     useNewUrlParser: true,
     useUnifiedTopology: false,
   })
   .then(() => {
-    console.log('Database Connected')
+    console.log("Database Connected");
 
     //user_model.updateMany({}, { is_online: false }).exec()
 
-    cron.schedule('0 0 * * *', async () => {
-      console.log('Cron 12 AM is Running')
-      await runEvery12AM()
-      await checkUsersBalanceStorage()
-      console.log('Cron 12 AM is Finished')
-    })
-
-    cron.schedule('0 12 * * *', async () => {
-      console.log('Cron 12 PM is Running')
-      await checkUsersBalanceStorage()
-      console.log('Cron 12 PM is Finished')
-    })
-
-    cron.schedule("0 0 1 * *", async () => { // every Month
-      console.log('Cron Every Month is Running')
-      await calcFiveAndTenYears()
-      console.log('Cron Every Month is Finished')
+    cron.schedule("0 0 * * *", async () => {
+      console.log("Cron 12 AM is Running");
+      await runEvery12AM();
+      await checkUsersBalanceStorage();
+      console.log("Cron 12 AM is Finished");
     });
 
-    getPublicIPAddress()
-    test()
+    cron.schedule("0 12 * * *", async () => {
+      console.log("Cron 12 PM is Running");
+      await checkUsersBalanceStorage();
+      console.log("Cron 12 PM is Finished");
+    });
 
+    cron.schedule("0 0 1 * *", async () => {
+      // every Month
+      console.log("Cron Every Month is Running");
+      await calcFiveAndTenYears();
+      console.log("Cron Every Month is Finished");
+    });
 
-  }).catch((e) => {
-    console.error(e)
+    getPublicIPAddress();
+    test();
+  })
+  .catch((e) => {
+    console.error(e);
   });
 
 firebaseAdmin.initializeApp({
-  credential: firebaseAdmin.credential.cert(serviceAccount)
+  credential: firebaseAdmin.credential.cert(serviceAccount),
 });
 
-app.use('/auth', auth);
-app.use('/profile', profile);
-app.use('/ads', ads);
-app.use('/favorites', favorites);
-app.use('/notifications', notifications);
-app.use('/cash-back', cashBack);
-app.use('/subscriptions', subscriptions);
-app.use('/payment', payment);
-app.use('/address', addressRoute);
+app.use("/auth", auth);
+app.use("/profile", profile);
+app.use("/ads", ads);
+app.use("/favorites", favorites);
+app.use("/notifications", notifications);
+app.use("/cash-back", cashBack);
+app.use("/subscriptions", subscriptions);
+app.use("/payment", payment);
+app.use("/address", addressRoute);
 
-
-app.use('/social/report', report);
-app.use('/social/search', search);
-app.use('/social/profile', peerProfile);
-app.use('/social/hidden-opinions', hiddenOpinion);
-app.use('/social/lists', list);
-app.use('/social/tinder', tinder);
-app.use('/social/gift', gift);
-app.use('/social/posts', posts);
+app.use("/social/report", report);
+app.use("/social/search", search);
+app.use("/social/profile", peerProfile);
+app.use("/social/hidden-opinions", hiddenOpinion);
+app.use("/social/lists", list);
+app.use("/social/tinder", tinder);
+app.use("/social/gift", gift);
+app.use("/social/posts", posts);
 //app.use('/social/reels', reel);
-app.use('/social/chat', chat);
+app.use("/social/chat", chat);
 
+app.use("/services/ride", ride);
+app.use("/services/loading", loading);
+app.use("/services/food", food);
+app.use("/services/health", health);
 
-app.use('/services/ride', ride);
-app.use('/services/loading', loading);
-app.use('/services/food', food);
-app.use('/services/health', health);
-
-app.use('/categories', categories);
-app.use('/app-radio', appRadio);
-app.use('/payout', payout);
-app.use('/contests', contests);
+app.use("/categories", categories);
+app.use("/app-radio", appRadio);
+app.use("/payout", payout);
+app.use("/contests", contests);
 
 // app.use('/dashboard/', (req, res, next) => {
 
@@ -157,26 +158,24 @@ app.use('/contests', contests);
 //   }
 // })
 
-app.use('/dashboard/auth', dashboardAuth)
-app.use('/dashboard/super-admin', dashboardSuperAdmin)
-app.use('/dashboard/admin', dashboardAdmin)
-app.use(express.static(__dirname + '/public'))
+app.use("/dashboard/auth", dashboardAuth);
+app.use("/dashboard/super-admin", dashboardSuperAdmin);
+app.use("/dashboard/admin", dashboardAdmin);
+app.use(express.static(__dirname + "/public"));
 
 app.use((req, res, next) => {
   next(createError.NotFound());
 });
 
 app.use((err, req, res, next) => {
-  if (err == 'Bad Request') res.status(400)
-  else
-    res.status(err.status || 500);
+  if (err == "Bad Request") res.status(400);
+  else res.status(err.status || 500);
   res.send({
     status: false,
     message: err.message ?? err,
   });
 });
 async function test() {
-
   //likeCashBack('62ee88aa1f14ec01e8dff4a0')
   /*const result = await sub_category_model.find({ parent: '62c8b5b09332225799fe335c' })
 
@@ -199,7 +198,6 @@ async function test() {
       index++
     }
   })*/
-
   /*const mainCategories = await main_category_model.find({}).sort('index').select('name_ar index')
 
   for (const mainCategory of mainCategories) {
@@ -216,7 +214,6 @@ async function test() {
     }
 
   }*/
-
   /*for (var i = 1; i < 121; i++) {
 
     console.log(i)
@@ -237,7 +234,6 @@ async function test() {
     }
     await calcFiveAndTenYears()
   }*/
-
   /*const startBalances = [20]
 
   for (var i = 0; i < 119; i++) {
