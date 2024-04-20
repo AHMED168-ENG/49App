@@ -14,7 +14,7 @@ import {
   deleteRestaurantItem,
   getRestaurantsCategory,
   updateRestaurantItem,
-  updateRestaurantInfo
+  updateRestaurantInfo,
 } from "../../controllers/food/restuarant_controller.js";
 import {
   createOrder,
@@ -39,6 +39,7 @@ const router = express.Router();
 router.use(verifyToken);
 
 router.get("/restaurants/:categoryId", getRestaurantsCategory);
+router.get("/food-items/:restaurantId", getRestaurantItems);
 router.get("/get-restaurant-orders", getRestaurantOrders);
 router.get("/get-restaurant/:id", getRestaurantById);
 router.get("/get-user-orders", getUserOrders);
@@ -63,19 +64,18 @@ router.delete("/delete-food-item", deleteRestaurantItem);
 router.delete("/delete-rating", deleteRateOrder);
 
 router.put(
-  "/update_restaurant_info",
+  "/update-restaurant-info",
   validationUpdateRestaurant(),
   handel_validation_errors,
   updateRestaurantInfo
 );
 
 router.put(
-  "/update-info",
+  "/update-restuarant-item/:id",
   validationUpdateRestaurantItem(),
   handel_validation_errors,
   updateRestaurantItem
 );
-
 
 /*-------------------Note-------------------
  * Need discussion with team
@@ -96,23 +96,6 @@ router.get("/foods", async (req, res, next) => {
     next(e);
   }
 });
-/*-------------------Note-------------------
- * Need discussion with team
-/*-----------------------------------------*/
-router.get("/food-items/:restaurantId", async (req, res, next) => {
-  try {
-    const result = await food_model.find({
-      restaurant_id: req.params.restaurantId,
-      is_approved: true,
-    });
-    res.json({
-      status: true,
-      data: result,
-    });
-  } catch (e) {
-    console.log(e);
-    next(e);
-  }
-});
+
 
 export default router;

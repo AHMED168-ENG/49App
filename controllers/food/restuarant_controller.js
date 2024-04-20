@@ -9,7 +9,7 @@ import rating_model from "../../models/rating_model.js";
 import sub_category_model from "../../models/sub_category_model.js";
 import main_category_model from "../../models/main_category_model.js";
 
-const updatedInfo = (body, fields) => {
+const filterFieldsForUpdate = (body, fields) => {
   const updateObject = {};
   fields.forEach((field) => {
     if (body[field]) updateObject[field] = body[field];
@@ -104,7 +104,8 @@ export const createRestuarant = asyncWrapper(async (req, res, next) => {
  * @method put
  * @access private
  * @data {category_id, name, location, work_from, work_to, available_day, pictures}
- * @return {status}
+ * @Warning at least one field is required
+ * @return {status , new data}
  * ------------------------------------------------------ */
 export const updateRestaurantInfo = asyncWrapper(async (req, res, next) => {
   // -> 1) Get the language from the request headers
@@ -143,27 +144,30 @@ export const updateRestaurantInfo = asyncWrapper(async (req, res, next) => {
     is_premium: true,
   });
 
-  const fields = Object.keys(result._doc).filter(
-    (field) => !["_id", "user_id", "createdAt", "updatedAt"].includes(field)
-  );
-
-  console.log(fields);
+  const fields = Object.keys(req.body);
 
   // -> 7) Update the restaurant object
-  // const updateObject = updatedInfo(req.body, subscription);
+  const updateObject = filterFieldsForUpdate(req.body, fields);
 
-  // // -> 8) Update the restaurant object
-  // await restaurant_model.updateOne({ user_id: req.user.id }, updateObject);
+  subscription && (updateObject.is_premium = true);
 
-  // // -> 9) Return the response
-  // res.json({
-  //   status: true,
-  // });
+  // -> 8) Update the restaurant object
+  const updatedRestaurant = await restaurant_model.findOneAndUpdate(
+    { user_id: req.user.id },
+    updateObject,
+    { new: true }
+  );
 
-  // // -> 10) Update the user model to set the is_restaurant field to true
-  // await user_model
-  //   .updateOne({ _id: req.user.id }, { is_restaurant: true })
-  //   .exec();
+  // -> 9) Return the response
+  res.json({
+    status: true,
+    data: updatedRestaurant,
+  });
+
+  // -> 10) Update the user model to set the is_restaurant field to true
+  await user_model
+    .updateOne({ _id: req.user.id }, { is_restaurant: true })
+    .exec();
 });
 
 /** ------------------------------------------------------
@@ -224,7 +228,7 @@ export const deleteRestuarant = asyncWrapper(async (req, res, next) => {
  * ------------------------------------------------------ */
 export const getRestaurantById = asyncWrapper(async (req, res, next) => {
   // -> 1) Get the language from the request headers
-  const { language } = req.headers;
+  const { language } = req.headers || "en";
 
   // -> 2) Find the restaurant by id
   const result = await restaurant_model
@@ -321,7 +325,7 @@ export const getRestaurantById = asyncWrapper(async (req, res, next) => {
  * ------------------------------------------------------ */
 export const getRestaurantsCategory = asyncWrapper(async (req, res, next) => {
   // -> 1) Get the language from the request headers
-  const { language } = req.headers;
+  const { language } = req.headers || "en";
 
   // -> 2) Get the page number from the query /*Required for pagination*/
   const { page } = req.query;
@@ -444,47 +448,8 @@ export const getRestaurantsCategory = asyncWrapper(async (req, res, next) => {
  * @return {status, data}
  * ------------------------------------------------------ */
 export const addRestaurantItem = asyncWrapper(async (req, res, next) => {
-  const { language } = req.headers;
-
-  const { name, desc, price, picture } = req.body;
-
-  const restaurant = await restaurant_model
-    .findOne({ user_id: req.user.id, is_approved: true, is_active: true })
-    .select("_id category_id");
-
-  if (!restaurant)
-    return next({
-      status: 404,
-      message:
-        language == "ar" ? "المطعم غير موجود" : "The Restaurant is Not Exist",
-    });
-
-  const result = await food_model.create({
-    restaurant_id: restaurant.id,
-    category_id: restaurant.category_id,
-    name,
-    desc,
-    price,
-    picture,
-  });
-
-  return res.json({
-    status: true,
-    data: result,
-  });
-});
-
-/** ------------------------------------------------------
- * @desc update restaurant info
- * @route /services/food/update-info
- * @method post
- * @access private
- * @data {name, desc, price, picture}
- * @return {status, data}
- * ------------------------------------------------------ */
-export const updateRestaurantItem = asyncWrapper(async (req, res, next) => {
   // -> 1) Get the language from the request headers
-  const { language } = req.headers;
+  const { language } = req.headers || "en";
 
   // -> 2) Extract the data from the request body
   const { name, desc, price, picture } = req.body;
@@ -512,6 +477,53 @@ export const updateRestaurantItem = asyncWrapper(async (req, res, next) => {
     picture,
   });
 
+  // -> 6) Return the response
+  return res.json({
+    status: true,
+    data: result,
+  });
+});
+
+/** ------------------------------------------------------
+ * @desc update restaurant item
+ * @route /services/food/update-info/:id
+ * @method post
+ * @access private
+ * @data {name, desc, price, picture}
+ * @Warning at least one field is required
+ * @Warning Need to change a path to get id from params
+ * @return {status, new data}
+ * ------------------------------------------------------ */
+export const updateRestaurantItem = asyncWrapper(async (req, res, next) => {
+  // -> 1) Get the language from the request headers
+  const { language } = req.headers || "en";
+
+  // -> 3) Check if the user is already registered as a restaurant
+  const restaurant = await restaurant_model
+    .findOne({ user_id: req.user.id, is_approved: true, is_active: true })
+    .select("_id category_id");
+
+  // -> 4) If the user is not registered as a restaurant, return an error
+  if (!restaurant)
+    return next({
+      status: 404,
+      message:
+        language == "ar" ? "المطعم غير موجود" : "The Restaurant is Not Exist",
+    });
+
+  // -> 5) Extract the data from the request body
+  const fields = Object.keys(req.body);
+
+  // -> 6) Update the restaurant object
+  const updateObject = filterFieldsForUpdate(req.body, fields);
+
+  // -> 5) Create a new food object
+  const result = await food_model.findOneAndUpdate(
+    { _id: req.params.id, restaurant_id: restaurant.id },
+    updateObject,
+    { new: true }
+  );
+
   // -> 7) Return the response
   return res.json({
     status: true,
@@ -521,7 +533,7 @@ export const updateRestaurantItem = asyncWrapper(async (req, res, next) => {
 
 /** ------------------------------------------------------
  * @desc get foods
- * @route /services/food/foods
+ * @route /services/food/food-items/:restaurantId
  * @method get
  * @access private
  * @data {}
@@ -529,11 +541,11 @@ export const updateRestaurantItem = asyncWrapper(async (req, res, next) => {
  * ------------------------------------------------------ */
 export const getRestaurantItems = asyncWrapper(async (req, res, next) => {
   // -> 1) Get the language from the request headers
-  const { language } = req.headers;
+ const { language } = req.headers || "en";
 
   // -> 2) Find the restaurant by user id
   const restaurant = await restaurant_model
-    .findOne({ user_id: req.user.id, is_approved: true, is_active: true })
+    .findOne({ _id: req.params.restaurantId })
     .select("_id");
 
   // -> 3) If the restaurant is not found, return an error
@@ -558,22 +570,20 @@ export const getRestaurantItems = asyncWrapper(async (req, res, next) => {
 
 /** ------------------------------------------------------
  * @desc delete food
- * @route /services/food/delete-food-item
+ * @route /services/food/delete-food-item/:id
  * @method delete
  * @access private
- * @data {id}
+ * @data {}
  * @return {status}
  * ------------------------------------------------------ */
 export const deleteRestaurantItem = asyncWrapper(async (req, res, next) => {
-  const language = req.language;
-  const { id } = req.body;
+  // -> 1) Get the language from the request headers
+ const { language } = req.headers || "en";
+ 
+  // -> 2) Extract the id from the request params
+  const { id } = req.params;
 
-  if (!id)
-    return next({
-      status: 400,
-      message: language == "ar" ? "ادخل البيانات" : "Enter Data",
-    });
-
+  // -> 3) Find the restaurant by user id
   const restaurant = await restaurant_model
     .findOne({ user_id: req.user.id })
     .select("_id");
@@ -582,7 +592,7 @@ export const deleteRestaurantItem = asyncWrapper(async (req, res, next) => {
 
   const result = await food_model.findOneAndDelete({
     _id: id,
-    restaurant_id: req.user.id,
+    restaurant_id: restaurant.id,
   });
 
   res.json({
