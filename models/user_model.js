@@ -34,7 +34,7 @@ const schema = new mongoose.Schema({
     job: { type: String, default: '' },
     language: { type: String, default: 'en' },
     currency: { type: String, default: 'EGP' },
-    country_code: { type: String, defualt: 'EG' },
+    country_code: { type: String, default: 'EG' },
 
     social_status: { type: Number, default: 0 },
 
@@ -95,6 +95,8 @@ schema.methods.toJSON = function () {
     delete user.password
     return user
 }
+
+
 
 schema.plugin(mongooseAggregatePaginate);
 schema.plugin(mongoosePaginate);
