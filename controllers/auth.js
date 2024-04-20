@@ -219,6 +219,7 @@ export const register = async (req, res, next) => {
             fName : body.first_name,
             lName : body.last_name,
             subject : "welcome in 49App as user account",
+
         })
       return res.status(httpStatus.CREATED).json({ data : {
         user,
