@@ -10,13 +10,11 @@ const oauth2Client = new OAuth2(
   "https://developers.google.com/oauthplayground",
 );
 
-
-oauth2Client.setCredentials({
-  refresh_token: "1//04AruWOtl-2SlCgYIARAAGAQSNwF-L9Ir1TG8Q8nxj77AIvz-n5PRRhjCoTuUJrdMiG7civftpfe70hXy75iMafLcu4ZUGn-mGlw"
-});
 export async function SendMails(data) {
-  const access_token = await oauth2Client.getAccessToken()
-  console.log(access_token.token)
+  oauth2Client.setCredentials({
+    refresh_token:process.env.REFRESH_TOKEN
+  });
+
     let transporter = nodemailer.createTransport({
         service:process.env.NODEMAILER_SERVICE,
         auth: {
@@ -24,8 +22,8 @@ export async function SendMails(data) {
           user: process.env.NODEMAILER_USERNAME,
           clientId: process.env.CLIENT_ID,
           clientSecret: process.env.CLIENT_SECRET,
-          accessToken : access_token.token,
-          refresh_token: "1//04AruWOtl-2SlCgYIARAAGAQSNwF-L9Ir1TG8Q8nxj77AIvz-n5PRRhjCoTuUJrdMiG7civftpfe70hXy75iMafLcu4ZUGn-mGlw"
+          refresh_token: process.env.REFRESH_TOKEN,
+          accessToken : "ya29.a0Ad52N39KxiWDcEfZ5BNhBI_Zw5H2LkK5O_iOoyaTQfaJ85eli4v6-k058A_XmmUE-aiMgrgz_rbcdq658D9VMaBk8PjWQxdtUt6maWB72PyGp80u2eYG_FBOvHxwBxn0XqZE0_FhywTSc6Gg2z7ffi9ZShX26QOxPexnaCgYKARYSARISFQHGX2MiehWDnSY78VORCZpxXC91Xw0171",
         },
         tls: {
           rejectUnauthorized: false
