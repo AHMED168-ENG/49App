@@ -1,39 +1,68 @@
-import express from 'express'
-import handel_validation_errors from '../middleware/handelBodyError.js';
-import { checkOtp, forgetPassword, login, refererGift, register, resetPassword, socialLogin, welcomeGift } from '../controllers/auth.js';
-import { checkOtpValidation, createUserValidation, forgetPasswordValidation, loginUserValidation, resetPasswordValidation } from '../validation/user.js';
-import { SendMails } from '../gmail/mail.js';
+import express from "express";
+import handel_validation_errors from "../middleware/handelBodyError.js";
+import {
+  registerController,
+  verifyEmailController,
+  loginController,
+  refreshTokenController,
+  checkOtp,
+  forgetPassword,
+  refererGift,
+  resetPassword,
+  socialLogin,
+  welcomeGift,
+} from "../controllers/auth.js";
+import {
+  checkOtpValidation,
+  forgetPasswordValidation,
+  resetPasswordValidation,
+} from "../validation/user.js";
+import {
+  validateLoginInput,
+  validateRefreshTokenInput,
+  validateRegisterInput,
+  validateVerifyEmailInput,
+} from "../validation/auth.js";
 
-const router = express.Router()
+const router = express.Router();
 
-router.post("/login" , loginUserValidation() , handel_validation_errors , login);
-router.post("/register" , createUserValidation() , handel_validation_errors, register);
+router.post("/register", validateRegisterInput, registerController);
+
+router.post("/verify/email", validateVerifyEmailInput, verifyEmailController);
+
+router.post("/login", validateLoginInput, loginController);
 
 router.post(
-    "/forget-password", 
-    forgetPasswordValidation(),
-    handel_validation_errors,
-    forgetPassword
-)
+  "/refresh/token",
+  validateRefreshTokenInput,
+  refreshTokenController
+);
 
 router.post(
-    "/verify-otp", 
-    checkOtpValidation(),
-    handel_validation_errors,
-    checkOtp
-)
+  "/forget-password",
+  forgetPasswordValidation(),
+  handel_validation_errors,
+  forgetPassword
+);
 
 router.post(
-    "/reset-password", 
-    resetPasswordValidation(),
-    handel_validation_errors,
-    resetPassword
-)
+  "/verify-otp",
+  checkOtpValidation(),
+  handel_validation_errors,
+  checkOtp
+);
 
-router.post('/social-login', socialLogin)
+router.post(
+  "/reset-password",
+  resetPasswordValidation(),
+  handel_validation_errors,
+  resetPassword
+);
 
-router.get('/welcome-gift', welcomeGift)
+router.post("/social-login", socialLogin);
 
-router.get('/referral-gift', refererGift)
+router.get("/welcome-gift", welcomeGift);
 
-export default router
+router.get("/referral-gift", refererGift);
+
+export default router;
