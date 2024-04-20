@@ -17,9 +17,14 @@ import {
   deleteRating,
 } from "../../controllers/health/rating_controller.js";
 import {
+  createBookValidation,
   createDoctorValidation,
+  createRatingValidation,
+  deleteRatingValidation,
+  getDoctorBooksValidation,
   getDoctorsByCategoryValidation,
   getDoctorsByIdValidation,
+  getUserBooksValidation,
   updateDocPictureValidation,
   updateDoctorValidation,
 } from "../../validation/health.js";
@@ -48,9 +53,9 @@ router.post(
 *@method  DELETE
 *@access private delete doctor
  /**  ------------------------------------------------------ */
+
+// DO NOT HAVE VALIDATION
 router.delete("/delete-registration", verifyToken, deleteDoctor);
-
-
 
 /** ------------------------------------------------------
 *@route update doctor
@@ -65,7 +70,6 @@ router.put(
   handel_validation_errors,
   updateDoctor
 );
-
 
 /** ------------------------------------------------------
 *@route update doctor picture
@@ -82,7 +86,6 @@ router.post(
   updateDocPicture
 );
 
-
 /** ------------------------------------------------------
 *@route get doctor books
 *@route path /services/health/update-picture
@@ -90,7 +93,13 @@ router.post(
 *@access private  get doctor books
  /**  ------------------------------------------------------ */
 
-router.get("/get-doctor-books", verifyToken, getDoctorBooks);
+router.get(
+  "/get-doctor-books",
+  verifyToken,
+  getDoctorBooksValidation(),
+  handel_validation_errors,
+  getDoctorBooks
+);
 
 //************************************************************************/
 /** ------------------------------------------------------
@@ -114,8 +123,13 @@ router.get(
 *@method  post
 *@access private  create book
  /**  ------------------------------------------------------ */
-router.post("/book", verifyToken, createBook);
-
+router.post(
+  "/book",
+  verifyToken,
+  createBookValidation(),
+  handel_validation_errors,
+  createBook
+);
 
 /** ------------------------------------------------------
 *@route get user books
@@ -123,24 +137,41 @@ router.post("/book", verifyToken, createBook);
 *@method  get
 *@access private  get user books
  /**  ------------------------------------------------------ */
-router.get("/get-user-books", verifyToken, getDoctorBooks);
-
+router.get(
+  "/get-user-books",
+  verifyToken,
+  getUserBooksValidation(),
+  handel_validation_errors,
+  getDoctorBooks
+);
 
 /** ------------------------------------------------------
 *@route get delete rating
-*@route path /services/health/update-picture
+*@route path /services/health/delete-rating
 *@method  DELETE
 *@access private  delete rating
  /**  ------------------------------------------------------ */
-router.delete("/delete-rating", verifyToken, deleteRating);
+router.delete(
+  "/delete-rating",
+  verifyToken,
+  deleteRatingValidation(),
+  handel_validation_errors,
+  deleteRating
+);
 
 /** ------------------------------------------------------
-*@route get delete rating
+*@route  create rating
 *@route path /services/health/update-picture
-*@method  GET
+*@method  POST
 *@access private  delete rating
  /**  ------------------------------------------------------ */
-router.post("/rating", verifyToken, createRating);
+router.post(
+  "/rating",
+  verifyToken,
+  createRatingValidation(),
+  handel_validation_errors,
+  createRating
+);
 
 /** ------------------------------------------------------
 *@route get doctor by id
@@ -157,4 +188,3 @@ router.get(
 );
 
 export default router;
-
