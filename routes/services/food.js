@@ -8,12 +8,13 @@ import { verifyToken } from "../../helper.js";
 import {
   createRestuarant,
   deleteRestuarant,
-  updateRestaurantInfo,
   getRestaurantById,
   getRestaurantItems,
   addRestaurantItem,
   deleteRestaurantItem,
   getRestaurantsCategory,
+  updateRestaurantItem,
+  updateRestaurantInfo
 } from "../../controllers/food/restuarant_controller.js";
 import {
   createOrder,
@@ -22,6 +23,15 @@ import {
   getUserOrders,
   getRestaurantOrders,
 } from "../../controllers/food/order_controller.js";
+
+import {
+  validationRegisterRestaurant,
+  validationUpdateRestaurant,
+  validationAddRestaurantItem,
+  validationUpdateRestaurantItem,
+} from "../../validation/food_validation.js";
+
+import handel_validation_errors from "../../middleware/handelBodyError.js";
 
 const router = express.Router();
 
@@ -34,15 +44,38 @@ router.get("/get-restaurant/:id", getRestaurantById);
 router.get("/get-user-orders", getUserOrders);
 
 router.post("/rating-order", createRateOrder);
-router.post("/add-food", addRestaurantItem);
-router.post("/register", createRestuarant);
+router.post(
+  "/add-food",
+  validationAddRestaurantItem(),
+  handel_validation_errors,
+  addRestaurantItem
+);
+router.post(
+  "/register",
+  validationRegisterRestaurant(),
+  handel_validation_errors,
+  createRestuarant
+);
 router.post("/make-order", createOrder);
 
 router.delete("/delete-registration", deleteRestuarant);
 router.delete("/delete-food-item", deleteRestaurantItem);
 router.delete("/delete-rating", deleteRateOrder);
 
-router.put("/update-info", updateRestaurantInfo);
+router.put(
+  "/update_restaurant_info",
+  validationUpdateRestaurant(),
+  handel_validation_errors,
+  updateRestaurantInfo
+);
+
+router.put(
+  "/update-info",
+  validationUpdateRestaurantItem(),
+  handel_validation_errors,
+  updateRestaurantItem
+);
+
 
 /*-------------------Note-------------------
  * Need discussion with team

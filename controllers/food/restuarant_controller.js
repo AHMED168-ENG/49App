@@ -1,3 +1,5 @@
+import asyncWrapper from "../../utils/asyncWrapper.js";
+
 import user_model from "../../models/user_model.js";
 import restaurant_model from "../../models/restaurant_model.js";
 import subscription_model from "../../models/subscription_model.js";
@@ -7,6 +9,14 @@ import rating_model from "../../models/rating_model.js";
 import sub_category_model from "../../models/sub_category_model.js";
 import main_category_model from "../../models/main_category_model.js";
 
+const updatedInfo = (body, fields) => {
+  const updateObject = {};
+  fields.forEach((field) => {
+    if (body[field]) updateObject[field] = body[field];
+  });
+  return updateObject;
+};
+
 /** ------------------------------------------------------
  * @desc create restaurant
  * @route /services/food/register
@@ -15,82 +25,146 @@ import main_category_model from "../../models/main_category_model.js";
  * @data {category_id, name, location, work_from, work_to, available_day, pictures}
  * @return {status}
  * ------------------------------------------------------ */
-export const createRestuarant = async (req, res, next) => {
-  try {
-    const { language } = req.headers;
-    const {
-      category_id,
-      name,
-      location,
-      work_from,
-      work_to,
-      available_day,
-      pictures,
-    } = req.body;
-    const user = await user_model
-      .findById(req.user.id)
-      .select("_id country_code");
+export const createRestuarant = asyncWrapper(async (req, res, next) => {
+  // -> 1) Get the language from the request headers
+  const { language } = req.headers || "en";
 
-    if (!user)
-      return next({
-        status: 400,
-        message:
-          language == "ar" ? "المستخدم غير موجود" : "The User is Not Exist",
-      });
+  // -> 2) Extract the data from the request body
+  const {
+    category_id,
+    name,
+    location,
+    work_from,
+    work_to,
+    available_day,
+    pictures,
+  } = req.body;
 
-    const result = await restaurant_model.findOne({ user_id: req.user.id });
+  // -> 3) Check if the user is already registered as a restaurant
+  const user = await user_model
+    .findById(req.user.id)
+    .select("_id country_code");
 
-    if (result)
-      return next({
-        status: 400,
-        message:
-          language == "ar"
-            ? "لقد قمت بالتسجيل من قبل"
-            : "You already Registered Before",
-      });
-
-    const subscription = await subscription_model.findOne({
-      user_id: req.user.id,
-      sub_category_id: category_id,
-      is_premium: true,
+  // -> 4) If the user is not found, return an error
+  if (!user)
+    return next({
+      status: 400,
+      message:
+        language == "ar" ? "المستخدم غير موجود" : "The User is Not Exist",
     });
 
-    if (
-      !location ||
-      !name ||
-      !work_from ||
-      !work_to ||
-      !work_to ||
-      !available_day ||
-      !pictures
-    )
-      return next("Bad Request");
+  // -> 5) Check if the user is already registered as a restaurant
+  const result = await restaurant_model.findOne({ user_id: req.user.id });
 
-    const object = new restaurant_model({
-      user_id: req.user.id,
-      pictures,
-      category_id,
-      name,
-      location,
-      work_from,
-      work_to,
-      available_day: available_day.map((e) => parseInt(e)),
-      country_code: user.country_code,
-      is_premium: subscription != null,
+  // -> 6) If the user is already registered as a restaurant, return an error
+  if (result)
+    return next({
+      status: 400,
+      message:
+        language == "ar"
+          ? "لقد قمت بالتسجيل من قبل"
+          : "You already Registered Before",
     });
 
-    await object.save();
+  // -> 7) Check if the user has a premium subscription
+  const subscription = await subscription_model.findOne({
+    user_id: req.user.id,
+    sub_category_id: category_id,
+    is_premium: true,
+  });
 
-    user_model.updateOne({ _id: req.user.id }, { is_restaurant: true }).exec();
+  // -> 8) Create a new restaurant object and save it
+  await restaurant_model.create({
+    user_id: req.user.id,
+    pictures,
+    category_id,
+    name,
+    location,
+    work_from,
+    work_to,
+    available_day: available_day.map((e) => parseInt(e)),
+    country_code: user.country_code,
+    is_premium: subscription != null,
+  });
 
-    res.json({
-      status: true,
+  // -> 9) Update the user model to set the is_restaurant field to true
+  await user_model
+    .updateOne({ _id: req.user.id }, { is_restaurant: true })
+    .exec();
+
+  // -> 10) Return the response
+  res.json({
+    status: true,
+  });
+});
+
+/** ------------------------------------------------------
+ * @desc update restaurant info
+ * @route /services/food/update_restaurant_info
+ * @method put
+ * @access private
+ * @data {category_id, name, location, work_from, work_to, available_day, pictures}
+ * @return {status}
+ * ------------------------------------------------------ */
+export const updateRestaurantInfo = asyncWrapper(async (req, res, next) => {
+  // -> 1) Get the language from the request headers
+  const { language } = req.headers;
+
+  // -> 2) Check if the user is already registered as a restaurant
+  const user = await user_model
+    .findById(req.user.id)
+    .select("_id country_code");
+
+  // -> 3) If the user is not found, return an error
+  if (!user)
+    return next({
+      status: 400,
+      message:
+        language == "ar" ? "المستخدم غير موجود" : "The User is Not Exist",
     });
-  } catch (e) {
-    console.log(e);
-    next(e);
-  }
-};
+
+  // -> 4) Check if the user is already registered as a restaurant
+  const result = await restaurant_model.findOne({ user_id: req.user.id });
+
+  // -> 5) If the user is already registered as a restaurant, return an error
+  if (!result)
+    return next({
+      status: 400,
+      message:
+        language == "ar"
+          ? "لم تقم بالتسجيل كمطعم بعد"
+          : "You didn't Register as a Restaurant Yet",
+    });
+
+  // -> 6) Check if the user has a premium subscription
+  const subscription = await subscription_model.findOne({
+    user_id: req.user.id,
+    sub_category_id: result.category_id,
+    is_premium: true,
+  });
+
+  const fields = Object.keys(result._doc).filter(
+    (field) => !["_id", "user_id", "createdAt", "updatedAt"].includes(field)
+  );
+
+  console.log(fields);
+
+  // -> 7) Update the restaurant object
+  // const updateObject = updatedInfo(req.body, subscription);
+
+  // // -> 8) Update the restaurant object
+  // await restaurant_model.updateOne({ user_id: req.user.id }, updateObject);
+
+  // // -> 9) Return the response
+  // res.json({
+  //   status: true,
+  // });
+
+  // // -> 10) Update the user model to set the is_restaurant field to true
+  // await user_model
+  //   .updateOne({ _id: req.user.id }, { is_restaurant: true })
+  //   .exec();
+});
 
 /** ------------------------------------------------------
  * @desc delete restaurant
@@ -100,72 +174,45 @@ export const createRestuarant = async (req, res, next) => {
  * @data {}
  * @return {status}
  * ------------------------------------------------------ */
-export const deleteRestuarant = async (req, res, next) => {
-  try {
-    const data = await restaurant_model.findOneAndDelete({
-      user_id: req.user.id,
+export const deleteRestuarant = asyncWrapper(async (req, res, next) => {
+  // -> 1) Get the language from the request headers
+  const { language } = req.headers || "en";
+  // -> 2) Check if the user is already registered as a restaurant
+  const restaurantDeleteResult = await restaurant_model.findOneAndDelete({
+    user_id: req.user.id,
+  });
+
+  // -> 3) Return an error if the user is not registered as a restaurant
+  if (!restaurantDeleteResult)
+    return next({
+      status: 404,
+      message:
+        language == "ar" ? "المطعم غير موجود" : "The Restaurant is Not Exist",
     });
 
-    if (data) {
-      await Promise.all([
-        food_model.deleteMany({ restaurant_id: req.user.id }),
-        food_order_model.deleteMany({ restaurant_id: req.user.id }),
-        rating_model.deleteMany({
-          user_id: req.user.id,
-          category_id: data.category_id,
-        }),
-      ]);
-    }
+  // -> 4) If the user is not registered as a restaurant, return an error
+  if (restaurantDeleteResult) {
+    // Delete related data in parallel
+    await Promise.all([
+      food_model.deleteMany({ restaurant_id: req.user.id }),
+      food_order_model.deleteMany({ restaurant_id: req.user.id }),
+      rating_model.deleteMany({
+        user_id: req.user.id,
+        category_id: restaurantDeleteResult.category_id,
+      }),
+    ]);
 
-    user_model.updateOne({ _id: req.user.id }, { is_restaurant: false }).exec();
-
-    res.json({
-      status: true,
-    });
-  } catch (e) {
-    next(e);
+    // Update the user model to set the is_restaurant field to false
+    user_model
+      .updateOne({ _id: req.user.id }, { $set: { is_restaurant: false } })
+      .exec();
   }
-};
 
-/** ------------------------------------------------------
- * @desc update restaurant info
- * @route /services/food/update-info
- * @method post
- * @access private
- * @data {name, desc, price, picture}
- * @return {status, data}
- * ------------------------------------------------------ */
-export const updateRestaurantInfo = async (req, res, next) => {
-  try {
-    const { name, desc, price, picture } = req.body;
-
-    if (!name || !desc || !price) return next("Bad Request");
-
-    const restaurant = await restaurant_model
-      .findOne({ user_id: req.user.id, is_approved: true, is_active: true })
-      .select("_id category_id");
-
-    if (!restaurant) return next("Bad Request");
-
-    const object = new food_model({
-      restaurant_id: req.user.id,
-      category_id: restaurant.category_id,
-      name,
-      desc,
-      price,
-      picture,
-    });
-
-    const result = await object.save();
-
-    return res.json({
-      status: true,
-      data: result,
-    });
-  } catch (e) {
-    next(e);
-  }
-};
+  // -> 5) Return the response
+  res.json({
+    status: true,
+  });
+});
 
 /** ------------------------------------------------------
  * @desc get restaurant by id
@@ -175,79 +222,94 @@ export const updateRestaurantInfo = async (req, res, next) => {
  * @data {}
  * @return {status, data}
  * ------------------------------------------------------ */
-export const getRestaurantById = async (req, res, next) => {
-  try {
-    const { language } = req.headers;
+export const getRestaurantById = asyncWrapper(async (req, res, next) => {
+  // -> 1) Get the language from the request headers
+  const { language } = req.headers;
 
-    const result = await restaurant_model
-      .findById(req.params.id)
-      .select(
-        "category_id user_id pictures name location work_from work_to available_day rating is_approved is_active is_premium country_code"
-      );
+  // -> 2) Find the restaurant by id
+  const result = await restaurant_model
+    .findById(req.params.id)
+    .select(
+      "category_id user_id pictures name location work_from work_to available_day rating is_approved is_active is_premium country_code"
+    );
 
-    if (!result)
-      return next({
-        status: 404,
-        message:
-          language == "ar" ? "المطعم غير موجود" : "The Restaurant is Not Exist",
-      });
-
-    const subCategory = await sub_category_model
-      .findById(result.category_id)
-      .select("name_ar name_en parent");
-
-    if (!subCategory) return next("Bad Request");
-
-    const mainCategory = await main_category_model
-      .findById(subCategory.parent)
-      .select("name_ar name_en");
-
-    if (!mainCategory) return next("Bad Request");
-
-    const subscriptions = await subscription_model
-      .find({
-        sub_category_id: req.params.categoryId,
-        user_id: { $in: [req.user.id, result.user_id] },
-      })
-      .distinct("user_id");
-
-    const totalOrders = await food_order_model.aggregate([
-      {
-        $match: { restaurant_id: result.user_id },
-      },
-      { $group: { _id: "$restaurant_id", total: { $sum: 1 } } },
-    ]);
-
-    const now = new Date();
-
-    result._doc.is_opened =
-      result.available_day.includes(now.getDay()) &&
-      now.getHours() >= result.work_from &&
-      now.getHours() <= result.work_to;
-    result._doc.is_subscription =
-      subscriptions.includes(result.user_id) ||
-      subscriptions.includes(req.user.id);
-
-    result._doc.main_category_name =
-      language == "ar" ? mainCategory.name_ar : mainCategory.name_en;
-
-    result._doc.sub_category_name =
-      language == "ar" ? subCategory.name_ar : subCategory.name_en;
-
-    result._doc.total = 0;
-
-    if (totalOrders.length > 0) {
-      result._doc.total = totalOrders[0].total;
-    }
-
-    res.json({
-      status: true,
-      data: result,
+  // -> 3) If the restaurant is not found, return an error
+  if (!result)
+    return next({
+      status: 404,
+      message:
+        language == "ar" ? "المطعم غير موجود" : "The Restaurant is Not Exist",
     });
-  } catch (e) {
-    next(e);
+
+  // -> 4) Find the sub category by id
+  const subCategory = await sub_category_model
+    .findById(result.category_id)
+    .select("name_ar name_en parent");
+
+  // -> 5) If the sub category is not found, return an error
+  if (!subCategory)
+    return next({
+      status: 404,
+      message:
+        language == "ar" ? "القسم غير موجود" : "The Category is Not Exist",
+    });
+
+  // -> 6) Find the main category by id
+  const mainCategory = await main_category_model
+    .findById(subCategory.parent)
+    .select("name_ar name_en");
+
+  // -> 7) If the main category is not found, return an error
+  if (!mainCategory)
+    return next({
+      status: 404,
+      message:
+        language == "ar" ? "القسم غير موجود" : "The Category is Not Exist",
+    });
+
+  // -> 8) Find the subscriptions
+  const subscriptions = await subscription_model
+    .find({
+      sub_category_id: req.params.categoryId,
+      user_id: { $in: [req.user.id, result.user_id] },
+    })
+    .distinct("user_id");
+
+  // -> 9) Find the total orders
+  const totalOrders = await food_order_model.aggregate([
+    {
+      $match: { restaurant_id: result.user_id },
+    },
+    { $group: { _id: "$restaurant_id", total: { $sum: 1 } } },
+  ]);
+
+  const now = new Date();
+
+  result._doc.is_opened =
+    result.available_day.includes(now.getDay()) &&
+    now.getHours() >= result.work_from &&
+    now.getHours() <= result.work_to;
+  result._doc.is_subscription =
+    subscriptions.includes(result.user_id) ||
+    subscriptions.includes(req.user.id);
+
+  result._doc.main_category_name =
+    language == "ar" ? mainCategory.name_ar : mainCategory.name_en;
+
+  result._doc.sub_category_name =
+    language == "ar" ? subCategory.name_ar : subCategory.name_en;
+
+  result._doc.total = 0;
+
+  if (totalOrders.length > 0) {
+    result._doc.total = totalOrders[0].total;
   }
-};
+
+  res.json({
+    status: true,
+    data: result,
+  });
+});
 
 /** ------------------------------------------------------
  * @desc get restaurants by category
@@ -257,123 +319,121 @@ export const getRestaurantById = async (req, res, next) => {
  * @data {}
  * @return {status, data}
  * ------------------------------------------------------ */
-export const getRestaurantsCategory = async (req, res, next) => {
-  try {
-    const { language } = req.headers;
+export const getRestaurantsCategory = asyncWrapper(async (req, res, next) => {
+  // -> 1) Get the language from the request headers
+  const { language } = req.headers;
 
-    const { page } = req.query;
+  // -> 2) Get the page number from the query /*Required for pagination*/
+  const { page } = req.query;
 
-    const user = await user_model.findById(req.user.id).select("country_code");
+  // -> 3) Find the user by id
+  const user = await user_model.findById(req.user.id).select("country_code");
 
-    if (!user) return next("Bad Request");
-
-    const subCategory = await sub_category_model
-      .findById(req.params.categoryId)
-      .select("name_ar name_en parent");
-
-    if (!subCategory) return next("Bad Request");
-
-    const mainCategory = await main_category_model
-      .findById(subCategory.parent)
-      .select("name_ar name_en");
-
-    if (!mainCategory) return next("Bad Request");
-
-    const result = await restaurant_model
-      .find({
-        country_code: user.country_code,
-        category_id: req.params.categoryId,
-        is_active: true,
-        is_approved: true,
-      })
-      .sort({ createdAt: -1, _id: 1 })
-      .skip(((page ?? 1) - 1) * 20)
-      .limit(20)
-      .select(
-        "category_id user_id pictures name location work_from work_to available_day rating is_approved is_active is_premium country_code"
-      );
-
-    const usersIds = [req.user.id];
-
-    result.forEach((ad) => {
-      if (!usersIds.includes(ad.user_id)) usersIds.push(ad.user_id);
+  // -> 4) If the user is not found, return an error
+  if (!user)
+    return next({
+      status: 404,
+      message: language == "ar" ? "المستخدم غير موجود" : "User is Not Exist",
     });
 
-    const subscriptions = await subscription_model
-      .find({
-        sub_category_id: req.params.categoryId,
-        user_id: { $in: usersIds },
-      })
-      .distinct("user_id");
+  // -> 5) Find the sub category by id
+  const subCategory = await sub_category_model
+    .findById(req.params.categoryId)
+    .select("name_ar name_en parent");
 
-    const totalOrders = await food_order_model.aggregate([
-      {
-        $match: {
-          restaurant_id: { $in: usersIds },
-        },
-      },
-      { $group: { _id: "$restaurant_id", total: { $sum: 1 } } },
-    ]);
-
-    const now = new Date();
-
-    result.forEach((item) => {
-      item._doc.is_opened =
-        item.available_day.includes(now.getDay()) &&
-        now.getHours() >= item.work_from &&
-        now.getHours() <= item.work_to;
-      item._doc.is_subscription =
-        subscriptions.includes(item.user_id) ||
-        subscriptions.includes(req.user.id);
-
-      item._doc.main_category_name =
-        language == "ar" ? mainCategory.name_ar : mainCategory.name_en;
-      item._doc.sub_category_name =
-        language == "ar" ? subCategory.name_ar : subCategory.name_en;
-
-      item._doc.total = 0;
-      for (const total of totalOrders) {
-        if (total._id == item.user_id) {
-          item._doc.total = total.total;
-          break;
-        }
-      }
+  // -> 6) If the sub category is not found, return an error
+  if (!subCategory)
+    return next({
+      status: 404,
+      message:
+        language == "ar" ? "القسم غير موجود" : "Sub Category is Not Exist",
     });
 
-    res.json({
-      status: true,
-      data: result,
-    });
-  } catch (e) {
-    console.log(e);
-    next(e);
-  }
-};
+  // -> 7) Find the main category by id
+  const mainCategory = await main_category_model
+    .findById(subCategory.parent)
+    .select("name_ar name_en");
 
-/** ------------------------------------------------------
- * @desc get foods
- * @route /services/food/foods
- * @method get
- * @access private
- * @data {}
- * @return {status, data}
- * ------------------------------------------------------ */
-export const getRestaurantItems = async (req, res, next) => {
-  try {
-    const result = await food_model.find({
-      restaurant_id: req.user.id,
+  // -> 8) If the main category is not found, return an error
+  if (!mainCategory)
+    return next({
+      status: 404,
+      message:
+        language == "ar" ? "القسم غير موجود" : "Main Category is Not Exist",
+    });
+
+  // -> 9) Find the restaurants by category
+  const result = await restaurant_model
+    .find({
+      country_code: user.country_code,
+      category_id: req.params.categoryId,
+      is_active: true,
       is_approved: true,
-    });
+    })
+    .sort({ createdAt: -1, _id: 1 })
+    .skip(((page ?? 1) - 1) * 20)
+    .limit(20)
+    .select(
+      "category_id user_id pictures name location work_from work_to available_day rating is_approved is_active is_premium country_code"
+    );
 
-    res.json({
-      status: true,
-      data: result,
-    });
-  } catch (e) {
-    console.log(e);
-    next(e);
-  }
-};
+  // -> 10) If the restaurants are not found, return an error
+  const usersIds = [req.user.id];
+
+  result.forEach((ad) => {
+    if (!usersIds.includes(ad.user_id)) usersIds.push(ad.user_id);
+  });
+
+  // -> 11) Find the subscriptions
+  const subscriptions = await subscription_model
+    .find({
+      sub_category_id: req.params.categoryId,
+      user_id: { $in: usersIds },
+    })
+    .distinct("user_id");
+
+  // -> 12) Find the total orders
+  const totalOrders = await food_order_model.aggregate([
+    {
+      $match: {
+        restaurant_id: { $in: usersIds },
+      },
+    },
+    { $group: { _id: "$restaurant_id", total: { $sum: 1 } } },
+  ]);
+
+  const now = new Date();
+
+  // -> 13) Update the result object
+  result.forEach((item) => {
+    item._doc.is_opened =
+      item.available_day.includes(now.getDay()) &&
+      now.getHours() >= item.work_from &&
+      now.getHours() <= item.work_to;
+    item._doc.is_subscription =
+      subscriptions.includes(item.user_id) ||
+      subscriptions.includes(req.user.id);
+
+    item._doc.main_category_name =
+      language == "ar" ? mainCategory.name_ar : mainCategory.name_en;
+    item._doc.sub_category_name =
+      language == "ar" ? subCategory.name_ar : subCategory.name_en;
+
+    item._doc.total = 0;
+    for (const total of totalOrders) {
+      if (total._id == item.user_id) {
+        item._doc.total = total.total;
+        break;
+      }
+    }
+  });
+
+  // -> 14) Return the response
+  res.json({
+    status: true,
+    data: result,
+  });
+});
 
 /** ------------------------------------------------------
  * @desc add food
@@ -383,37 +443,118 @@ export const getRestaurantItems = async (req, res, next) => {
  * @data {name, desc, price, picture}
  * @return {status, data}
  * ------------------------------------------------------ */
-export const addRestaurantItem = async (req, res, next) => {
-  try {
-    const { name, desc, price, picture } = req.body;
+export const addRestaurantItem = asyncWrapper(async (req, res, next) => {
+  const { language } = req.headers;
 
-    if (!name || !desc || !price) return next("Bad Request");
+  const { name, desc, price, picture } = req.body;
 
-    const restaurant = await restaurant_model
-      .findOne({ user_id: req.user.id, is_approved: true, is_active: true })
-      .select("_id category_id");
+  const restaurant = await restaurant_model
+    .findOne({ user_id: req.user.id, is_approved: true, is_active: true })
+    .select("_id category_id");
 
-    if (!restaurant) return next("Bad Request");
-
-    const object = new food_model({
-      restaurant_id: req.user.id,
-      category_id: restaurant.category_id,
-      name,
-      desc,
-      price,
-      picture,
+  if (!restaurant)
+    return next({
+      status: 404,
+      message:
+        language == "ar" ? "المطعم غير موجود" : "The Restaurant is Not Exist",
     });
 
-    const result = await object.save();
+  const result = await food_model.create({
+    restaurant_id: restaurant.id,
+    category_id: restaurant.category_id,
+    name,
+    desc,
+    price,
+    picture,
+  });
 
-    return res.json({
-      status: true,
-      data: result,
+  return res.json({
+    status: true,
+    data: result,
+  });
+});
+
+/** ------------------------------------------------------
+ * @desc update restaurant info
+ * @route /services/food/update-info
+ * @method post
+ * @access private
+ * @data {name, desc, price, picture}
+ * @return {status, data}
+ * ------------------------------------------------------ */
+export const updateRestaurantItem = asyncWrapper(async (req, res, next) => {
+  // -> 1) Get the language from the request headers
+  const { language } = req.headers;
+
+  // -> 2) Extract the data from the request body
+  const { name, desc, price, picture } = req.body;
+
+  // -> 3) Check if the user is already registered as a restaurant
+  const restaurant = await restaurant_model
+    .findOne({ user_id: req.user.id, is_approved: true, is_active: true })
+    .select("_id category_id");
+
+  // -> 4) If the user is not registered as a restaurant, return an error
+  if (!restaurant)
+    return next({
+      status: 404,
+      message:
+        language == "ar" ? "المطعم غير موجود" : "The Restaurant is Not Exist",
     });
-  } catch (e) {
-    next(e);
-  }
-};
+
+  // -> 5) Create a new food object
+  const result = await food_model.create({
+    restaurant_id: restaurant.id,
+    category_id: restaurant.category_id,
+    name,
+    desc,
+    price,
+    picture,
+  });
+
+  // -> 7) Return the response
+  return res.json({
+    status: true,
+    data: result,
+  });
+});
+
+/** ------------------------------------------------------
+ * @desc get foods
+ * @route /services/food/foods
+ * @method get
+ * @access private
+ * @data {}
+ * @return {status, data}
+ * ------------------------------------------------------ */
+export const getRestaurantItems = asyncWrapper(async (req, res, next) => {
+  // -> 1) Get the language from the request headers
+  const { language } = req.headers;
+
+  // -> 2) Find the restaurant by user id
+  const restaurant = await restaurant_model
+    .findOne({ user_id: req.user.id, is_approved: true, is_active: true })
+    .select("_id");
+
+  // -> 3) If the restaurant is not found, return an error
+  if (!restaurant)
+    return next({
+      status: 404,
+      message:
+        language == "ar" ? "المطعم غير موجود" : "The Restaurant is Not Exist",
+    });
+
+  // -> 4) Find the foods by restaurant id
+  const result = await food_model.find({
+    restaurant_id: restaurant.id,
+    is_approved: true,
+  });
+
+  res.json({
+    status: true,
+    data: result,
+  });
+});
 
 /** ------------------------------------------------------
  * @desc delete food
@@ -423,27 +564,28 @@ export const addRestaurantItem = async (req, res, next) => {
  * @data {id}
  * @return {status}
  * ------------------------------------------------------ */
-export const deleteRestaurantItem = async (req, res, next) => {
-  try {
-    const { id } = req.body;
+export const deleteRestaurantItem = asyncWrapper(async (req, res, next) => {
+  const language = req.language;
+  const { id } = req.body;
 
-    if (!id) return next("Bad Request");
-
-    const restaurant = await restaurant_model
-      .findOne({ user_id: req.user.id })
-      .select("_id");
-
-    if (!restaurant) return next({ status: 404, message: "Not Found" });
-
-    const result = await food_model.findOneAndDelete({
-      _id: id,
-      restaurant_id: req.user.id,
+  if (!id)
+    return next({
+      status: 400,
+      message: language == "ar" ? "ادخل البيانات" : "Enter Data",
     });
 
-    res.json({
-      status: result != null,
-    });
-  } catch (e) {
-    next(e);
-  }
-};
+  const restaurant = await restaurant_model
+    .findOne({ user_id: req.user.id })
+    .select("_id");
+
+  if (!restaurant) return next({ status: 404, message: "Not Found" });
+
+  const result = await food_model.findOneAndDelete({
+    _id: id,
+    restaurant_id: req.user.id,
+  });
+
+  res.json({
+    status: result != null,
+  });
+});
