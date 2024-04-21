@@ -1,4 +1,5 @@
 import { body, check, param, query } from "express-validator";
+import mongoose from 'mongoose'
 
 
 
@@ -12,6 +13,22 @@ function getLocation() {
             ar: "قم بادخال خط الطول",
             en: "Enter latitude"
         })),
+    ];
+  }
+
+
+
+export function cancelRide() {
+    return [
+        check("reasonId").notEmpty().withMessage(JSON.stringify({
+            ar: "قم بادخال سبب الرفض",
+            en: "Enter cancelation reasonId"
+        })).custom((ele , {req}) => {
+          if(!mongoose.isValidObjectId(ele)) return Promise.reject(JSON.stringify({
+            ar: "قم بادخال معرف صحيح",
+            en: "Enter valid id"
+        }))
+        }),
     ];
   }
 

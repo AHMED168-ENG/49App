@@ -12,7 +12,7 @@ export function chargeMony() {
         })),
 
     ];
-  }
+}
   
 export function sendMonyToUser() {
     return [
@@ -22,5 +22,5 @@ export function sendMonyToUser() {
             en: "Enter latitude"
         })),
     ];
-  }
+}
   

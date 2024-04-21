@@ -286,4 +286,16 @@ router.post('/get-user-balance' , sendMonyToUser() , handel_validation_errors , 
 })
 // *********** get mony balance ********************//
 
+// *********** get wallet details ********************//
+router.get('/get-wallet-details', verifyToken , async (req, res, next) => {
+    try {
+        const userWallet = await wallet_model.findOne({user_id : req.user.id})
+        res.json({ 'status': true , userWallet })
+
+    } catch (e) {
+        next(e)
+    }
+})
+// *********** get wallet details ********************//
+
 export default router

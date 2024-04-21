@@ -11,6 +11,7 @@ import ride_model from '../../models/ride_model.js';
 import rating_model from '../../models/rating_model.js';
 import ride_request_logs from '../../models/ride_request_logs.js';
 import wallets_model from '../../models/wallet_model.js';
+import cancelation_reasons from '../../models/cancelation_reasons.js';
 
 import { verifyToken, comeWithMeTripKeys, pickMeTripKeys, tryVerify } from '../../helper.js'
 import { sendNotifications } from '../../controllers/notification_controller.js'
@@ -21,7 +22,7 @@ import pick_me_ride_model from '../../models/pick_me_ride_model.js';
 import axios from 'axios';
 import wallet_model from '../../models/wallet_model.js';
 import handel_validation_errors from '../../middleware/handelBodyError.js';
-import getLocation, { acceptRideOfferValidation, addNormalRide, addUserRating, changeRideOfferStatus, getExpectedPrice, sendClientOfferValidation, sendRideValidation } from '../../validation/riders.js';
+import getLocation, { acceptRideOfferValidation, addNormalRide, addUserRating, cancelRide, changeRideOfferStatus, getExpectedPrice, sendClientOfferValidation, sendRideValidation } from '../../validation/riders.js';
 import { updateUserLocation } from '../../validation/user.js';
 import mongoose from 'mongoose';
 import { calculateDistance } from '../../utils/calculateDestance.js';
@@ -667,6 +668,140 @@ router.get('/requests-of-rider' , verifyToken, async (req, res, next) => {
     }
 })
 
+router.get('/requests-of-rider-now' , verifyToken, async (req, res, next) => {
+    try {
+        const riderRequest = await ride_model.aggregate([
+            {
+                $match : {
+                    rider_id : new mongoose.Types.ObjectId(req.user.id),
+                    is_completed : false
+                }
+            },
+            {
+                $lookup : {
+                    from : "users",
+                    localField : "user_id",
+                    as : "user_id",
+                    foreignField : "_id",
+
+                }
+            },
+            {
+                $unwind : {path  : "$user_id" , preserveNullAndEmptyArrays : true},
+            },
+            {
+                $lookup : {
+                    from : "users",
+                    localField : "rider_id",
+                    as : "rider_id",
+                    foreignField : "_id",
+                }
+            },
+            {
+                $unwind : {path  : "$rider_id" , preserveNullAndEmptyArrays : true},
+            },
+            {
+                $lookup : {
+                    from : "sub_categories",
+                    localField : "category_id",
+                    as : "category_id",
+                    foreignField : "_id",
+
+                }
+            },
+            {
+                $unwind : {path  : "$category_id" , preserveNullAndEmptyArrays : true},
+            },
+
+            {
+                $lookup : {
+                    from : "ride_offers",
+                    localField : "_id",
+                    as : "ride_offer",
+                    foreignField : "ride_id",
+                    pipeline : [
+                        {
+                            $match : {
+                                is_accept : true
+                            }
+                        }
+                    ]
+                }
+            },
+        ])
+        res.json({ 'status': true , data : riderRequest});
+    } catch (e) {
+        next(e)
+    }
+})
+
+router.get('/requests-of-client-now' , verifyToken, async (req, res, next) => {
+    try {
+        const riderRequest = await ride_model.aggregate([
+            {
+                $match : {
+                    user_id : new mongoose.Types.ObjectId(req.user.id),
+                    is_completed : false
+                }
+            },
+            {
+                $lookup : {
+                    from : "users",
+                    localField : "user_id",
+                    as : "user_id",
+                    foreignField : "_id",
+
+                }
+            },
+            {
+                $unwind : {path  : "$user_id" , preserveNullAndEmptyArrays : true},
+            },
+            {
+                $lookup : {
+                    from : "users",
+                    localField : "rider_id",
+                    as : "rider_id",
+                    foreignField : "_id",
+                }
+            },
+            {
+                $unwind : {path  : "$rider_id" , preserveNullAndEmptyArrays : true},
+            },
+            {
+                $lookup : {
+                    from : "sub_categories",
+                    localField : "category_id",
+                    as : "category_id",
+                    foreignField : "_id",
+
+                }
+            },
+            {
+                $unwind : {path  : "$category_id" , preserveNullAndEmptyArrays : true},
+            },
+
+            {
+                $lookup : {
+                    from : "ride_offers",
+                    localField : "_id",
+                    as : "ride_offer",
+                    foreignField : "ride_id",
+                    pipeline : [
+                        {
+                            $match : {
+                                is_accept : true
+                            }
+                        }
+                    ]
+                }
+            },
+        ])
+        res.json({ 'status': true , data : riderRequest});
+    } catch (e) {
+        next(e)
+    }
+})
+
 router.get('/client-request/:id' , verifyToken, async (req, res, next) => {
 
     try {
@@ -920,9 +1055,9 @@ router.get('/get-expected-price' , getExpectedPrice() , handel_validation_errors
         let z = info.constant_z
         let x = info.price_per_km
         let trip_ratio = info.trip_ratio
-        const price = await calculatePrice(distance , trip_ratio , y , z , x)
+        const priceCalculate = (await calculatePrice(distance , trip_ratio , y , z , x)).priceCalculate
     
-        res.json({ 'status': true , price : price.priceCalculate , distance : distance , duration});
+        res.json({ 'status': true , price : priceCalculate , distance : distance , duration});
     } catch (e) {
         next(e)
     }
@@ -999,18 +1134,39 @@ router.get('/rider-request' , getLocation() , handel_validation_errors , verifyT
     }
 })
 
-router.delete('/cancel-ride/:id', verifyToken, async (req, res, next) => {
+
+
+router.delete('/cancel-ride/:id' , cancelRide() , handel_validation_errors , verifyToken, async (req, res, next) => {
     try {
 
         const { language } = req.headers
-
+        const { reasonId } = req.body
         const { id } = req.params
         const ride = await ride_model.findOne({ _id: id, is_completed: false, is_canceled: false })
-
+        const userReason = await cancelation_reasons.findOne({ _id: reasonId})
         if (!ride) return next({ 'status': 404, 'message': language == 'ar' ? 'لم يتم العثور على الرحلة' : 'The Ride is not Exist' })
 
 
         if (ride.user_id == req.user.id || ride.rider_id == req.user.id) {
+            // const info = await app_manager_model.findOne({}).select('price_per_km trip_ratio constant_y constant_z ')
+            // const origin  = `${parseFloat(ride.user_lat)},${parseFloat(ride.user_lng)}`;
+            // const destination = `${parseFloat(ride.location.coordinates[1])},${parseFloat(ride.location.coordinates[0])}`;
+            
+            // const url = `https://maps.googleapis.com/maps/api/distancematrix/json?origins=${origin}&destinations=${destination}&key=AIzaSyB0BtWBSQYdjvND0zL17L3dNdPJWZbG0EY`;
+            // const response = await axios.get(url);
+            // const distance = response.data.rows[0].elements[0].distance.text;
+            // let y = info.constant_y
+            // let z = info.constant_z
+            // let x = info.price_per_km
+            // let trip_ratio = info.trip_ratio
+            // const calculate_b = (await calculatePrice(distance , trip_ratio , y , z , x)).calculate_b
+        
+            // if(calculate_b != 0) {
+            //     if(reason.according == true)
+            // }
+
+
+
             ride_model.updateOne({ _id: id }, { is_canceled: true }).exec()
             rider_model.updateOne({ user_id: ride.rider_id }, { has_ride: false }).exec()
 

@@ -24,16 +24,18 @@ const schema = new mongoose.Schema({
     is_start: { type: Boolean, default: false },
     is_completed: { type: Boolean, default: false },
     is_canceled: { type: Boolean, default: false },
-
+    
     passengers: { type: Number, default: 0 },
-
+    
     is_user_get_cashback : { type: Boolean, default: false },
     is_rider_get_cashback: { type: Boolean, default: false },
     phone : {type:String},
     auto_accept : {
         type: Boolean, default: false
-    }
-    
+    },
+    cancel_reason: { type: mongoose.Schema.ObjectId , ref: "cancelation_reasons" },
+    penalty: { type: Number , default : 0},
+    payed_penalty : { type: Boolean , default : false},
 
 }, { versionKey: false, timestamps: true })
 

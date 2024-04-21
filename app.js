@@ -22,6 +22,7 @@ import payment from './routes/payment.js'
 import addressRoute from './routes/address.js'
 
 import ride from './routes/services/ride.js'
+import cancelation_reasons from './routes/services/cancelation_reasons.js'
 import food from './routes/services/food.js'
 import health from './routes/services/health.js'
 
@@ -137,6 +138,7 @@ app.use('/social/chat', chat);
 
 
 app.use('/services/ride', ride);
+app.use('/services/cancelation-reasons', cancelation_reasons);
 app.use('/services/loading', loading);
 app.use('/services/food', food);
 app.use('/services/health', health);
