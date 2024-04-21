@@ -29,6 +29,8 @@ export const createRestuarant = asyncWrapper(async (req, res, next) => {
   // -> 1) Get the language from the request headers
   const { language } = req.headers || "en";
 
+  const user = await user_model.findById(req.user.id);
+
   // -> 2) Extract the data from the request body
   const {
     category_id,
@@ -41,22 +43,9 @@ export const createRestuarant = asyncWrapper(async (req, res, next) => {
   } = req.body;
 
   // -> 3) Check if the user is already registered as a restaurant
-  const user = await user_model
-    .findById(req.user.id)
-    .select("_id country_code");
-
-  // -> 4) If the user is not found, return an error
-  if (!user)
-    return next({
-      status: 400,
-      message:
-        language == "ar" ? "المستخدم غير موجود" : "The User is Not Exist",
-    });
-
-  // -> 5) Check if the user is already registered as a restaurant
   const result = await restaurant_model.findOne({ user_id: req.user.id });
 
-  // -> 6) If the user is already registered as a restaurant, return an error
+  // -> 4) If the user is already registered as a restaurant, return an error
   if (result)
     return next({
       status: 400,
@@ -66,14 +55,14 @@ export const createRestuarant = asyncWrapper(async (req, res, next) => {
           : "You already Registered Before",
     });
 
-  // -> 7) Check if the user has a premium subscription
+  // -> 5) Check if the user has a premium subscription
   const subscription = await subscription_model.findOne({
     user_id: req.user.id,
     sub_category_id: category_id,
     is_premium: true,
   });
 
-  // -> 8) Create a new restaurant object and save it
+  // -> 6) Create a new restaurant object and save it
   await restaurant_model.create({
     user_id: req.user.id,
     pictures,
@@ -87,12 +76,14 @@ export const createRestuarant = asyncWrapper(async (req, res, next) => {
     is_premium: subscription != null,
   });
 
-  // -> 9) Update the user model to set the is_restaurant field to true
+  console.log("user", user);
+
+  // -> 7) Update the user model to set the is_restaurant field to true
   await user_model
     .updateOne({ _id: req.user.id }, { is_restaurant: true })
     .exec();
 
-  // -> 10) Return the response
+  // -> 8) Return the response
   res.json({
     status: true,
   });
@@ -112,22 +103,9 @@ export const updateRestaurantInfo = asyncWrapper(async (req, res, next) => {
   const { language } = req.headers;
 
   // -> 2) Check if the user is already registered as a restaurant
-  const user = await user_model
-    .findById(req.user.id)
-    .select("_id country_code");
-
-  // -> 3) If the user is not found, return an error
-  if (!user)
-    return next({
-      status: 400,
-      message:
-        language == "ar" ? "المستخدم غير موجود" : "The User is Not Exist",
-    });
-
-  // -> 4) Check if the user is already registered as a restaurant
   const result = await restaurant_model.findOne({ user_id: req.user.id });
 
-  // -> 5) If the user is already registered as a restaurant, return an error
+  // -> 3) If the user is already registered as a restaurant, return an error
   if (!result)
     return next({
       status: 400,
@@ -137,34 +115,35 @@ export const updateRestaurantInfo = asyncWrapper(async (req, res, next) => {
           : "You didn't Register as a Restaurant Yet",
     });
 
-  // -> 6) Check if the user has a premium subscription
+  // -> 4) Check if the user has a premium subscription
   const subscription = await subscription_model.findOne({
     user_id: req.user.id,
     sub_category_id: result.category_id,
     is_premium: true,
   });
 
+  // -> 5) Check if the user has a premium subscription
   const fields = Object.keys(req.body);
 
-  // -> 7) Update the restaurant object
+  // -> 5) Update the restaurant object
   const updateObject = filterFieldsForUpdate(req.body, fields);
 
   subscription && (updateObject.is_premium = true);
 
-  // -> 8) Update the restaurant object
+  // -> 6) Update the restaurant object
   const updatedRestaurant = await restaurant_model.findOneAndUpdate(
     { user_id: req.user.id },
     updateObject,
     { new: true }
   );
 
-  // -> 9) Return the response
+  // -> 7) Return the response
   res.json({
     status: true,
     data: updatedRestaurant,
   });
 
-  // -> 10) Update the user model to set the is_restaurant field to true
+  // -> 8) Update the user model to set the is_restaurant field to true
   await user_model
     .updateOne({ _id: req.user.id }, { is_restaurant: true })
     .exec();
@@ -194,7 +173,7 @@ export const deleteRestuarant = asyncWrapper(async (req, res, next) => {
         language == "ar" ? "المطعم غير موجود" : "The Restaurant is Not Exist",
     });
 
-  // -> 4) If the user is not registered as a restaurant, return an error
+  // -> 4) If the restaurant is deleted, delete the related data
   if (restaurantDeleteResult) {
     // Delete related data in parallel
     await Promise.all([
@@ -207,7 +186,7 @@ export const deleteRestuarant = asyncWrapper(async (req, res, next) => {
     ]);
 
     // Update the user model to set the is_restaurant field to false
-    user_model
+    await user_model
       .updateOne({ _id: req.user.id }, { $set: { is_restaurant: false } })
       .exec();
   }
@@ -220,7 +199,7 @@ export const deleteRestuarant = asyncWrapper(async (req, res, next) => {
 
 /** ------------------------------------------------------
  * @desc get restaurant by id
- * @route /services/food/restaurant/:id
+ * @route /services/food/restaurants/:id
  * @method get
  * @access private
  * @data {}
@@ -255,7 +234,9 @@ export const getRestaurantById = asyncWrapper(async (req, res, next) => {
     return next({
       status: 404,
       message:
-        language == "ar" ? "القسم غير موجود" : "The Category is Not Exist",
+        language == "ar"
+          ? "القسم الفرعي غير موجود"
+          : "Sub Category is Not Exist",
     });
 
   // -> 6) Find the main category by id
@@ -268,7 +249,9 @@ export const getRestaurantById = asyncWrapper(async (req, res, next) => {
     return next({
       status: 404,
       message:
-        language == "ar" ? "القسم غير موجود" : "The Category is Not Exist",
+        language == "ar"
+          ? "القسم الرئيسي غير موجود"
+          : "Main Category is Not Exist",
     });
 
   // -> 8) Find the subscriptions
@@ -324,49 +307,45 @@ export const getRestaurantById = asyncWrapper(async (req, res, next) => {
  * @return {status, data}
  * ------------------------------------------------------ */
 export const getRestaurantsCategory = asyncWrapper(async (req, res, next) => {
-  // -> 1) Get the language from the request headers
+  // -> 1) Get the language from the request headers 
   const { language } = req.headers || "en";
+
+  const user = await user_model.findById(req.user.id);
 
   // -> 2) Get the page number from the query /*Required for pagination*/
   const { page } = req.query;
 
-  // -> 3) Find the user by id
-  const user = await user_model.findById(req.user.id).select("country_code");
-
-  // -> 4) If the user is not found, return an error
-  if (!user)
-    return next({
-      status: 404,
-      message: language == "ar" ? "المستخدم غير موجود" : "User is Not Exist",
-    });
-
-  // -> 5) Find the sub category by id
+  // -> 3) Find the sub category by id
   const subCategory = await sub_category_model
     .findById(req.params.categoryId)
     .select("name_ar name_en parent");
 
-  // -> 6) If the sub category is not found, return an error
+  // -> 4) If the sub category is not found, return an error
   if (!subCategory)
     return next({
       status: 404,
       message:
-        language == "ar" ? "القسم غير موجود" : "Sub Category is Not Exist",
+        language == "ar"
+          ? "القسم الفرعي غير موجود"
+          : "Sub Category is Not Exist",
     });
 
-  // -> 7) Find the main category by id
+  // -> 5) Find the main category by id
   const mainCategory = await main_category_model
     .findById(subCategory.parent)
     .select("name_ar name_en");
 
-  // -> 8) If the main category is not found, return an error
+  // -> 6) If the main category is not found, return an error
   if (!mainCategory)
     return next({
       status: 404,
       message:
-        language == "ar" ? "القسم غير موجود" : "Main Category is Not Exist",
+        language == "ar"
+          ? "القسم الرئيسي غير موجود"
+          : "Main Category is Not Exist",
     });
 
-  // -> 9) Find the restaurants by category
+  // -> 7) Find the restaurants by category
   const result = await restaurant_model
     .find({
       country_code: user.country_code,
@@ -381,14 +360,14 @@ export const getRestaurantsCategory = asyncWrapper(async (req, res, next) => {
       "category_id user_id pictures name location work_from work_to available_day rating is_approved is_active is_premium country_code"
     );
 
-  // -> 10) If the restaurants are not found, return an error
+  // -> 8) If the restaurants are not found, return an error
   const usersIds = [req.user.id];
 
   result.forEach((ad) => {
     if (!usersIds.includes(ad.user_id)) usersIds.push(ad.user_id);
   });
 
-  // -> 11) Find the subscriptions
+  // -> 9) Find the subscriptions
   const subscriptions = await subscription_model
     .find({
       sub_category_id: req.params.categoryId,
@@ -396,7 +375,7 @@ export const getRestaurantsCategory = asyncWrapper(async (req, res, next) => {
     })
     .distinct("user_id");
 
-  // -> 12) Find the total orders
+  // -> 10) Find the total orders
   const totalOrders = await food_order_model.aggregate([
     {
       $match: {
@@ -408,7 +387,7 @@ export const getRestaurantsCategory = asyncWrapper(async (req, res, next) => {
 
   const now = new Date();
 
-  // -> 13) Update the result object
+  // -> 11) Update the result object
   result.forEach((item) => {
     item._doc.is_opened =
       item.available_day.includes(now.getDay()) &&
@@ -432,7 +411,7 @@ export const getRestaurantsCategory = asyncWrapper(async (req, res, next) => {
     }
   });
 
-  // -> 14) Return the response
+  // -> 12) Return the response
   res.json({
     status: true,
     data: result,
@@ -517,14 +496,21 @@ export const updateRestaurantItem = asyncWrapper(async (req, res, next) => {
   // -> 6) Update the restaurant object
   const updateObject = filterFieldsForUpdate(req.body, fields);
 
-  // -> 5) Create a new food object
+  // -> 7) Create a new food object
   const result = await food_model.findOneAndUpdate(
     { _id: req.params.id, restaurant_id: restaurant.id },
     updateObject,
     { new: true }
   );
 
-  // -> 7) Return the response
+  //  -> 8) If the food is not found, return an error
+  if (!result)
+    return next({
+      status: 404,
+      message: language == "ar" ? "الطعام غير موجود" : "The Food is Not Exist",
+    });
+
+  // -> 9) Return the response
   return res.json({
     status: true,
     data: result,
@@ -541,7 +527,7 @@ export const updateRestaurantItem = asyncWrapper(async (req, res, next) => {
  * ------------------------------------------------------ */
 export const getRestaurantItems = asyncWrapper(async (req, res, next) => {
   // -> 1) Get the language from the request headers
- const { language } = req.headers || "en";
+  const { language } = req.headers || "en";
 
   // -> 2) Find the restaurant by user id
   const restaurant = await restaurant_model
@@ -578,8 +564,8 @@ export const getRestaurantItems = asyncWrapper(async (req, res, next) => {
  * ------------------------------------------------------ */
 export const deleteRestaurantItem = asyncWrapper(async (req, res, next) => {
   // -> 1) Get the language from the request headers
- const { language } = req.headers || "en";
- 
+  const { language } = req.headers || "en";
+
   // -> 2) Extract the id from the request params
   const { id } = req.params;
 
@@ -588,7 +574,12 @@ export const deleteRestaurantItem = asyncWrapper(async (req, res, next) => {
     .findOne({ user_id: req.user.id })
     .select("_id");
 
-  if (!restaurant) return next({ status: 404, message: "Not Found" });
+  if (!restaurant)
+    return next({
+      status: 404,
+      message:
+        language == "ar" ? "المطعم غير موجود" : "The Restaurant is Not Exist",
+    });
 
   const result = await food_model.findOneAndDelete({
     _id: id,

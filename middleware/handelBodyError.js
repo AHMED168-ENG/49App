@@ -15,7 +15,6 @@ const handel_validation_errors = (req, res, next) => {
 
   // -> 3) If there are errors, extract the error messages
   errors.array().forEach((element) => {
-    console.log(element);
     const errorMessage = element.msg[language] || element.msg["en"]; // Fallback to English if language is not available
     if (!param.includes(element.param ?? element.path)) {
       param.push(element.param ?? element.path);

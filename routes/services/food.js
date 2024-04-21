@@ -2,7 +2,8 @@ import express from "express";
 import food_model from "../../models/food_model.js";
 
 /*-------------------Middleware-------------------*/
-import { verifyToken } from "../../helper.js";
+import { isAuthenticated } from "../../middleware/is-authenticated.js";
+import { isAuthorized } from "../../middleware/is-authorized.js";
 
 /*-------------------Controllers-------------------*/
 import {
@@ -29,6 +30,8 @@ import {
   validationUpdateRestaurant,
   validationAddRestaurantItem,
   validationUpdateRestaurantItem,
+  validationCreateOrder,
+  validationCreateRateOrder,
 } from "../../validation/food_validation.js";
 
 import handel_validation_errors from "../../middleware/handelBodyError.js";
@@ -36,7 +39,8 @@ import handel_validation_errors from "../../middleware/handelBodyError.js";
 const router = express.Router();
 
 /*------------------- Apply Universal Middleware to All Routes -------------------*/
-router.use(verifyToken);
+router.use(isAuthenticated);
+router.use(isAuthorized(["user", "admin", "super_admin"]));
 
 router.get("/restaurants/:categoryId", getRestaurantsCategory);
 router.get("/food-items/:restaurantId", getRestaurantItems);
@@ -44,36 +48,25 @@ router.get("/get-restaurant-orders", getRestaurantOrders);
 router.get("/get-restaurant/:id", getRestaurantById);
 router.get("/get-user-orders", getUserOrders);
 
-router.post("/rating-order", createRateOrder);
-router.post(
-  "/add-food",
-  validationAddRestaurantItem(),
-  handel_validation_errors,
-  addRestaurantItem
-);
-router.post(
-  "/register",
-  validationRegisterRestaurant(),
-  handel_validation_errors,
-  createRestuarant
-);
-router.post("/make-order", createOrder);
+router.post("/rating-order", validationCreateRateOrder, createRateOrder);
+router.post("/add-food", validationAddRestaurantItem, addRestaurantItem);
+router.post("/register", validationRegisterRestaurant, createRestuarant);
+router.post("/make-order", validationCreateOrder, createOrder);
 
 router.delete("/delete-registration", deleteRestuarant);
-router.delete("/delete-food-item", deleteRestaurantItem);
 router.delete("/delete-rating", deleteRateOrder);
-
+// modified from "/delete-food-item" to "/delete-food-item/:id"
+router.delete("/delete-food-item/:id", deleteRestaurantItem);
+// new route -> refactor ver. 0.1
 router.put(
   "/update-restaurant-info",
-  validationUpdateRestaurant(),
-  handel_validation_errors,
+  validationUpdateRestaurant,
   updateRestaurantInfo
 );
-
+// modified from "/update-restuarant-item" to "/update-restuarant-item/:id"
 router.put(
   "/update-restuarant-item/:id",
-  validationUpdateRestaurantItem(),
-  handel_validation_errors,
+  validationUpdateRestaurantItem,
   updateRestaurantItem
 );
 
@@ -96,6 +89,5 @@ router.get("/foods", async (req, res, next) => {
     next(e);
   }
 });
-
 
 export default router;
