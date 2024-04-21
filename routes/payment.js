@@ -295,6 +295,7 @@ router.get('/get-wallet-details', verifyToken , async (req, res, next) => {
     } catch (e) {
         next(e)
     }
+    
 })
 // *********** get wallet details ********************//
 
