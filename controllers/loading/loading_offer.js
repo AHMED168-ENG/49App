@@ -9,6 +9,7 @@ import rating_model from '../../models/rating_model.js';
 import { loadingCategoryId } from '../../controllers/ride_controller.js';
 import { sendNotifications } from '../../controllers/notification_controller.js';
 import { requestCashBack } from '../../controllers/cash_back_controller.js';
+import {populateResultUserLoading} from '../../helper.js';
 
 
 
@@ -16,7 +17,7 @@ import { requestCashBack } from '../../controllers/cash_back_controller.js';
 // loading_model : model store on it rider about loading
 
 /** ------------------------------------------------------  
- * @desc rider get loading tripe by id
+ * @desc rider get loading tripe by id where it is completed
  * @route /get-loading-trips
  * @method get
  * @returns {status , data}
@@ -206,7 +207,6 @@ export const acceptLoadingOffer = asyncWrapper(async (req, res, next) => {
             notification_model.findOne({ _id: notificationId, receiver_id: req.user.id })
         ])
 
-
         if (!ad) return next({ 'status': 404, 'message': language == 'ar' ? 'لم يتم العثور على الاعلان' : 'The Ad is not Exist' })
         if (ad.is_completed == true) return next({ 'status': 400, 'message': language == 'ar' ? 'الاعلان بالفعل مزود بمقدم خدمة' : 'The Ad is Already has service provider' })
         if (!notification) return next({ 'status': 404, 'message': language == 'ar' ? 'لم يتم العثور على العرض' : 'The Offer is not Exist' })
@@ -248,90 +248,60 @@ export const acceptLoadingOffer = asyncWrapper(async (req, res, next) => {
         sendNotifications(fcmTokens, title, body, 10006);
         res.json({ 'status': true })
 })
+/** ------------------------------------------------------  
+ * @desc delete loading request for specific request
+ * @route /delete-loading-request
+ * @method delete
+ * @returns {status}
+ /**  ------------------------------------------------------  */
+ export const deleteLoadingRequest = asyncWrapper(async (req, res, next) => {
+    const { language } = req.headers;
+    const requestId   = req.params.requestId
+    const userId  = req.user.id
+    //find trip in loading_trip_model and remove it 
+    const result = await loading_trip_model.findOneAndDelete({ _id:requestId, user_id:userId  }).lean();
 
-export const deleteLoadingRequest = asyncWrapper( async (req, res, next) => {
-        const { language } = req.headers
+    if (!result) {
+        return next({ status: 404, message: language === 'ar' ? 'لم يتم العثور على الطلب' : 'The Request is not Exist' });
+    }
 
-        const result = await loading_trip_model.findOneAndDelete({ _id: req.params.requestId, user_id: req.user.id, })
+    // Delete related notifications in parallel related to trip by using direction
+    await Promise.all([
+        notification_model.deleteMany({ direction: req.params.requestId })
+    ]);
+    res.json({ status: true });
+});
 
-        if (!result) return next({ 'status': 404, 'message': language == 'ar' ? 'لم يتم العثور على الطلب' : 'The Request is not Exist' })
+/** ------------------------------------------------------  
+ * @desc get all user loadings when completed
+ * @route /get-user-loadings
+ * @method get
+ * @returns {status , data}
+ /**  ------------------------------------------------------  */
+ export const getAllUserLoading = asyncWrapper(async (req, res, next) => {
+    const { language } = req.headers
+    const { page } = req.query
+    //get all loading trip by user_id for userId 
+    const result = await loading_trip_model.find({ user_id: req.user.id, is_completed: true }).sort({ createdAt: -1, _id: 1 }).skip((((page ?? 1) - 1) * 20)).limit(20)
+    //get every rider_id n model and stor it in array call riderIds and else for subCategoriesIds
+    const riderIds = [...new Set(result.map(ride => ride.rider_id))];
+    const subCategoriesIds = [...new Set(result.map(ride => ride.category_id))];
 
-        if (result) {
-            notification_model.deleteMany({
-                direction: req.params.requestId,
-            }).exec()
-        }
-        res.json({
-            'status': true,
-        })
-})
+    console.log(riderIds, subCategoriesIds);
+    // Fetch riders, ratings, users, and categories in parallel
+    const [riders, ratings, users, categories] = await Promise.all([
+        // get riders with user_id in riderIds
+        loading_model.find({ user_id: { $in: riderIds } }),
+        // get rating when user_rating_id  match  with user login
+        rating_model.find({ user_rating_id: req.user.id, ad_id: { $in: result.map(e => e.id) } }),
+         //get first_name of riders and get profile_picture
+        user_model.find({ _id: { $in: riderIds } }).select('first_name profile_picture'),
+        //get info for subcategories that i store in subCategoriesIds[]
+        sub_category_model.find({ _id: { $in: subCategoriesIds } }).select('_id name_ar name_en')
+    ]);
 
-export const getAllUserLoading = asyncWrapper(async (req, res, next) => {
-        const { language } = req.headers
-
-        const { page } = req.query
-
-        const result = await loading_trip_model.find({ user_id: req.user.id, is_completed: true }).sort({ createdAt: -1, _id: 1 }).skip((((page ?? 1) - 1) * 20)).limit(20)
-
-        const riderIds = []
-        const subCategoriesIds = []
-
-        for (const ride of result) {
-            if (!riderIds.includes(ride.rider_id))
-                riderIds.push(ride.rider_id)
-            if (!subCategoriesIds.includes(ride.category_id))
-                subCategoriesIds.push(ride.category_id)
-        }
-
-        if (riderIds.length > 0) {
-
-            const riders = await loading_model.find({ user_id: { $in: riderIds } })
-            const ratings = await rating_model.find({ user_rating_id: req.user.id, ad_id: { $in: result.map(e => e.id) } })
-            const users = await user_model.find({ _id: { $in: riderIds } }).select('first_name profile_picture')
-            const categories = await sub_category_model.find({ _id: { $in: subCategoriesIds } }).select('_id name_ar name_en')
-
-            for (const ride of result) {
-                ride._doc.sub_category_name = ''
-
-                for (const rider of riders) {
-                    if (rider.user_id == ride.rider_id) {
-                        ride._doc.rider_info = {
-                            'id': rider.user_id,
-                            'trips': rider.trips,
-                            'name': '',
-                            'picture': '',
-                            'rating': rider.rating,
-                            'car_brand': rider.car_brand,
-                            'car_type': rider.car_type,
-                        }
-                        break
-                    }
-                }
-                for (const user of users) {
-                    if (user.id == ride.rider_id) {
-                        if (ride._doc.rider_info) {
-                            ride._doc.rider_info.name = user.first_name
-                            ride._doc.rider_info.picture = user.profile_picture
-                        }
-                        break
-                    }
-                }
-                for (const rating of ratings) {
-                    if (rating.ad_id == ride.id) {
-                        ride._doc.rating = rating
-                        break
-                    }
-                }
-                for (const category of categories) {
-                    if (category.id == ride.category_id) {
-                        ride._doc.sub_category_name = language == 'ar' ? category.name_ar : category.name_en
-                        break
-                    }
-                }
-            }
-        }
-
-        res.json({ 'status': true, 'data': result })
-})
-
-
+    if (riderIds.length > 0) {
+        populateResultUserLoading(result, riders, users, ratings, categories, language);
+    }
+    res.json({ 'status': true, 'data': result });
+});

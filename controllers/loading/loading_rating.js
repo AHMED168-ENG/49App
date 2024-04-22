@@ -4,6 +4,12 @@ import sub_category_model from '../../models/sub_category_model.js'
 import rating_model from '../../models/rating_model.js';
 import { loadingCategoryId } from '../../controllers/ride_controller.js';
 
+
+/** ------------------------------------------------------  
+ * @desc add rating for specific loading
+ * @route /rating
+ * @method post
+ /**  ------------------------------------------------------  */
 export const addRating = asyncWrapper(async (req, res, next) => {
     console.log("here");
     const { language } = req.headers
@@ -42,6 +48,11 @@ export const addRating = asyncWrapper(async (req, res, next) => {
 
     } else return next('Bad Request')
 })
+/** ------------------------------------------------------  
+ * @desc delete rating for specific loading
+ * @route /delete-rating
+ * @method delete
+ /**  ------------------------------------------------------  */
 export const deleteRating = asyncWrapper(async (req, res, next) => {
 
     try {

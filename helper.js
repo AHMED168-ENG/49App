@@ -128,6 +128,50 @@ export const verifyTokenAndAdmin = (req, res, next) => {
         return res.sendStatus(401)
     })
 }
+export function populateResultUserLoading(result, riders, users, ratings, categories, language) {
+    for (const ride of result) {
+        ride._doc.sub_category_name = '';
+
+        for (const rider of riders) {
+            if (rider.user_id == ride.rider_id) {
+                ride._doc.rider_info = {
+                    'id': rider.user_id,
+                    'trips': rider.trips,
+                    'name': '',
+                    'picture': '',
+                    'rating': rider.rating,
+                    'car_brand': rider.car_brand,
+                    'car_type': rider.car_type,
+                };
+                break;
+            }
+        }
+
+        for (const user of users) {
+            if (user.id == ride.rider_id) {
+                if (ride._doc.rider_info) {
+                    ride._doc.rider_info.name = user.first_name;
+                    ride._doc.rider_info.picture = user.profile_picture;
+                }
+                break;
+            }
+        }
+
+        for (const rating of ratings) {
+            if (rating.ad_id == ride.id) {
+                ride._doc.rating = rating;
+                break;
+            }
+        }
+
+        for (const category of categories) {
+            if (category.id == ride.category_id) {
+                ride._doc.sub_category_name = language == 'ar' ? category.name_ar : category.name_en;
+                break;
+            }
+        }
+    }
+}
 
 
 export const getUserData = function (doc) {
