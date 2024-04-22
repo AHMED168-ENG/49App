@@ -13,6 +13,7 @@ import path from "path";
 import cors from "cors";
 import hpp from "hpp";
 import fs from "fs";
+import { globalErrorHandlerMiddleware } from "./middleware/global-error-handler-middleware.js";
 
 async function bootstrap() {
   try {
@@ -63,14 +64,7 @@ async function bootstrap() {
     app.use("*", notFoundErrorMiddleware);
 
     /* Global Error handling middleware */
-    app.use((error, req, res, next) => {
-      res.status(error.status || 500);
-      res.json({
-        error: {
-          message: error.message,
-        },
-      });
-    });
+    app.use(globalErrorHandlerMiddleware);
 
     /* Start server */
     const serverListen = app.listen(process.env.PORT, () => {
