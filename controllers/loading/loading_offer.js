@@ -9,7 +9,6 @@ import rating_model from '../../models/rating_model.js';
 import { loadingCategoryId } from '../../controllers/ride_controller.js';
 import { sendNotifications } from '../../controllers/notification_controller.js';
 import { requestCashBack } from '../../controllers/cash_back_controller.js';
-import {populateResultUserLoading} from '../../helper.js';
 
 
 
