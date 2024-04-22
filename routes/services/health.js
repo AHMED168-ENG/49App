@@ -1,21 +1,20 @@
-import express from "express";
-import { verifyToken } from "../../helper.js";
+import express from 'express'
 import {
   createDoctor,
   deleteDoctor,
   getDoctorById,
   getDoctorsByCategory,
   updateDocPicture,
-  updateDoctor,
-} from "../../controllers/health/doctor_controller.js";
+  updateDoctor
+} from '../../controllers/health/doctor_controller.js'
 import {
   createBook,
-  getDoctorBooks,
-} from "../../controllers/health/book_controller.js";
+  getDoctorBooks
+} from '../../controllers/health/book_controller.js'
 import {
   createRating,
-  deleteRating,
-} from "../../controllers/health/rating_controller.js";
+  deleteRating
+} from '../../controllers/health/rating_controller.js'
 import {
   createBookValidation,
   createDoctorValidation,
@@ -26,12 +25,12 @@ import {
   getDoctorsByIdValidation,
   getUserBooksValidation,
   updateDocPictureValidation,
-  updateDoctorValidation,
-} from "../../validation/health.js";
-import handel_validation_errors from "../../middleware/handelBodyError.js";
+  updateDoctorValidation
+} from '../../validation/health.js'
+import { isAuthenticated } from '../../middleware/is-authenticated.js'
 
 // create express router
-const router = express.Router();
+const router = express.Router()
 
 /** ------------------------------------------------------
 *@route create doctor
@@ -40,12 +39,11 @@ const router = express.Router();
 *@access private create doctor
  /**  ------------------------------------------------------ */
 router.post(
-  "/register",
-  verifyToken,
+  '/register',
+  isAuthenticated,
   createDoctorValidation(),
-  handel_validation_errors,
   createDoctor
-);
+)
 
 /** ------------------------------------------------------
 *@route delete doctor
@@ -55,7 +53,7 @@ router.post(
  /**  ------------------------------------------------------ */
 
 // DO NOT HAVE VALIDATION
-router.delete("/delete-registration", verifyToken, deleteDoctor);
+router.delete('/delete-registration', isAuthenticated, deleteDoctor)
 
 /** ------------------------------------------------------
 *@route update doctor
@@ -64,12 +62,11 @@ router.delete("/delete-registration", verifyToken, deleteDoctor);
 *@access private update doctor
  /**  ------------------------------------------------------ */
 router.put(
-  "/update-info",
-  verifyToken,
+  '/update-info',
+  isAuthenticated,
   updateDoctorValidation(),
-  handel_validation_errors,
   updateDoctor
-);
+)
 
 /** ------------------------------------------------------
 *@route update doctor picture
@@ -79,12 +76,11 @@ router.put(
  /**  ------------------------------------------------------ */
 
 router.post(
-  "/update-picture",
-  verifyToken,
+  '/update-picture',
+  isAuthenticated,
   updateDocPictureValidation(),
-  handel_validation_errors,
   updateDocPicture
-);
+)
 
 /** ------------------------------------------------------
 *@route get doctor books
@@ -94,12 +90,11 @@ router.post(
  /**  ------------------------------------------------------ */
 
 router.get(
-  "/get-doctor-books",
-  verifyToken,
+  '/get-doctor-books',
+  isAuthenticated,
   getDoctorBooksValidation(),
-  handel_validation_errors,
   getDoctorBooks
-);
+)
 
 //************************************************************************/
 /** ------------------------------------------------------
@@ -109,12 +104,11 @@ router.get(
 *@access private  get doctor by category
  /**  ------------------------------------------------------ */
 router.get(
-  "/doctors/:categoryId",
-  verifyToken,
+  '/doctors/:categoryId',
+  isAuthenticated,
   getDoctorsByCategoryValidation(),
-  handel_validation_errors,
   getDoctorsByCategory
-);
+)
 
 //************************************************************************/
 /** ------------------------------------------------------
@@ -124,12 +118,12 @@ router.get(
 *@access private  create book
  /**  ------------------------------------------------------ */
 router.post(
-  "/book",
-  verifyToken,
+  '/book',
+  isAuthenticated,
   createBookValidation(),
-  handel_validation_errors,
+
   createBook
-);
+)
 
 /** ------------------------------------------------------
 *@route get user books
@@ -138,12 +132,11 @@ router.post(
 *@access private  get user books
  /**  ------------------------------------------------------ */
 router.get(
-  "/get-user-books",
-  verifyToken,
+  '/get-user-books',
+  isAuthenticated,
   getUserBooksValidation(),
-  handel_validation_errors,
   getDoctorBooks
-);
+)
 
 /** ------------------------------------------------------
 *@route get delete rating
@@ -152,12 +145,11 @@ router.get(
 *@access private  delete rating
  /**  ------------------------------------------------------ */
 router.delete(
-  "/delete-rating",
-  verifyToken,
+  '/delete-rating',
+  isAuthenticated,
   deleteRatingValidation(),
-  handel_validation_errors,
   deleteRating
-);
+)
 
 /** ------------------------------------------------------
 *@route  create rating
@@ -165,13 +157,7 @@ router.delete(
 *@method  POST
 *@access private  delete rating
  /**  ------------------------------------------------------ */
-router.post(
-  "/rating",
-  verifyToken,
-  createRatingValidation(),
-  handel_validation_errors,
-  createRating
-);
+router.post('/rating', isAuthenticated, createRatingValidation(), createRating)
 
 /** ------------------------------------------------------
 *@route get doctor by id
@@ -180,11 +166,10 @@ router.post(
 *@access private  get doctor by id
  /**  ------------------------------------------------------ */
 router.get(
-  "/get-doctor/:id",
-  verifyToken,
+  '/get-doctor/:id',
+  isAuthenticated,
   getDoctorsByIdValidation(),
-  handel_validation_errors,
   getDoctorById
-);
+)
 
-export default router;
+export default router
