@@ -14,7 +14,7 @@ import fs from 'fs'
 import post_comment_model from '../../models/post_comment_model.js'
 
 const router = express.Router()
-/*
+
 router.get('/songs', async (req, res, next) => {
 
     try {
@@ -533,7 +533,7 @@ router.get('/get-global-reels', tryVerify, async (req, res, next) => {
             var country_code = user.country_code
 
             result = await reel_model.aggregate([
-                { $match: { is_reel: true, user_id: req.user.id/*, views: { $nin: [req.user.id] } } },
+                { $match: { is_reel: true, user_id: req.user.id, views: { $nin: [req.user.id] } } },
                 {
                     $project: {
                         user_id: '$user_id',
@@ -558,7 +558,7 @@ router.get('/get-global-reels', tryVerify, async (req, res, next) => {
 
             if (result.length < pageSize) {
                 const newResult = await reel_model.aggregate([
-                    { $match: { is_reel: true, user_id: { $in: friends }, _id: { $nin: result.map(e => mongoose.Types.ObjectId(e._id)) },/*, views: { $nin: [req.user.id] } } },
+                    { $match: { is_reel: true, user_id: { $in: friends }, _id: { $nin: result.map(e => mongoose.Types.ObjectId(e._id)) }, views: { $nin: [req.user.id] } } },
                     {
                         $project: {
                             user_id: '$user_id',
@@ -585,7 +585,7 @@ router.get('/get-global-reels', tryVerify, async (req, res, next) => {
             if (result.length < pageSize) {
 
                 const newResult = await reel_model.aggregate([
-                    { $match: { is_reel: true, country_code, _id: { $nin: result.map(e => mongoose.Types.ObjectId(e._id)) }, user_id: { $nin: blocked }/*, views: { $nin: [req.user.id] } } },
+                    { $match: { is_reel: true, country_code, _id: { $nin: result.map(e => mongoose.Types.ObjectId(e._id)) }, user_id: { $nin: blocked }, views: { $nin: [req.user.id] } } },
                     {
                         $project: {
                             user_id: '$user_id',
@@ -615,7 +615,7 @@ router.get('/get-global-reels', tryVerify, async (req, res, next) => {
 
             if (user) {
                 const newResult = await reel_model.aggregate([
-                    { $match: { is_reel: true, _id: { $nin: result.map(e => mongoose.Types.ObjectId(e._id)) }, user_id: { $nin: blocked }/*, views: { $nin: [user.id ?? null] }  } },
+                    { $match: { is_reel: true, _id: { $nin: result.map(e => mongoose.Types.ObjectId(e._id)) }, user_id: { $nin: blocked }, views: { $nin: [user.id ?? null] }  } },
                     {
                         $project: {
                             user_id: '$user_id',
@@ -1104,5 +1104,5 @@ async function extractSong(videoPath, userId) {
         console.log(e)
         return null
     }
-}*/
+}
 export default router
