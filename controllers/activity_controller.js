@@ -27,6 +27,11 @@ export const getSocialActivities = asyncWrapper(async (req, res, next) => {
     .skip(((page ?? 1) - 1) * 20)
     .limit(20);
 
+  /*-------------------Note-------------------*/
+  /* we don't need to check if activities is defined or not because find method always return an array */
+  // return if no activities without make any operations
+  if (activities.length === 0) return res.json({ status: true, data: [] });
+
   // -> 4) Get all unique user ids from the notifications
   const userIds = [...new Set(activities.map((activity) => activity.user_id))];
 
@@ -57,60 +62,67 @@ export const getServiceActivities = asyncWrapper(async (req, res, next) => {
   // -> 1) Get the language from the request headers
   const { language } = req.headers;
 
+  // -> 2) Get the page number from the query
   const { page } = req.query;
 
-  const result = await notification_model
-    .find({
-      receiver_id: req.user.id,
-      tab: 2,
-    })
+  const activities = await notification_model
+    .find({ receiver_id: req.user.id, tab: 2 })
     .sort({ createdAt: -1, _id: 1 })
     .skip(((page ?? 1) - 1) * 20)
     .limit(20);
 
-  const usersIds = [req.user.id];
+  /*-------------------Note-------------------*/
+  /* we don't need to check if activities is defined or not because find method always return an array */
+  // return if no activities without make any operations
+  if (activities?.length === 0) return res.json({ status: true, data: [] });
+
+  // 2) Extract unique user IDs and sub-category IDs
+  const userIds = [req.user.id];
   const subCategoriesIds = [];
 
-  result.forEach((e) => {
-    if (!usersIds.includes(e.user_id)) usersIds.push(e.user_id);
-    if (!subCategoriesIds.includes(e.sub_category_id))
-      subCategoriesIds.push(e.sub_category_id);
+  activities.forEach((activity) => {
+    if (!userIds.includes(activity.user_id)) userIds.push(activity.user_id);
+    if (!subCategoriesIds.includes(activity.sub_category_id))
+      subCategoriesIds.push(activity.sub_category_id);
   });
 
+  // 3) Fetch free sub-categories
   const freeSubCategories = await sub_category_model
     .find({ _id: { $in: subCategoriesIds }, daily_price: 0 })
     .distinct("_id");
 
+  // 4) Fetch subscriptions
   const subscriptions = await subscription_model
     .find({
       sub_category_id: { $in: subCategoriesIds },
-      user_id: { $in: usersIds },
+      user_id: { $in: userIds },
     })
     .select("sub_category_id user_id");
 
-  result.forEach((e) => {
-    e._doc.is_subscription = false;
+  // 5) Update activities with subscription information and localized text
+  activities.forEach((activity) => {
+    activity._doc.is_subscription = false;
 
     for (const subscription of subscriptions) {
       if (
-        freeSubCategories.includes(e.sub_category_id) ||
-        (subscription.sub_category_id == e.sub_category_id &&
-          (e.user_id == subscription.user_id ||
-            subscription.user_id == req.user.id))
+        freeSubCategories.includes(activity.sub_category_id) ||
+        (subscription.sub_category_id === activity.sub_category_id &&
+          (activity.user_id === subscription.user_id ||
+            subscription.user_id === req.user.id))
       ) {
-        e._doc.is_subscription = true;
+        activity._doc.is_subscription = true;
         break;
       }
     }
 
-    e._doc.text = language == "ar" ? e.text_ar : e.text_en;
+    activity._doc.text =
+      language === "ar" ? activity.text_ar : activity.text_en;
 
-    delete e._doc.text_ar;
-    delete e._doc.text_en;
+    // Remove the localized text from the response
+    delete activity._doc.text_ar;
+    delete activity._doc.text_en;
   });
 
-  res.json({
-    status: true,
-    data: result,
-  });
+  // 6) Send response
+  res.json({ status: true, data: activities });
 });
