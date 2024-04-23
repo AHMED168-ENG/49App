@@ -5,6 +5,7 @@ import sub_category_model from "../models/sub_category_model.js";
 import subscription_model from "../models/subscription_model.js";
 import user_model from "../models/user_model.js";
 import NotFoundError from "../utils/types-errors/not-found.js";
+import BadRequestError from "../utils/types-errors/bad-request.js";
 
 /** ------------------------------------------------------
  * @desc get social activities for user
@@ -250,6 +251,52 @@ export const deleteActivity = asyncWrapper(async (req, res, next) => {
   });
 
   // -> 5) Send the response
+  res.json({
+    status: true,
+  });
+});
+
+/** ------------------------------------------------------
+ * @desc delete all activities by tab
+ * @route /notifications/all/:tab
+ * @method delete
+ * @access private
+ * @data {}
+ * @return {status}
+ * ------------------------------------------------------ */
+export const deleteAllActivities = asyncWrapper(async (req, res, next) => {
+  // -> 1) Get the language from the request headers
+  const { language } = req.headers;
+
+  // -> 2) Extract the tab from the request parameters
+  const { tab } = req.params;
+
+  console.log(typeof tab);
+
+  if (![1, 2, 3].includes(parseInt(tab)))
+    throw new BadRequestError(
+      language === "ar" ? "التبويب غير صحيح" : "Invalid tab"
+    );
+
+  // -> 3) Check if activities exist by the tab
+  const activities = await notification_model.find({
+    tab: parseInt(tab),
+    receiver_id: req.user.id,
+  });
+
+  // -> 4) If no activities exist, throw an error
+  if (activities.length === 0)
+    throw new NotFoundError(
+      language === "ar" ? "لا توجد أنشطة" : "No activities found"
+    );
+
+  // -> 5) Delete all activities by the tab
+  await notification_model.deleteMany({
+    tab: parseInt(tab),
+    receiver_id: req.user.id,
+  });
+
+  // -> 6) Send the response
   res.json({
     status: true,
   });

@@ -4,6 +4,7 @@ import notification_model from "../models/notification_model.js";
 
 import {
   deleteActivity,
+  deleteAllActivities,
   getAppActivities,
   getServiceActivities,
   getSocialActivities,
@@ -33,21 +34,7 @@ router.post(
 );
 
 router.delete("/:id", deleteActivity);
-
-router.delete("/all/:tab", async (req, res, next) => {
-  try {
-    await notification_model.deleteMany({
-      tab: req.params.tab,
-      receiver_id: req.user.id,
-    });
-
-    res.json({
-      status: true,
-    });
-  } catch (e) {
-    next(e);
-  }
-});
+router.delete("/all/:tab", deleteAllActivities);
 
 router.get("/count", async (req, res, next) => {
   try {
