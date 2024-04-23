@@ -58,6 +58,7 @@ import user_model from "./models/user_model.js";
 import { sendNotification } from "./controllers/notification_controller.js";
 import come_with_me_ride_model from "./models/come_with_me_ride_model.js";
 import pick_me_ride_model from "./models/pick_me_ride_model.js";
+import NotFoundError from "./utils/types-errors/not-found.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -75,8 +76,11 @@ app.use(morgan('dev'));
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'ejs');
 
-mongoose.connect(process.env.MONGODB_URI_REFACTOR,
-  {
+
+
+mongoose
+  .connect(process.env.MONGODB_URI_REFACTOR, {
+
     useNewUrlParser: true,
     useUnifiedTopology: false,
   })
@@ -164,7 +168,11 @@ app.use("/dashboard/admin", dashboardAdmin);
 app.use(express.static(__dirname + "/public"));
 
 app.use((req, res, next) => {
-  next(createError.NotFound());
+  next(
+    new NotFoundError(
+      "Ooh you are lost, read the the API documentations to find your way back home 😂"
+    )
+  );
 });
 
 app.use((err, req, res, next) => {

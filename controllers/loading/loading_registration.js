@@ -6,9 +6,14 @@ import {extractPictureUrls} from '../../helper.js';
 import asyncWrapper from '../../utils/asyncWrapper.js';
 
 
+/** ------------------------------------------------------  
+ * @desc register with car for loading
+ * @route /register
+ * @method post
+ /**  ------------------------------------------------------  */
 export const createCarForLoading =asyncWrapper(async (req, res, next) => {
     const { language } = req.headers
-    const { car_brand, car_type, category_id, location, pictures, phone } = req.body
+    const { pictures , ...data   } = req.body
     // get user country code 
     const user = await user_model.findById(req.user.id).select('_id country_code')
     if (!user) return next({
@@ -25,10 +30,8 @@ export const createCarForLoading =asyncWrapper(async (req, res, next) => {
     const object = new loading_model({
         user_id: req.user.id,
         ...extractPictureUrls(pictures),
-        car_brand, car_type,
-        category_id, location,
         country_code: user.country_code,
-        phone,
+        ...data
     })
     await object.save()
     // update is_loading in user model to make true 
@@ -37,6 +40,11 @@ export const createCarForLoading =asyncWrapper(async (req, res, next) => {
         'status': true,
     })
 })
+/** ------------------------------------------------------  
+ * @desc delete register with car for loading
+ * @route /delete-registration
+ * @method delete
+ /**  ------------------------------------------------------  */
 export const deleteCarForLoading = asyncWrapper(async (req, res, next) => {
     // delete loading model by user id from req.user
     const rider = await loading_model.findOneAndDelete({ user_id: req.user.id })

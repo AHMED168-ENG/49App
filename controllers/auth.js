@@ -471,6 +471,7 @@ export const register = async (req, res, next) => {
     });
     let token = generateToken(user, body.keepLogin, "30d");
 
+
     let auth = await auth_model.create({
       fcm: body.fcm,
       user_id: user.id,
