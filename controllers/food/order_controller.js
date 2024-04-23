@@ -1,5 +1,6 @@
 import asyncWrapper from "../../utils/asyncWrapper.js";
 
+// models
 import user_model from "../../models/user_model.js";
 import restaurant_model from "../../models/restaurant_model.js";
 import food_model from "../../models/food_model.js";
@@ -8,9 +9,14 @@ import rating_model from "../../models/rating_model.js";
 import sub_category_model from "../../models/sub_category_model.js";
 import notification_model from "../../models/notification_model.js";
 import auth_model from "../../models/auth_model.js";
+
+// controllers
 import { sendNotifications } from "../notification_controller.js";
 import { requestCashBack } from "../cash_back_controller.js";
 import { foodCategoryId } from "../ride_controller.js";
+
+// errors
+import NotFoundError from "../../utils/types-errors/not-found.js";
 
 /** ------------------------------------------------------
  * @desc get restaurant orders
@@ -21,37 +27,52 @@ import { foodCategoryId } from "../ride_controller.js";
  * @return {status, data}
  * ------------------------------------------------------ */
 export const getRestaurantOrders = asyncWrapper(async (req, res, next) => {
+  // -> 1) Get the language from the request headers
   const { language } = req.headers;
 
+  // -> 2) Get the page from the request query
   const { page } = req.query;
 
+  // -> 3) Get the restaurant
   const restaurant = await restaurant_model
     .findOne({ user_id: req.user.id })
     .select("_id category_id");
 
-  if (!restaurant) return next("Bad Request");
+  // -> 4) if the restaurant not found return 404
+  if (!restaurant)
+    throw new NotFoundError(
+      language == "ar"
+        ? "لا يوجد مطعم بهذا الاسم"
+        : "No Restaurant with this name"
+    );
 
+  // -> 5) Get the orders
   const result = await food_order_model
     .find({ restaurant_id: restaurant.id })
     .sort({ createdAt: -1, _id: 1 })
     .skip(((page ?? 1) - 1) * 20)
     .limit(20);
 
+  // -> 6) Get the category
   const category = await sub_category_model
     .findById(restaurant.category_id)
     .select("name_ar name_en");
 
+  // -> 7) Get the total orders count
   const totalOrders = await food_order_model
     .find({ restaurant_id: restaurant.id })
     .count();
 
+  // -> 8) Set the total orders count to the restaurant
   restaurant._doc.total = totalOrders;
 
+  // -> 9) Get the ratings
   const ratings = await rating_model.find({
     category_id: category.id,
     ad_id: { $in: result.map((e) => e.id) },
   });
 
+  // -> 10) Add the rating and sub category to the orders
   for (const order of result) {
     for (const rating of ratings) {
       if (order.id == rating.ad_id) {
@@ -64,6 +85,7 @@ export const getRestaurantOrders = asyncWrapper(async (req, res, next) => {
       language == "ar" ? category.name_ar : category.name_en;
   }
 
+  // -> 11) Send the response
   res.json({
     status: true,
     data: result,
@@ -76,28 +98,37 @@ export const getRestaurantOrders = asyncWrapper(async (req, res, next) => {
  * @method get
  * @access private
  * @data {}
+ * @warning This route has a bug in the aggregation query and rating model
  * @return {status, data}
  * ------------------------------------------------------ */
 export const getUserOrders = asyncWrapper(async (req, res, next) => {
+  // -> 1) Get the language from the request headers
   const { language } = req.headers;
 
+  // -> 2) Get the page from the request query
   const { page } = req.query;
 
+  // -> 3) Get the orders
   const result = await food_order_model
     .find({ user_id: req.user.id })
     .sort({ createdAt: -1, _id: 1 })
     .skip(((page ?? 1) - 1) * 20)
     .limit(20);
 
+  // -> 4) if the orders not found return 404 without make any operations
+  if (result.length == 0) return res.json({ status: true, data: result });
+
   const subCategoriesIds = [];
   const restaurantsIds = [];
 
+  // -> 5) Get the sub categories and restaurants
   for (const order of result) {
     if (!subCategoriesIds.includes(order.category_id))
       subCategoriesIds.push(order.category_id);
     if (!restaurantsIds.includes(order.restaurant_id))
       restaurantsIds.push(order.restaurant_id);
   }
+  // -> 6) Get the sub categories and restaurants
   const categories = await sub_category_model
     .find({ _id: { $in: subCategoriesIds } })
     .select("_id name_ar name_en");
@@ -105,6 +136,7 @@ export const getUserOrders = asyncWrapper(async (req, res, next) => {
     _id: { $in: restaurantsIds },
   });
 
+  // -> 7) Get the ratings
   const ratings = await rating_model.find({
     user_rating_id: req.user.id,
     ad_id: { $in: result.map((e) => e.id) },
@@ -113,12 +145,13 @@ export const getUserOrders = asyncWrapper(async (req, res, next) => {
   const totalOrders = await food_order_model.aggregate([
     {
       $match: {
-        restaurant_id: { $in: result.map((e) => e.restaurant_id) },
+        restaurant_id: { $in: restaurantsIds },
       },
     },
     { $group: { _id: "$restaurant_id", total: { $sum: 1 } } },
   ]);
 
+  // -> 8) Add the rating and sub category to the orders
   for (const order of result) {
     for (const rating of ratings) {
       if (order.id == rating.ad_id) {
@@ -148,6 +181,7 @@ export const getUserOrders = asyncWrapper(async (req, res, next) => {
     }
   }
 
+  // -> 9) Send the response
   res.json({
     status: true,
     data: result,
@@ -261,6 +295,7 @@ export const createOrder = asyncWrapper(async (req, res, next) => {
     is_accepted: true,
   });
 
+  // -> 12) Send the notification
   auth_model
     .find({ user_id: restaurantData.user_id })
     .distinct("fcm")
@@ -273,6 +308,7 @@ export const createOrder = asyncWrapper(async (req, res, next) => {
       );
     });
 
+  // -> 13) Send the response
   res.json({
     status: true,
   });
@@ -291,7 +327,6 @@ export const createRateOrder = asyncWrapper(async (req, res, next) => {
   // -> 1) Get the language from the request headers
   const { language } = req.headers;
 
-
   // -> 2) Get the fields from the request body
   const {
     field_one,
@@ -309,14 +344,11 @@ export const createRateOrder = asyncWrapper(async (req, res, next) => {
     .select("_id parent");
 
   if (!category)
-    return next({
-      status: 400,
-      message:
-        language == "ar"
-          ? "لا يوجد فئة بهذا الاسم"
-          : "No Category with this name",
-    });
+    throw new NotFoundError(
+      language == "ar" ? "لا يوجد فئة بهذا الاسم" : "No Category with this name"
+    );
 
+  // -> 4) Check if the category is from the food category
   if (category.parent != foodCategoryId)
     return next({
       status: 400,
@@ -326,12 +358,14 @@ export const createRateOrder = asyncWrapper(async (req, res, next) => {
           : "This Ad is not from Food Category",
     });
 
+  // -> 5) Create the rating
   await rating_model.updateOne(
     { user_rating_id: req.user.id, category_id, ad_id, user_id },
     { field_one, field_two, field_three, comment },
     { upsert: true, new: true, setDefaultsOnInsert: true }
   );
 
+  // -> 6) Get the rating
   let result = await rating_model.aggregate([
     { $match: { user_id, category_id } },
     {
@@ -344,6 +378,8 @@ export const createRateOrder = asyncWrapper(async (req, res, next) => {
       },
     },
   ]);
+
+  // -> 7) Update the restaurant rating
   if (result && result.length > 0) {
     const total =
       (result[0].field_one + result[0].field_two + result[0].field_three) /
@@ -353,22 +389,24 @@ export const createRateOrder = asyncWrapper(async (req, res, next) => {
       .exec();
   } else restaurant_model.updateOne({ user_id }, { rating: 5.0 }).exec();
 
+  // -> 8) Send the response
   res.json({ status: true });
 });
 
 /** ------------------------------------------------------
  * @desc delete order
- * @route /services/food/delete-order
+ * @route /services/food/delete-rating
  * @method delete
  * @access private
- * @data {order_id}
+ * @data {category_id , ad_id}
  * @return {status}
  * ------------------------------------------------------ */
 export const deleteRateOrder = asyncWrapper(async (req, res, next) => {
-  const { category_id, ad_id } = req.body;
+  // -> 1) Get the language from the request headers
   const { language } = req.headers;
 
-  if (!category_id || !ad_id) return next("Bad Request");
+  // -> 2) Get the order id from the request body
+  const { category_id, ad_id } = req.body;
 
   const result = await rating_model.findOneAndDelete({
     user_rating_id: req.user.id,
@@ -377,30 +415,26 @@ export const deleteRateOrder = asyncWrapper(async (req, res, next) => {
   });
 
   if (!result)
-    return next({
-      status: 400,
-      message:
-        language == "ar"
-          ? "لا يوجد تقييم لهذا الاعلان"
-          : "No Rating for this Ad",
-    });
+    throw new NotFoundError(
+      language == "ar" ? "لا يوجد تقييم بهذا الاسم" : "No Rating with this name"
+    );
 
-  if (result) {
-    if (result.length > 0) {
-      const total =
-        (result[0].field_one + result[0].field_two + result[0].field_three) /
-        (3 * result[0].count);
-      restaurant_model
-        .updateOne(
-          { user_id: result.user_id },
-          { rating: parseFloat(total).toFixed(2) }
-        )
-        .exec();
-    } else
-      restaurant_model
-        .updateOne({ user_id: result.user_id }, { rating: 5.0 })
-        .exec();
-  }
+  // -> 3) Get the rating and update the restaurant rating
+  if (result.length > 0) {
+    const total =
+      (result[0].field_one + result[0].field_two + result[0].field_three) /
+      (3 * result[0].count);
+    restaurant_model
+      .updateOne(
+        { user_id: result.user_id },
+        { rating: parseFloat(total).toFixed(2) }
+      )
+      .exec();
+  } else
+    restaurant_model
+      .updateOne({ user_id: result.user_id }, { rating: 5.0 })
+      .exec();
 
+  // -> 4) Send the response
   res.json({ status: true });
 });
