@@ -1,81 +1,93 @@
-import express from 'express'
-import { verifyToken } from '../helper.js'
-import notification_model from '../models/notification_model.js'
-import sub_category_model from '../models/sub_category_model.js'
-import subscription_model from '../models/subscription_model.js'
-import user_model from '../models/user_model.js'
+import express from "express";
+import notification_model from "../models/notification_model.js";
 
-import {getAppActivities, getServiceActivities, getSocialActivities, setActivityRead} from '../controllers/activity_controller.js'
 
+import {
+  deleteActivity,
+  getAppActivities,
+  getServiceActivities,
+  getSocialActivities,
+  setActivityRead,
+} from "../controllers/activity_controller.js";
 
 /*-------------------Middleware-------------------*/
 import { isAuthenticated } from "../middleware/is-authenticated.js";
 import { isAuthorized } from "../middleware/is-authorized.js";
-import { validateSetAsReadActivity } from '../validation/activity.js'
 
-const router = express.Router()
+// Validation
+import { validateSetAsReadActivity } from "../validation/activity.js";
 
-router.get('/social', isAuthenticated, getSocialActivities)
-router.get('/service', isAuthenticated, getServiceActivities)
-router.get('/app', isAuthenticated, getAppActivities)
-router.post('/set-as-read', isAuthenticated, validateSetAsReadActivity, setActivityRead)
+const router = express.Router();
 
-router.delete('/:id', verifyToken, async (req, res, next) => {
-    try {
+/*------------------- Apply Universal Middleware to All Routes -------------------*/
+router.use(isAuthenticated);
+router.use(isAuthorized(["user", "admin", "super_admin"]));
 
-        await notification_model.deleteOne({ _id: req.params.id, receiver_id: req.user.id, })
+router.get("/social", getSocialActivities);
+router.get("/service", getServiceActivities);
+router.get("/app", getAppActivities);
+router.post(
+  "/set-as-read",
+  validateSetAsReadActivity,
+  setActivityRead
+);
 
-        res.json({
-            'status': true,
-        })
+router.delete("/:id", deleteActivity);
 
-    } catch (e) { next(e) }
-})
+router.delete("/all/:tab", async (req, res, next) => {
+  try {
+    await notification_model.deleteMany({
+      tab: req.params.tab,
+      receiver_id: req.user.id,
+    });
 
-router.delete('/all/:tab', verifyToken, async (req, res, next) => {
-    try {
+    res.json({
+      status: true,
+    });
+  } catch (e) {
+    next(e);
+  }
+});
 
-        await notification_model.deleteMany({ tab: req.params.tab, receiver_id: req.user.id, })
+router.get("/count", async (req, res, next) => {
+  try {
+    const result = await notification_model
+      .find({ receiver_id: req.user.id, is_read: false })
+      .count();
 
-        res.json({
-            'status': true,
-        })
+    res.json({
+      status: true,
+      data: result,
+    });
+  } catch (e) {
+    next(e);
+  }
+});
 
-    } catch (e) { next(e) }
-})
+router.get("/count-by-type", async (req, res, next) => {
+  try {
+    const result = await Promise.all([
+      notification_model
+        .find({ receiver_id: req.user.id, is_read: false, tab: 1 })
+        .count(),
+      notification_model
+        .find({ receiver_id: req.user.id, is_read: false, tab: 2 })
+        .count(),
+      notification_model
+        .find({ receiver_id: req.user.id, is_read: false, tab: 3 })
+        .count(),
+    ]);
 
-router.get('/count', verifyToken, async (req, res, next) => {
-    try {
-
-        const result = await notification_model.find({ receiver_id: req.user.id, is_read: false }).count()
-
-        res.json({
-            'status': true,
-            'data': result,
-        })
-
-    } catch (e) { next(e) }
-})
-
-
-router.get('/count-by-type', verifyToken, async (req, res, next) => {
-    try {
-
-        const result = await Promise.all([
-            notification_model.find({ receiver_id: req.user.id, is_read: false, tab: 1 }).count(),
-            notification_model.find({ receiver_id: req.user.id, is_read: false, tab: 2 }).count(),
-            notification_model.find({ receiver_id: req.user.id, is_read: false, tab: 3 }).count(),
-        ])
-
-        res.json({
-            'status': true,
-            'data': {
-                'social': result[0],
-                'service': result[1],
-                'app': result[2],
-            },
-        })
-
-    } catch (e) { next(e) }
-})
-export default router
+    res.json({
+      status: true,
+      data: {
+        social: result[0],
+        service: result[1],
+        app: result[2],
+      },
+    });
+  } catch (e) {
+    next(e);
+  }
+});
+export default router;

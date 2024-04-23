@@ -218,3 +218,39 @@ export const setActivityRead = asyncWrapper(async (req, res, next) => {
     status: true,
   });
 });
+
+/** ------------------------------------------------------
+ * @desc delete activity
+ * @route /notifications/:id
+ * @method delete
+ * @access private
+ * @data {}
+ * @return {status}
+ * ------------------------------------------------------ */
+export const deleteActivity = asyncWrapper(async (req, res, next) => {
+  // -> 1) Get the language from the request headers
+  const { language } = req.headers;
+
+  // -> 2) First, check if the activity exists
+  const activity = await notification_model.findOne({
+    _id: req.params.id,
+    receiver_id: req.user.id,
+  });
+
+  // -> 3) If the activity does not exist, throw an error
+  if (!activity)
+    throw new NotFoundError(
+      language === "ar" ? "النشاط غير موجود" : "Activity not found"
+    );
+
+  // -> 4) Delete the activity
+  await notification_model.deleteOne({
+    _id: req.params.id,
+    receiver_id: req.user.id,
+  });
+
+  // -> 5) Send the response
+  res.json({
+    status: true,
+  });
+});
