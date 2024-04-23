@@ -81,7 +81,6 @@ export const deleteDoctor = async (req, res, next) => {
     }
     res.json({
       status: true,
-      data: DeletedDoctor
     })
   } catch (e) {
     next(e)
@@ -110,11 +109,7 @@ export const updateDoctor = async (req, res, next) => {
 
     // get doctor subcategory and  reset data in subcategory model.
     const category = await sub_category_model.findById(doctor.category_id)
-    console.log(category)
-    // return res.json({
-    //   status: true,
-    //   doctor: category
-    // })
+
     // set from dashboard.
     doctor._doc.total = 0
     category._doc.total = 0
@@ -135,7 +130,7 @@ export const updateDoctor = async (req, res, next) => {
       status: true
     })
   } catch (e) {
-    console.log(e)
+  
     next(e)
   }
 }
@@ -210,7 +205,6 @@ export const getDoctorById = async (req, res, next) => {
     }
     res.json({
       status: true,
-      message: 'success',
       data: doctor
     })
   } catch (e) {
@@ -277,7 +271,7 @@ export const getDoctorsByCategory = async (req, res, next) => {
       data: doctors
     })
   } catch (e) {
-    console.log(e)
+
     next(e)
   }
 }

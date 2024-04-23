@@ -157,8 +157,11 @@ export const updateDoctorValidation = () => {
         })
       ),
     header('language').custom(async (value, { req }) => {
-      const doctor = await doctor_model.findOne({ user_id: req.user.id,is_approved: true,
-        is_active: true })
+      const doctor = await doctor_model.findOne({
+        user_id: req.user.id,
+        is_approved: true,
+        is_active: true
+      })
       if (!doctor)
         return Promise.reject(
           JSON.stringify({
@@ -167,9 +170,7 @@ export const updateDoctorValidation = () => {
           })
         )
 
-      const subCategory = await sub_category_model.findById(
-        doctor.category_id
-      )
+      const subCategory = await sub_category_model.findById(doctor.category_id)
       if (!subCategory)
         return Promise.reject(
           JSON.stringify({
@@ -311,12 +312,15 @@ export const createBookValidation = () => {
           ar: 'قم بادخال القسم',
           en: 'Enter category'
         })
-      ).custom(async (value, { req }) => {
-        const { id} = req.body
-        const doctor = await doctor_model.findOne({ _id: id,
-         category_id:value,
-         is_approved: true, is_active: true
-         })
+      )
+      .custom(async (value, { req }) => {
+        const { id } = req.body
+        const doctor = await doctor_model.findOne({
+          _id: id,
+          category_id: value,
+          is_approved: true,
+          is_active: true
+        })
         if (!doctor)
           return Promise.reject(
             JSON.stringify({
@@ -324,27 +328,23 @@ export const createBookValidation = () => {
               en: 'this doctor not found'
             })
           )
-          const doctorUser = await user_model
-          .findOne({ _id: doctor.user_id })
-          if(!doctorUser)
+        const doctorUser = await user_model.findOne({ _id: doctor.user_id })
+        if (!doctorUser)
           return Promise.reject(
             JSON.stringify({
               ar: 'هذا الدكتور غير موجود',
               en: 'this doctor not found'
             })
           )
-          const getSubCategory = await sub_category_model
-            .findById(value)
-            if ( !getSubCategory) {
-              return Promise.reject(
-                JSON.stringify({
-                  ar: 'هذا التخصص غير موجود',
-                  en: ' this sub category not found'
-                })
-              )
-
-            }
-
+        const getSubCategory = await sub_category_model.findById(value)
+        if (!getSubCategory) {
+          return Promise.reject(
+            JSON.stringify({
+              ar: 'هذا التخصص غير موجود',
+              en: ' this sub category not found'
+            })
+          )
+        }
 
         return true
       }),
@@ -371,7 +371,8 @@ export const getUserBooksValidation = () => {
           ar: 'قم بادخال اللغة',
           en: 'Enter language'
         })
-      ).custom(async (value, { req }) => {
+      )
+      .custom(async (value, { req }) => {
         const user = await user_model.findOne({ _id: req.user.id })
         const doctor = await doctor_model.findOne({ user_id: user._id })
         if (!doctor)
@@ -382,16 +383,6 @@ export const getUserBooksValidation = () => {
             })
           )
       }),
-    param('page')
-      // .notEmpty()
-      // .withMessage(
-      //   JSON.stringify({
-      //     ar: 'قم بادخال الصفحة',
-      //     en: 'Enter page'
-      //   })
-      // )
-
-      ,
 
     validatorHandlerMiddleware
   ]
@@ -406,7 +397,8 @@ export const getDoctorBooksValidation = () => {
           ar: 'قم بادخال اللغة',
           en: 'Enter language'
         })
-      ).custom(async (value, { req }) => {
+      )
+      .custom(async (value, { req }) => {
         const user = await user_model.findOne({ _id: req.user.id })
         const doctor = await doctor_model.findOne({ user_id: user._id })
         if (!doctor)
@@ -417,22 +409,6 @@ export const getDoctorBooksValidation = () => {
             })
           )
       }),
-    // param('page')
-    //   .notEmpty()
-    //   .withMessage(
-    //     JSON.stringify({
-    //       ar: 'قم بادخال الصفحة',
-    //       en: 'Enter page'
-    //     })
-    //   )
-    //   .isNumeric()
-    //   .withMessage(
-    //     JSON.stringify({
-    //       ar: 'الصفحة يجب ان تكون رقم',
-    //       en: ' page must be number'
-    //     })
-    //   ),
-
 
     validatorHandlerMiddleware
   ]

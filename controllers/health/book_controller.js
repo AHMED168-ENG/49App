@@ -279,7 +279,7 @@ const getRatings = async id => {
   })
 }
 
-//
+// set rating to each book if book have rating
 const handleLoop = async (
   allBooks,
   ratings,
@@ -335,8 +335,6 @@ const getDoctorById = async id => {
 
 // doctor book
 const DoctorBooks = async (userId, page) => {
-  console.log(userId, page)
-
   const allBooks = await patient_book_model
     .find({ doctor_id: userId })
     .sort({ createdAt: -1, _id: 1 })
