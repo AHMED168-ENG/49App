@@ -5,36 +5,20 @@ import sub_category_model from '../models/sub_category_model.js'
 import subscription_model from '../models/subscription_model.js'
 import user_model from '../models/user_model.js'
 
-import {getAppActivities, getServiceActivities, getSocialActivities} from '../controllers/activity_controller.js'
+import {getAppActivities, getServiceActivities, getSocialActivities, setActivityRead} from '../controllers/activity_controller.js'
 
 
 /*-------------------Middleware-------------------*/
 import { isAuthenticated } from "../middleware/is-authenticated.js";
 import { isAuthorized } from "../middleware/is-authorized.js";
+import { validateSetAsReadActivity } from '../validation/activity.js'
 
 const router = express.Router()
 
 router.get('/social', isAuthenticated, getSocialActivities)
-
 router.get('/service', isAuthenticated, getServiceActivities)
-
 router.get('/app', isAuthenticated, getAppActivities)
-
-router.post('/set-as-read', verifyToken, async (req, res, next) => {
-    try {
-
-        const { id } = req.body
-
-        if (!id) return next('Bad Request')
-
-        await notification_model.updateOne({ _id: id, receiver_id: req.user.id }, { is_read: true })
-
-        res.json({
-            'status': true,
-        })
-
-    } catch (e) { next(e) }
-})
+router.post('/set-as-read', isAuthenticated, validateSetAsReadActivity, setActivityRead)
 
 router.delete('/:id', verifyToken, async (req, res, next) => {
     try {

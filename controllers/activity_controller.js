@@ -4,6 +4,7 @@ import notification_model from "../models/notification_model.js";
 import sub_category_model from "../models/sub_category_model.js";
 import subscription_model from "../models/subscription_model.js";
 import user_model from "../models/user_model.js";
+import NotFoundError from "../utils/types-errors/not-found.js";
 
 /** ------------------------------------------------------
  * @desc get social activities for user
@@ -58,6 +59,14 @@ export const getSocialActivities = asyncWrapper(async (req, res, next) => {
   });
 });
 
+/** ------------------------------------------------------
+ * @desc get service activities for user
+ * @route /notifications/service?page=?
+ * @method get
+ * @access private
+ * @data {}
+ * @return {status, data}
+ * ------------------------------------------------------ */
 export const getServiceActivities = asyncWrapper(async (req, res, next) => {
   // -> 1) Get the language from the request headers
   const { language } = req.headers;
@@ -129,6 +138,14 @@ export const getServiceActivities = asyncWrapper(async (req, res, next) => {
   res.json({ status: true, data: activities });
 });
 
+/** ------------------------------------------------------
+ * @desc get app activities for user
+ * @route /notifications/app?page=?
+ * @method get
+ * @access private
+ * @data {}
+ * @return {status, data}
+ * ------------------------------------------------------ */
 export const getAppActivities = asyncWrapper(async (req, res, next) => {
   // -> 1) Get the language from the request headers
   const { language } = req.headers;
@@ -163,5 +180,41 @@ export const getAppActivities = asyncWrapper(async (req, res, next) => {
   res.json({
     status: true,
     data: activities,
+  });
+});
+
+/** ------------------------------------------------------
+ * @desc set activity as read
+ * @route /notifications/set-as-read
+ * @method post
+ * @access private
+ * @data {id}
+ * @return {status}
+ * ------------------------------------------------------ */
+export const setActivityRead = asyncWrapper(async (req, res, next) => {
+  const { language } = req.headers;
+  // -> 1) Get the activity ID from the request body
+  const { id } = req.body;
+
+  // -> 2) First, check if the activity exists
+  const activity = await notification_model.findOne({
+    _id: id,
+    receiver_id: req.user.id,
+  });
+
+  // -> 3) If the activity does not exist, throw an error
+  if (!activity)
+    throw new NotFoundError(
+      language === "ar" ? "النشاط غير موجود" : "Activity not found"
+    );
+
+  // -> 4) Update the activity as read
+  await notification_model.updateOne(
+    { _id: id, receiver_id: req.user.id },
+    { is_read: true }
+  );
+
+  res.json({
+    status: true,
   });
 });
