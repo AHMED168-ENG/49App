@@ -185,6 +185,62 @@ export const getAppActivities = asyncWrapper(async (req, res, next) => {
 });
 
 /** ------------------------------------------------------
+ * @desc get count of unread activities
+ * @route /notifications/count
+ * @method get
+ * @access private
+ * @data {}
+ * @return {status, data}
+ * ------------------------------------------------------ */
+export const getUnreadActivitiesCount = asyncWrapper(async (req, res, next) => {
+  // -> 1) Get the count of unread activities
+  const count = await notification_model
+    .find({ receiver_id: req.user.id, is_read: false })
+    .count();
+
+  // -> 2) Send the response
+  res.json({
+    status: true,
+    data: count,
+  });
+});
+
+/** ------------------------------------------------------
+ * @desc get count of unread activities by type
+ * @route /notifications/count-by-type
+ * @method get
+ * @access private
+ * @data {}
+ * @return {status, data}
+ * ------------------------------------------------------ */
+export const getUnreadActivitiesCountByType = asyncWrapper(
+  async (req, res, next) => {
+    // -> 1) Get the count of unread activities by type
+    const result = await Promise.all([
+      notification_model
+        .find({ receiver_id: req.user.id, is_read: false, tab: 1 })
+        .count(),
+      notification_model
+        .find({ receiver_id: req.user.id, is_read: false, tab: 2 })
+        .count(),
+      notification_model
+        .find({ receiver_id: req.user.id, is_read: false, tab: 3 })
+        .count(),
+    ]);
+
+    // -> 2) Send the response
+    res.json({
+      status: true,
+      data: {
+        social: result[0],
+        service: result[1],
+        app: result[2],
+      },
+    });
+  }
+);
+
+/** ------------------------------------------------------
  * @desc set activity as read
  * @route /notifications/set-as-read
  * @method post
@@ -299,26 +355,5 @@ export const deleteAllActivities = asyncWrapper(async (req, res, next) => {
   // -> 6) Send the response
   res.json({
     status: true,
-  });
-});
-
-/** ------------------------------------------------------
- * @desc get count of unread activities
- * @route /notifications/count
- * @method get
- * @access private
- * @data {}
- * @return {status, data}
- * ------------------------------------------------------ */
-export const getUnreadActivitiesCount = asyncWrapper(async (req, res, next) => {
-  // -> 1) Get the count of unread activities
-  const count = await notification_model
-    .find({ receiver_id: req.user.id, is_read: false })
-    .count();
-
-  // -> 2) Send the response
-  res.json({
-    status: true,
-    data: count,
   });
 });
