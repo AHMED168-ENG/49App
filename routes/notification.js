@@ -5,7 +5,7 @@ import sub_category_model from '../models/sub_category_model.js'
 import subscription_model from '../models/subscription_model.js'
 import user_model from '../models/user_model.js'
 
-import {getServiceActivities, getSocialActivities} from '../controllers/activity_controller.js'
+import {getAppActivities, getServiceActivities, getSocialActivities} from '../controllers/activity_controller.js'
 
 
 /*-------------------Middleware-------------------*/
@@ -18,35 +18,7 @@ router.get('/social', isAuthenticated, getSocialActivities)
 
 router.get('/service', isAuthenticated, getServiceActivities)
 
-router.get('/app', verifyToken, async (req, res, next) => {
-
-    try {
-
-        const { language } = req.headers
-
-        const { page } = req.query
-
-        const result = await notification_model.find({
-            receiver_id: req.user.id,
-            tab: 3,
-        }).sort({ createdAt: -1 , _id: 1}).skip((((page ?? 1) - 1) * 20)).limit(20)
-
-        result.forEach(e => {
-            e._doc.text = language == 'ar' ? e.text_ar : e.text_en
-
-            delete e._doc.text_ar
-            delete e._doc.text_en
-        })
-
-        res.json({
-            'status': true,
-            'data': result,
-        })
-
-    } catch (e) {
-        next(e)
-    }
-})
+router.get('/app', isAuthenticated, getAppActivities)
 
 router.post('/set-as-read', verifyToken, async (req, res, next) => {
     try {

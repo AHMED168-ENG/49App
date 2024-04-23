@@ -65,6 +65,7 @@ export const getServiceActivities = asyncWrapper(async (req, res, next) => {
   // -> 2) Get the page number from the query
   const { page } = req.query;
 
+  // -> 3) Find all service activities for the user
   const activities = await notification_model
     .find({ receiver_id: req.user.id, tab: 2 })
     .sort({ createdAt: -1, _id: 1 })
@@ -76,22 +77,23 @@ export const getServiceActivities = asyncWrapper(async (req, res, next) => {
   // return if no activities without make any operations
   if (activities?.length === 0) return res.json({ status: true, data: [] });
 
-  // 2) Extract unique user IDs and sub-category IDs
+  // 4) Extract unique user IDs and sub-category IDs
   const userIds = [req.user.id];
   const subCategoriesIds = [];
 
+  // 5) Loop through the activities and extract the user IDs and sub-category IDs
   activities.forEach((activity) => {
     if (!userIds.includes(activity.user_id)) userIds.push(activity.user_id);
     if (!subCategoriesIds.includes(activity.sub_category_id))
       subCategoriesIds.push(activity.sub_category_id);
   });
 
-  // 3) Fetch free sub-categories
+  // 6) Fetch free sub-categories
   const freeSubCategories = await sub_category_model
     .find({ _id: { $in: subCategoriesIds }, daily_price: 0 })
     .distinct("_id");
 
-  // 4) Fetch subscriptions
+  // 7) Fetch subscriptions
   const subscriptions = await subscription_model
     .find({
       sub_category_id: { $in: subCategoriesIds },
@@ -99,7 +101,7 @@ export const getServiceActivities = asyncWrapper(async (req, res, next) => {
     })
     .select("sub_category_id user_id");
 
-  // 5) Update activities with subscription information and localized text
+  // 8) Update activities with subscription information and localized text
   activities.forEach((activity) => {
     activity._doc.is_subscription = false;
 
@@ -125,4 +127,41 @@ export const getServiceActivities = asyncWrapper(async (req, res, next) => {
 
   // 6) Send response
   res.json({ status: true, data: activities });
+});
+
+export const getAppActivities = asyncWrapper(async (req, res, next) => {
+  // -> 1) Get the language from the request headers
+  const { language } = req.headers;
+
+  // -> 2) Get the page number from the query
+  const { page } = req.query;
+
+  // -> 3) Find all app activities for the user
+  const activities = await notification_model
+    .find({
+      receiver_id: req.user.id,
+      tab: 3,
+    })
+    .sort({ createdAt: -1, _id: 1 })
+    .skip(((page ?? 1) - 1) * 20)
+    .limit(20);
+
+  /*-------------------Note-------------------*/
+  /* we don't need to check if activities is defined or not because find method always return an array */
+  // return if no activities without make any operations
+  if (activities.length === 0) return res.json({ status: true, data: [] });
+
+  // -> 4) Update the activities with the localized text
+  activities.forEach((e) => {
+    e._doc.text = language == "ar" ? e.text_ar : e.text_en;
+
+    delete e._doc.text_ar;
+    delete e._doc.text_en;
+  });
+
+  // -> 5) Send the response
+  res.json({
+    status: true,
+    data: activities,
+  });
 });
