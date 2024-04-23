@@ -34,8 +34,6 @@ import {
   validationCreateRateOrder,
 } from "../../validation/food_validation.js";
 
-import handel_validation_errors from "../../middleware/handelBodyError.js";
-
 const router = express.Router();
 
 /*------------------- Apply Universal Middleware to All Routes -------------------*/

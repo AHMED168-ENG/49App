@@ -5,106 +5,18 @@ import sub_category_model from '../models/sub_category_model.js'
 import subscription_model from '../models/subscription_model.js'
 import user_model from '../models/user_model.js'
 
+import {getServiceActivities, getSocialActivities} from '../controllers/activity_controller.js'
+
+
+/*-------------------Middleware-------------------*/
+import { isAuthenticated } from "../middleware/is-authenticated.js";
+import { isAuthorized } from "../middleware/is-authorized.js";
+
 const router = express.Router()
 
-router.get('/social', verifyToken, async (req, res, next) => {
+router.get('/social', isAuthenticated, getSocialActivities)
 
-    try {
-
-        const { language } = req.headers
-
-        const { page } = req.query
-
-        const result = await notification_model.find({
-            receiver_id: req.user.id,
-            tab: 1,
-        }).sort({ createdAt: -1, _id: 1 }).skip((((page ?? 1) - 1) * 20)).limit(20)
-
-        const userIds = []
-
-        result.forEach(e => {
-            if (e.user_id && !userIds.includes(e.user_id)) userIds.push(e.user_id)
-        })
-
-        var users = []
-        if (userIds.length > 0)
-            users = await user_model.find({ _id: { $in: userIds } }).select('first_name last_name profile_picture profile_picture')
-
-        result.forEach(e => {
-            e._doc.text = language == 'ar' ? e.text_ar : e.text_en
-
-            delete e._doc.text_ar
-            delete e._doc.text_en
-
-            for (const user of users) {
-                if (e.user_id == user.id) {
-                    e._doc.sender = user
-                    break
-                }
-            }
-        })
-
-        res.json({
-            'status': true,
-            'data': result,
-        })
-
-    } catch (e) {
-        console.log(e)
-        next(e)
-    }
-})
-
-router.get('/service', verifyToken, async (req, res, next) => {
-
-    try {
-        const { language } = req.headers
-
-        const { page } = req.query
-
-        const result = await notification_model.find({
-            receiver_id: req.user.id,
-            tab: 2,
-        }).sort({ createdAt: -1, _id: 1 }).skip((((page ?? 1) - 1) * 20)).limit(20)
-
-        const usersIds = [req.user.id]
-        const subCategoriesIds = []
-
-        result.forEach(e => {
-            if (!usersIds.includes(e.user_id)) usersIds.push(e.user_id)
-            if (!subCategoriesIds.includes(e.sub_category_id)) subCategoriesIds.push(e.sub_category_id)
-        })
-
-        const freeSubCategories = await sub_category_model.find({ _id: { $in: subCategoriesIds }, daily_price: 0 }).distinct('_id')
-
-        const subscriptions = await subscription_model.find({ sub_category_id: { $in: subCategoriesIds }, user_id: { $in: usersIds } }).select('sub_category_id user_id')
-
-        result.forEach(e => {
-            e._doc.is_subscription = false
-
-            for (const subscription of subscriptions) {
-                if (freeSubCategories.includes(e.sub_category_id) || (subscription.sub_category_id == e.sub_category_id && (e.user_id == subscription.user_id || subscription.user_id == req.user.id))) {
-                    e._doc.is_subscription = true
-                    break
-                }
-            }
-
-            e._doc.text = language == 'ar' ? e.text_ar : e.text_en
-
-            delete e._doc.text_ar
-            delete e._doc.text_en
-        })
-
-        res.json({
-            'status': true,
-            'data': result,
-        })
-
-    } catch (e) {
-        console.log(e)
-        next(e)
-    }
-})
+router.get('/service', isAuthenticated, getServiceActivities)
 
 router.get('/app', verifyToken, async (req, res, next) => {
 
