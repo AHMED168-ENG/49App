@@ -198,12 +198,14 @@ const validationCreateOrder = [
   validatorHandlerMiddleware,
 ];
 
+
+
 //* @data {comment , category_id , ad_id , user_id}
 const validationCreateRateOrder = [
   body("comment")
     .notEmpty()
     .isString()
-    .isLength({ min: 3 , max: 100 })
+    .isLength({ min: 3, max: 100 })
     .withMessage(
       returnValidationMessageToClient({
         en: "comment is required",
@@ -246,6 +248,35 @@ const validationCreateRateOrder = [
   validatorHandlerMiddleware,
 ];
 
+//{category_id , ad_id}
+const validationDeleteRateOrder = [
+  body("category_id")
+    .notEmpty()
+    .isMongoId()
+    .withMessage(
+      returnValidationMessageToClient({
+        en: "category id is required",
+        ar: "معرف الفئة مطلوب",
+      })
+    ),
+  body("ad_id")
+    .notEmpty()
+    .isMongoId()
+    .withMessage(
+      returnValidationMessageToClient({
+        en: "ad id is required",
+        ar: "معرف الإعلان مطلوب",
+      })
+    ),
+  checkExact([], {
+    message: returnValidationMessageToClient({
+      en: "Sorry, you are trying to enter fields that are not required",
+      ar: "لقد قمت بادخال حقول غير مطلوبة",
+    }),
+  }),
+  validatorHandlerMiddleware,
+];
+
 /**
  * @deprecated
  */
@@ -273,4 +304,5 @@ export {
   validationUpdateRestaurantItem,
   validationCreateOrder,
   validationCreateRateOrder,
+  validationDeleteRateOrder,
 };

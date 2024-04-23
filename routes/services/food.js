@@ -32,9 +32,8 @@ import {
   validationUpdateRestaurantItem,
   validationCreateOrder,
   validationCreateRateOrder,
+  validationDeleteRateOrder,
 } from "../../validation/food_validation.js";
-
-import handel_validation_errors from "../../middleware/handelBodyError.js";
 
 const router = express.Router();
 
@@ -54,7 +53,7 @@ router.post("/register", validationRegisterRestaurant, createRestuarant);
 router.post("/make-order", validationCreateOrder, createOrder);
 
 router.delete("/delete-registration", deleteRestuarant);
-router.delete("/delete-rating", deleteRateOrder);
+router.delete("/delete-rating", validationDeleteRateOrder, deleteRateOrder);
 // modified from "/delete-food-item" to "/delete-food-item/:id"
 router.delete("/delete-food-item/:id", deleteRestaurantItem);
 // new route -> refactor ver. 0.1
