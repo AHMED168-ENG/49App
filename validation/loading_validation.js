@@ -59,6 +59,7 @@ export const validationRegisterLoading = () => {
 };
 
 export const validationLoadingRating = () => {
+
   return [
     check("category_id")
       .notEmpty()
@@ -157,6 +158,7 @@ export const requestLoadingValidation = () => {
   ];
 };
 
+
 export const validateLoadingOffer = () => {
   return [
     check("adId")
@@ -185,6 +187,7 @@ export const validateLoadingOffer = () => {
   ];
 };
 
+
 export const acceptLoadingOfferValidation = () => {
   return [
     check("notificationId")
@@ -212,3 +215,4 @@ export const acceptLoadingOfferValidation = () => {
       validatorHandlerMiddleware
   ];
 };
+

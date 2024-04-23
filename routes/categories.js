@@ -18,7 +18,7 @@ router.get('/main', tryVerify, async (req, res, next) => {
 
     try {
 
-        const { user } = req
+        const { id } = req.user
 
         const { language } = req.headers
 
