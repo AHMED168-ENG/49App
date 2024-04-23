@@ -301,3 +301,24 @@ export const deleteAllActivities = asyncWrapper(async (req, res, next) => {
     status: true,
   });
 });
+
+/** ------------------------------------------------------
+ * @desc get count of unread activities
+ * @route /notifications/count
+ * @method get
+ * @access private
+ * @data {}
+ * @return {status, data}
+ * ------------------------------------------------------ */
+export const getUnreadActivitiesCount = asyncWrapper(async (req, res, next) => {
+  // -> 1) Get the count of unread activities
+  const count = await notification_model
+    .find({ receiver_id: req.user.id, is_read: false })
+    .count();
+
+  // -> 2) Send the response
+  res.json({
+    status: true,
+    data: count,
+  });
+});

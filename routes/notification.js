@@ -1,13 +1,13 @@
 import express from "express";
 import notification_model from "../models/notification_model.js";
 
-
 import {
   deleteActivity,
   deleteAllActivities,
   getAppActivities,
   getServiceActivities,
   getSocialActivities,
+  getUnreadActivitiesCount,
   setActivityRead,
 } from "../controllers/activity_controller.js";
 
@@ -27,29 +27,12 @@ router.use(isAuthorized(["user", "admin", "super_admin"]));
 router.get("/social", getSocialActivities);
 router.get("/service", getServiceActivities);
 router.get("/app", getAppActivities);
-router.post(
-  "/set-as-read",
-  validateSetAsReadActivity,
-  setActivityRead
-);
+router.post("/set-as-read", validateSetAsReadActivity, setActivityRead);
 
 router.delete("/:id", deleteActivity);
 router.delete("/all/:tab", deleteAllActivities);
 
-router.get("/count", async (req, res, next) => {
-  try {
-    const result = await notification_model
-      .find({ receiver_id: req.user.id, is_read: false })
-      .count();
-
-    res.json({
-      status: true,
-      data: result,
-    });
-  } catch (e) {
-    next(e);
-  }
-});
+router.get("/count", getUnreadActivitiesCount);
 
 router.get("/count-by-type", async (req, res, next) => {
   try {
