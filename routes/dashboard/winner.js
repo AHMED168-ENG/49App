@@ -1,7 +1,7 @@
 // make user winner route by super admin -> jsut only active comptitions
 // check of subscriber's counter is equal to limitOfComptition
 router.put(
-  "/dashboard/winner/:subscriperId",
+  "/dashboard/winner/:subscriberId",
   isAuthenticated,
   isAuthorized(["super_admin"])
 );

@@ -1,4 +1,4 @@
-// get all subscribers for whole comptitions by super admin
+// get all subscribers for whole competitions by super admin
 /*
     1- all subscribers (include name, email, phone, wallet, status , counter , isBlocked/fraud)
  */
@@ -17,7 +17,7 @@ router.get(
         1- status
         1- counter
         1- isBlocked/fraud
-        1- all comptitions that user subscribed to (include comptition name, category name, pricePer request, start_date, end_date, status)
+        1- all competitions that user subscribed to (include competitions name, category name, pricePer request, start_date, end_date, status)
      */
 router.get(
   "/dashboard/subscribers/:subscriberId",
