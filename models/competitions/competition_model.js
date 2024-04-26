@@ -11,7 +11,7 @@ const schema = new mongoose.Schema(
     description: { type: String, required: true },
     maxSubscriber: { type: Number, required: true },
     withdrawLimit: { type: Number, required: true },
-    status: { type: String, required: true, default: "active" }, // active, inactive
+    status: { type: Boolean, required: true, default: true },
     start_date: { type: Date, required: true },
     end_date: { type: Date, required: true },
     pricePerRequest: { type: Number, required: true },
