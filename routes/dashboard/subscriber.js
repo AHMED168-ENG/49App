@@ -1,11 +1,17 @@
-// get all subscribers for whole competitions by super admin
-/*
-    1- all subscribers (include name, email, phone, wallet, status , counter , isBlocked/fraud)
- */
+import { validateGetSubscribersInput } from "../../validation/competition/subscriber.js";
+import { getSubscribersController } from "../../controllers/dashboard/subscriber.js";
+import { isAuthenticated } from "../../middleware/is-authenticated.js";
+import { isAuthorized } from "../../middleware/is-authorized.js";
+import express from "express";
+
+const router = express.Router();
+
 router.get(
-  "/dashboard/subscribers",
+  "/subscribers",
   isAuthenticated,
-  isAuthorized(["super_admin"])
+  isAuthorized(["super_admin"]),
+  validateGetSubscribersInput,
+  getSubscribersController
 );
 
 // get specific subscriber by id by super admin
@@ -31,3 +37,5 @@ router.put(
   isAuthenticated,
   isAuthorized(["super_admin"])
 );
+
+export default router;

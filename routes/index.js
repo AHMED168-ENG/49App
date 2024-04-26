@@ -28,6 +28,7 @@ import contests from "./contests.js";
 import dashboardAuth from "./dashboard/auth.js";
 import dashboardSuperAdmin from "./dashboard/super_admin.js";
 import dashboardAdmin from "./dashboard/admin.js";
+import dashboardSubscribersRouter from "./dashboard/Subscriber.js";
 
 const initializeRoutes = (app) => {
   app.use("/auth", auth);
@@ -64,6 +65,7 @@ const initializeRoutes = (app) => {
   app.use("/dashboard/auth", dashboardAuth);
   app.use("/dashboard/super-admin", dashboardSuperAdmin);
   app.use("/dashboard/admin", dashboardAdmin);
+  app.use("/dashboard", dashboardSubscribersRouter);
 };
 
 export { initializeRoutes };
