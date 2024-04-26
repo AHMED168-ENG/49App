@@ -47,12 +47,7 @@ import chat_group_model from '../../models/chat_group_model.js'
 import monthly_contest_model from '../../models/monthly_contest_model.js'
 import complaintـmodel from '../../models/complaintـmodel.js'
 
-import competitionRouter from './competition.js'
-
 const router = express.Router()
-
-// nested routes
-router.use('/competitions', competitionRouter)
 
 router.post('/admins', verifyTokenAndSuperAdmin, async (req, res, next) => {
 

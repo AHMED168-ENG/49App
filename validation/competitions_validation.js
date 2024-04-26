@@ -66,7 +66,7 @@ const createCompetitionValidation = [
     ),
 
   body("start_date")
-    .notEmpty()
+    .optional()
     .isString()
     .withMessage(
       returnValidationMessageToClient({
@@ -75,7 +75,7 @@ const createCompetitionValidation = [
       })
     ),
   body("end_date")
-    .notEmpty()
+    .optional()
     .isString()
     .withMessage(
       returnValidationMessageToClient({
@@ -84,7 +84,7 @@ const createCompetitionValidation = [
       })
     ),
   body("status")
-    .notEmpty()
+    .optional()
     .isBoolean()
     .withMessage(
       returnValidationMessageToClient({

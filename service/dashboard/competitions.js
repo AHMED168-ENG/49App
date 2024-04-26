@@ -37,12 +37,10 @@ export const createCompetitionService = async (body, headers) => {
 
     // -> 4) If the competition name is already exists, return an error
     if (competition) {
-      return next(
-        new ConflictError(
-          language === "en"
-            ? "Competition name is already exists"
-            : "اسم المسابقة موجود بالفعل"
-        )
+      throw new ConflictError(
+        language === "en"
+          ? "Competition name is already exists"
+          : "اسم المسابقة موجود بالفعل"
       );
     }
 
@@ -144,7 +142,7 @@ export const getAllCompetitionsService = async ({ pagination }) => {
   return { data, count };
 };
 
-export const getCompetitionByIdService = async (competitionId , headers) => {
+export const getCompetitionByIdService = async (competitionId, headers) => {
   try {
     // -> 1) Get the language from the request headers
     const { language } = headers || "en";
