@@ -1,4 +1,4 @@
-import { getSubscribersService } from "../../service/dashboard/subscriber.js";
+import { getSubscriberByIdService, getSubscribersService } from "../../service/dashboard/subscriber.js";
 import httpStatus from "http-status";
 
 const getSubscribersController = async (req, res, next) => {
@@ -24,4 +24,24 @@ const getSubscribersController = async (req, res, next) => {
   }
 };
 
-export { getSubscribersController };
+const getSubscriberByIdController = async (req, res, next) => {
+  try {
+    // --> 1) get data from request
+    const { subscriberId } = req.params;
+
+    // --> 2) get subscriber by id
+    const subscriber = await getSubscriberByIdService(subscriberId);
+
+    // --> 3) return response to client
+    res.status(httpStatus.OK).json({
+      status: true,
+      data: {
+        subscriber,
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export { getSubscribersController, getSubscriberByIdController };

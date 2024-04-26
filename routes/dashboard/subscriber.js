@@ -1,7 +1,14 @@
-import { validateGetSubscribersInput } from "../../validation/competition/subscriber.js";
-import { getSubscribersController } from "../../controllers/dashboard/subscriber.js";
+import {
+  validateGetSubscriberByIdInput,
+  validateGetSubscribersInput,
+} from "../../validation/competition/subscriber.js";
 import { isAuthenticated } from "../../middleware/is-authenticated.js";
 import { isAuthorized } from "../../middleware/is-authorized.js";
+import {
+  getSubscriberByIdController,
+  getSubscribersController,
+} from "../../controllers/dashboard/subscriber.js";
+
 import express from "express";
 
 const router = express.Router();
@@ -26,9 +33,11 @@ router.get(
         1- all competitions that user subscribed to (include competitions name, category name, pricePer request, start_date, end_date, status)
      */
 router.get(
-  "/dashboard/subscribers/:subscriberId",
+  "/subscribers/:subscriberId",
   isAuthenticated,
-  isAuthorized(["super_admin"])
+  isAuthorized(["super_admin"]),
+  validateGetSubscriberByIdInput,
+  getSubscriberByIdController
 );
 
 // super admin can delete remove or block or fraud any user from the system by this route

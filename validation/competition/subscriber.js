@@ -1,6 +1,6 @@
 import { returnValidationMessageToClient } from "../../utils/return-validation-message-to-client.js";
 import { validatorHandlerMiddleware } from "../../middleware/validator-handler-middleware.js";
-import { checkExact, query } from "express-validator";
+import { checkExact, param, query } from "express-validator";
 
 const validateGetSubscribersInput = [
   query("page").optional(),
@@ -14,4 +14,16 @@ const validateGetSubscribersInput = [
   validatorHandlerMiddleware,
 ];
 
-export { validateGetSubscribersInput };
+const validateGetSubscriberByIdInput = [
+  param("subscriberId")
+    .isMongoId()
+    .withMessage(
+      returnValidationMessageToClient({
+        en: "The subscriber id is not valid",
+        ar: "معرف المشترك غير صالح",
+      })
+    ),
+  validatorHandlerMiddleware,
+];
+
+export { validateGetSubscribersInput, validateGetSubscriberByIdInput };
