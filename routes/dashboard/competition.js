@@ -1,15 +1,37 @@
+import express from "express";
 
+/*-------------------Middleware-------------------*/
+import { isAuthenticated } from "../../middleware/is-authenticated.js";
+import { isAuthorized } from "../../middleware/is-authorized.js";
 
+/*-------------------Validation-------------------*/
+import {
+  createCompetitionValidation,
+  updateCompetitionValidation,
+} from "../../validation/competitions_validation.js";
+import {
+  createCompetitionController,
+  getCompetitionByIdController,
+  getCompetitionsController,
+  updateCompetitionController,
+} from "../../controllers/dashboard/competition.js";
 
+const router = express.Router();
+
+router.use(isAuthenticated);
+router.use(isAuthorized(["super_admin"]));
 
 /*-------------------Super Admin-------------------*/
 // create new competition by super admin
-router.post("/dashboard/competitions", isAuthenticated, isAuthorized(["super_admin"]));
+router.post(
+  "/",
+  createCompetitionValidation,
+  createCompetitionController
+);
 
 // get all competitions by super admin active and inactive -> if there is any query string it will be for active competitions only
 // router.get("/competitions?active", isAuthenticated, isAuthorized(["super_admin"])); -> return active competitions only
 // router.get("/competitions?inactive", isAuthenticated, isAuthorized(["super_admin"])); -> return inactive competitions only
-
 /*
   1- competition id
   1- competition name
@@ -21,7 +43,7 @@ router.post("/dashboard/competitions", isAuthenticated, isAuthorized(["super_adm
   1- end_date
   1- active or inactive (status)
  */
-router.get("/dashboard/competitions", isAuthenticated, isAuthorized(["super_admin"]));
+router.get("/", getCompetitionsController);
 
 // get competition by id by super admin active and inactive
 /*
@@ -36,25 +58,17 @@ router.get("/dashboard/competitions", isAuthenticated, isAuthorized(["super_admi
     1- active or inactive (status)
     1- all subscribers for this competition (include user name, email, phone, wallet, status , counter , isBlocked/fraud)
  */
-router.get(
-  "/dashboard/competitions/:competitionId",
-  isAuthenticated,
-  isAuthorized(["super_admin"])
-);
-
+router.get("/:competitionId" , getCompetitionByIdController);
 
 // update competition by id by super admin  -> name , description , start_date , end_date , price , max_subscribers , active , in_active , price_per_request
 router.put(
-  "/dashboard/competitions/:competitionId",
-  isAuthenticated,
-  isAuthorized(["super_admin"])
+  "/:competitionId",
+  updateCompetitionValidation,
+  updateCompetitionController
 );
+
+export default router;
 
 /*-------------------optional-------------------*/
 // optional route to delete competition by id by super admin
 // router.delete("/competitions/:competitionId", isAuthenticated, isAuthorized(["super_admin"]));
-
-
-
-
-
