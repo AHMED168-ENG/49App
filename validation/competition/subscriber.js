@@ -47,8 +47,30 @@ const validateUpdateSubscriberBlockStatusInput = [
   validatorHandlerMiddleware,
 ];
 
+const validateUpdateSubscriberFraudStatusInput = [
+  param("subscriberId")
+    .isMongoId()
+    .withMessage(
+      returnValidationMessageToClient({
+        en: "The subscriber id is not valid",
+        ar: "معرف المشترك غير صالح",
+      })
+    ),
+
+  body("isFraud")
+    .isBoolean({ strict: true })
+    .withMessage(
+      returnValidationMessageToClient({
+        en: "isFraud must be true or false",
+        ar: "isFraud يجب ان يكون true او false",
+      })
+    ),
+  validatorHandlerMiddleware,
+];
+
 export {
   validateGetSubscribersInput,
   validateGetSubscriberByIdInput,
   validateUpdateSubscriberBlockStatusInput,
+  validateUpdateSubscriberFraudStatusInput,
 };

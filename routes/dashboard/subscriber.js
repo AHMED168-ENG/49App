@@ -6,12 +6,14 @@ import {
   validateGetSubscriberByIdInput,
   validateGetSubscribersInput,
   validateUpdateSubscriberBlockStatusInput,
+  validateUpdateSubscriberFraudStatusInput,
 } from "../../validation/competition/subscriber.js";
 
 import {
   getSubscriberByIdController,
   getSubscribersController,
   updateSubscriberBlockStatusController,
+  updateSubscriberFraudStatusController,
 } from "../../controllers/dashboard/subscriber.js";
 
 const router = express.Router();
@@ -43,7 +45,6 @@ router.get(
   getSubscriberByIdController
 );
 
-// super admin can delete remove or block or fraud any user from the system by this route
 router.put(
   "/subscribers/:subscriberId/block",
   isAuthenticated,
@@ -55,7 +56,9 @@ router.put(
 router.put(
   "/subscribers/:subscriberId/fraud",
   isAuthenticated,
-  isAuthorized(["super_admin"])
+  isAuthorized(["super_admin"]),
+  validateUpdateSubscriberFraudStatusInput,
+  updateSubscriberFraudStatusController
 );
 
 export default router;

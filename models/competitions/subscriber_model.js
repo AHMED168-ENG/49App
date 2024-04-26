@@ -12,6 +12,11 @@ const schema = new mongoose.Schema(
       required: true,
       ref: "competitions",
     },
+    wallet_id: {
+      type: mongoose.Schema.Types.ObjectId,
+      required: true,
+      ref: "competition_wallet",
+    },
     isBlocked: { type: Boolean, default: false },
     isFraud: { type: Boolean, default: false },
     countOfRequest: { type: Number, default: 0 },

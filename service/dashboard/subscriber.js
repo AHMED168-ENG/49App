@@ -8,6 +8,7 @@ const getSubscribersService = async ({ pagination }) => {
     const subscribers = await subscriber_model
       .find({})
       .populate("user_id", "name email")
+      .populate("wallet_id", "amount")
       .select("user_id isBlocked, isFraud, countOfRequest")
       .skip((pagination.page - 1) * pagination.limit)
       .limit(pagination.limit)
@@ -42,6 +43,7 @@ const getSubscriberByIdService = async (subscriberId) => {
     const subscriber = subscriber_model
       .findById(subscriberId)
       .populate("user_id", "name email")
+      .populate("wallet_id", "amount")
       .select("user_id isBlocked, isFraud, countOfRequest");
 
     // --> 3) return response to client
