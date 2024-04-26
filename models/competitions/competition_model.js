@@ -1,17 +1,17 @@
-import mongoose, { Mongoose } from "mongoose";
+import mongoose from "mongoose";
 
 const schema = new mongoose.Schema(
   {
     category_id: {
-      type: Mongoose.Schema.Types.ObjectId,
+      type: mongoose.Schema.Types.ObjectId,
       required: true,
       ref: "main_categories",
     },
-    name: { type: String, required: true },
+    name: { type: String, required: true , unique: true},
     description: { type: String, required: true },
     maxSubscriber: { type: Number, required: true },
     withdrawLimit: { type: Number, required: true },
-    status: { type: String, required: true, default: "active" }, // active, inactive
+    status: { type: Boolean, required: true, default: true },
     start_date: { type: Date, required: true },
     end_date: { type: Date, required: true },
     pricePerRequest: { type: Number, required: true },
