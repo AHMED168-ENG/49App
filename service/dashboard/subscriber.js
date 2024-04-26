@@ -1,5 +1,6 @@
 import subscriber_model from "../../models/competitions/subscriber_model.js";
 import BadRequestError from "../../utils/types-errors/bad-request.js";
+import NotFoundError from "../../utils/types-errors/not-found.js";
 
 const getSubscribersService = async ({ pagination }) => {
   try {
@@ -50,4 +51,24 @@ const getSubscriberByIdService = async (subscriberId) => {
   }
 };
 
-export { getSubscribersService, getSubscriberByIdService };
+const updateSubscriber = async (subscriberId, subscriber) => {
+  try {
+    // --> 1) check if subscriber exists
+    const isSubscriberExists = await subscriber_model
+      .findById(subscriber.id)
+      .select("user_id");
+
+    if (!isSubscriberExists) {
+      throw new NotFoundError("Subscriber not found");
+    }
+
+    // --> 2) update subscriber
+    await subscriber_model
+      .updateOne({ _id: subscriberId }, { ...subscriber })
+      .select("user_id");
+  } catch (error) {
+    throw error;
+  }
+};
+
+export { getSubscribersService, getSubscriberByIdService, updateSubscriber };

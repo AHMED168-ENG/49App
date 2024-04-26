@@ -1,15 +1,18 @@
+import express from "express";
+import { isAuthenticated } from "../../middleware/is-authenticated.js";
+import { isAuthorized } from "../../middleware/is-authorized.js";
+
 import {
   validateGetSubscriberByIdInput,
   validateGetSubscribersInput,
+  validateUpdateSubscriberBlockStatusInput,
 } from "../../validation/competition/subscriber.js";
-import { isAuthenticated } from "../../middleware/is-authenticated.js";
-import { isAuthorized } from "../../middleware/is-authorized.js";
+
 import {
   getSubscriberByIdController,
   getSubscribersController,
+  updateSubscriberBlockStatusController,
 } from "../../controllers/dashboard/subscriber.js";
-
-import express from "express";
 
 const router = express.Router();
 
@@ -42,7 +45,15 @@ router.get(
 
 // super admin can delete remove or block or fraud any user from the system by this route
 router.put(
-  "/dashboard/subscriptions/:subscriberId",
+  "/subscribers/:subscriberId/block",
+  isAuthenticated,
+  isAuthorized(["super_admin"]),
+  validateUpdateSubscriberBlockStatusInput,
+  updateSubscriberBlockStatusController
+);
+
+router.put(
+  "/subscribers/:subscriberId/fraud",
   isAuthenticated,
   isAuthorized(["super_admin"])
 );

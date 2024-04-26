@@ -1,5 +1,9 @@
-import { getSubscriberByIdService, getSubscribersService } from "../../service/dashboard/subscriber.js";
 import httpStatus from "http-status";
+import {
+  getSubscriberByIdService,
+  getSubscribersService,
+  updateSubscriber,
+} from "../../service/dashboard/subscriber.js";
 
 const getSubscribersController = async (req, res, next) => {
   try {
@@ -44,4 +48,26 @@ const getSubscriberByIdController = async (req, res, next) => {
   }
 };
 
-export { getSubscribersController, getSubscriberByIdController };
+const updateSubscriberBlockStatusController = async (req, res, next) => {
+  try {
+    // --> 1) get data from request
+    const { subscriberId } = req.params;
+
+    // --> 2) update subscriber block status
+    await updateSubscriber(subscriberId, req.body);
+
+    // --> 3) return response to client
+    res.status(httpStatus.OK).json({
+      status: true,
+      message: "Updated subscriber block status successfully",
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export {
+  getSubscribersController,
+  getSubscriberByIdController,
+  updateSubscriberBlockStatusController,
+};

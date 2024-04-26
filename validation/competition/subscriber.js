@@ -1,6 +1,6 @@
 import { returnValidationMessageToClient } from "../../utils/return-validation-message-to-client.js";
 import { validatorHandlerMiddleware } from "../../middleware/validator-handler-middleware.js";
-import { checkExact, param, query } from "express-validator";
+import { body, checkExact, param, query } from "express-validator";
 
 const validateGetSubscribersInput = [
   query("page").optional(),
@@ -26,4 +26,29 @@ const validateGetSubscriberByIdInput = [
   validatorHandlerMiddleware,
 ];
 
-export { validateGetSubscribersInput, validateGetSubscriberByIdInput };
+const validateUpdateSubscriberBlockStatusInput = [
+  param("subscriberId")
+    .isMongoId()
+    .withMessage(
+      returnValidationMessageToClient({
+        en: "The subscriber id is not valid",
+        ar: "معرف المشترك غير صالح",
+      })
+    ),
+
+  body("isBlocked")
+    .isBoolean({ strict: true })
+    .withMessage(
+      returnValidationMessageToClient({
+        en: "isBlocked must be true or false",
+        ar: "isBlocked يجب ان يكون true او false",
+      })
+    ),
+  validatorHandlerMiddleware,
+];
+
+export {
+  validateGetSubscribersInput,
+  validateGetSubscriberByIdInput,
+  validateUpdateSubscriberBlockStatusInput,
+};
