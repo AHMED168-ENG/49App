@@ -7,9 +7,12 @@ import {
 
 const getSubscribersController = async (req, res, next) => {
   try {
-    const { page, limit } = req.query;
+    const { page, limit, withdrawLimit } = req.query;
 
-    const subscribers = await getSubscribersService({
+    const { data, pagination } = await getSubscribersService({
+      filter: {
+        withdrawLimit,
+      },
       pagination: {
         page: page ? parseInt(page) : process.env.PAGINATION_PAGE,
         limit: limit ? parseInt(limit) : process.env.PAGINATION_LIMIT,
@@ -19,9 +22,9 @@ const getSubscribersController = async (req, res, next) => {
     res.status(httpStatus.OK).json({
       status: true,
       data: {
-        subscribers: subscribers.data,
+        subscribers: data,
       },
-      pagination: subscribers.pagination,
+      pagination,
     });
   } catch (error) {
     next(error);

@@ -2,17 +2,20 @@ import subscriber_model from "../../models/competitions/subscriber_model.js";
 import BadRequestError from "../../utils/types-errors/bad-request.js";
 import NotFoundError from "../../utils/types-errors/not-found.js";
 
-const getSubscribersService = async ({ pagination }) => {
+const getSubscribersService = async ({ filter, pagination }) => {
   try {
     // --> 1) get all subscribers for whole competitions
-    const subscribers = await subscriber_model
+    let subscribers = await subscriber_model
       .find({})
-      .populate("user_id", "name email")
+      .select("user_id isBlocked isFraud countOfRequest")
+      .populate("user_id", "email first_name last_name")
       .populate("wallet_id", "amount")
-      .select("user_id isBlocked, isFraud, countOfRequest")
       .skip((pagination.page - 1) * pagination.limit)
       .limit(pagination.limit)
       .sort({ createdAt: -1 });
+
+    if (filter.withdrawLimit) {
+    }
 
     // --> 2) get count of subscribers from database
     const count = await subscriber_model.countDocuments();
