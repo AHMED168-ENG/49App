@@ -33,15 +33,17 @@ const schema = new mongoose.Schema({
     auto_accept : {
         type: Boolean, default: false
     },
-    cancel_reason: { type: mongoose.Schema.ObjectId , ref: "cancelation_reasons" },
     penalty: { type: Number , default : 0},
     payed_penalty : { type: Boolean , default : false},
+    is_cancel_client : { type: mongoose.Schema.ObjectId , ref: "cancelation_reasons" },
+    is_cancel_ride : { type: mongoose.Schema.ObjectId , ref: "cancelation_reasons" },
 
 }, { versionKey: false, timestamps: true })
 
 schema.index({
     location: "2dsphere",
 })
+
 schema.plugin(mongoosePaginate);
 schema.plugin(mongooseAggregatePaginate);
 export default mongoose.model("rides", schema);

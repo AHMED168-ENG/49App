@@ -80,6 +80,9 @@ const schema = new Schema({
     constant_y : {type : Number , default : 1},
     constant_z : {type : Number , default : 1},
     trip_ratio : {type : Number , default : 0},
+    instapay_personal_number : {type : String , default : "01027000071"},
+    instapay_company_number : {type : String, default : "01033509607"},
+    trip_ratio : {type : Number , default : 0},
     
 }, { versionKey: false, timestamps: true })
 

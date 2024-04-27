@@ -28,6 +28,7 @@ export function cancelRide() {
             ar: "قم بادخال معرف صحيح",
             en: "Enter valid id"
         }))
+        return true
         }),
     ];
   }

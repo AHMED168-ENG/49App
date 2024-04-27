@@ -7,7 +7,7 @@ const cardIntegrationId = '2765377'
 const walletIntegrationId = '2765376'
 
 
-// payout info
+
 const payoutClientId = 'mkVByrVQFTsfYwC4FyxLfSutxDvl8p7UU2kCgNqk'
 const payoutClientSecret = 'jcTE3AM7ydbTSrf5vJgMEdkJ1HPL7H4H7Xl5RO1zAnAUWergXAx5rFwP5qTrQ1EhkhE8bqkcSpWV6gKJVVVxhxysEz7uQMGGVUi0IQKDRZoQHnZ0P75nE67u5ePQGPI3'
 const payoutUsername = '49_api_checker'
@@ -15,6 +15,12 @@ const payoutPassword = 'pIB6dSKOAGrutR50XghWpIK#5'
 const payoutGrantType = 'password'
 
 
+/** ------------------------------------------------------  
+ * @desc get payment token
+ * @route /payment
+ * @method get
+ * @access private get payment token
+ /**  ------------------------------------------------------  */
 export async function getPaymobToken() {
 
     const result = await axios
@@ -25,6 +31,12 @@ export async function getPaymobToken() {
     return result.data.token
 }
 
+/** ------------------------------------------------------  
+ * @desc make order
+ * @route /payment
+ * @method post
+ * @access private make order
+ /**  ------------------------------------------------------  */
 export async function makeOrder(token, amount) {
 
     const result = await axios
@@ -37,7 +49,13 @@ export async function makeOrder(token, amount) {
 
 }
 
-export async function makeWalletOrder(paymentToken, phoneNumber) {
+/** ------------------------------------------------------  
+ * @desc get payment token
+ * @route /payment
+ * @method get
+ * @access private get payment token
+ /**  ------------------------------------------------------  */
+export async function makeWalletOrder(paymentToken , phoneNumber) {
 
     const result = await axios
         .post('https://accept.paymob.com/api/acceptance/payments/pay', {
@@ -51,6 +69,12 @@ export async function makeWalletOrder(paymentToken, phoneNumber) {
 
 }
 
+/** ------------------------------------------------------  
+ * @desc get payment keys
+ * @route /payment
+ * @method get
+ * @access private get payment keys
+ /**  ------------------------------------------------------  */
 export async function paymentKeys(token, orderId, amount, billing_data, isCard) {
 
 
@@ -68,8 +92,13 @@ export async function paymentKeys(token, orderId, amount, billing_data, isCard) 
     return result.data.token
 }
 
+/** ------------------------------------------------------  
+ * @desc get HMAC order
+ * @route /payment
+ * @method get
+ * @access private get HMAC order
+ /**  ------------------------------------------------------  */
 export async function getHMACByOrderId(token, orderId) {
-
     const result = await axios
         .get(`https://accept.paymobsolutions.com/api/acceptance/transactions/${orderId}/hmac_calc`,
             {
@@ -82,6 +111,12 @@ export async function getHMACByOrderId(token, orderId) {
     return result.data.hmac
 }
 
+/** ------------------------------------------------------  
+ * @desc get payout token
+ * @route /payment
+ * @method get
+ * @access private get payout token
+ /**  ------------------------------------------------------  */
 export async function getPayoutToken() {
 
     const options = {
@@ -103,6 +138,12 @@ export async function getPayoutToken() {
 }
 
 
+/** ------------------------------------------------------  
+ * @desc get wallet
+ * @route /payment
+ * @method get
+ * @access private get wallet
+ /**  ------------------------------------------------------  */
 export async function walletPayout(token, amount, issuer, msisdn) { // mobile wallet , bank wallet
 
 
@@ -125,6 +166,12 @@ export async function walletPayout(token, amount, issuer, msisdn) { // mobile wa
     }
 }
 
+/** ------------------------------------------------------  
+ * @desc aman payout
+ * @route /payment
+ * @method get
+ * @access private aman payout
+ /**  ------------------------------------------------------  */
 export async function amanPayout(token, amount, msisdn, first_name, last_name, email) {
 
     try {
@@ -150,6 +197,12 @@ export async function amanPayout(token, amount, msisdn, first_name, last_name, e
     }
 }
 
+/** ------------------------------------------------------  
+ * @desc bank Card Payout
+ * @route /payment
+ * @method get
+ * @access private bank Card Payout
+ /**  ------------------------------------------------------  */
 export async function bankCardPayout(token, amount, full_name, bank_card_number, bank_code) {
 
     try {

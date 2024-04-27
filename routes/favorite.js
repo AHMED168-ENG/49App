@@ -368,17 +368,11 @@ router.post('/ad', verifyToken, async (req, res, next) => {
     try {
 
         const { language } = req.headers
-
         const { id } = req.body
-
         if (!id) return next('Bad Request')
-
         const ad = await dynamic_ad_model.findById(id)
-
         if (!ad) return next({ 'status': 404, 'message': language == 'ar' ? 'الاعلان غير موجود' : 'The Ad is Not Exist' })
-
         await favorite_model.updateOne({ user_id: req.user.id, ad_id: id, type: 3, sub_category_id: ad.sub_category_id }, { user_id: req.user.id, ad_id: id, type: 3, sub_category_id: ad.sub_category_id }, { upsert: true, new: true, setDefaultsOnInsert: true })
-
         res.json({
             'status': true,
         })
@@ -402,4 +396,5 @@ router.delete('/ad/:id', verifyToken, async (req, res, next) => {
         next(e)
     }
 })
+
 export default router

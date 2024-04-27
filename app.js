@@ -19,6 +19,7 @@ import notifications from './routes/notification.js'
 import cashBack from './routes/cash_back.js'
 import subscriptions from './routes/subscription.js'
 import payment from './routes/payment.js'
+import manual_payment from './routes/manual_payment.js'
 import addressRoute from './routes/address.js'
 
 import ride from './routes/services/ride.js'
@@ -37,28 +38,19 @@ import hiddenOpinion from './routes/social/hidden_opinion.js'
 import list from './routes/social/list.js'
 import tinder from './routes/social/tinder.js'
 import gift from './routes/social/gift.js'
-import reel from './routes/social/reel.js'
 import appRadio from './routes/app_radio.js'
 
-import chat from './routes/social/chat.js'
+import chat from './routes/social/chat.js' 
 import contests from './routes/contests.js'
-
+                                           
 import dashboardAuth from './routes/dashboard/auth.js'
 import dashboardSuperAdmin from './routes/dashboard/super_admin.js'
 import dashboardAdmin from './routes/dashboard/admin.js'
 import { getPublicIPAddress } from './helper.js';
 import payout from './routes/payout.js'
-import { calculateWithPaymob } from './controllers/accounts_controller.js';
-import { rideCategoryId } from './controllers/ride_controller.js';
-import rider_model from './models/rider_model.js';
-import user_model from './models/user_model.js';
-import { sendNotification } from './controllers/notification_controller.js';
-import come_with_me_ride_model from './models/come_with_me_ride_model.js';
-import pick_me_ride_model from './models/pick_me_ride_model.js';
-
 
 const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+const __dirname = path.dirname(__filename);       
 
 const app = express();
 const server = http.createServer(app);
@@ -122,6 +114,7 @@ app.use('/notifications', notifications);
 app.use('/cash-back', cashBack);
 app.use('/subscriptions', subscriptions);
 app.use('/payment', payment);
+app.use('/manual-payment', manual_payment);
 app.use('/address', addressRoute);
 
 

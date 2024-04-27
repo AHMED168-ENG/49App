@@ -169,10 +169,9 @@ router.post('/get-high-low-price', async (req, res, next) => {
 router.get('/toggle-ready', verifyToken, async (req, res, next) => {
 
     try {
+
         const rider = await rider_model.findOne({ user_id: req.user.id, is_approved: true, is_active: true, }).select('is_ready')
-
         rider_model.updateOne({ user_id: req.user.id, is_approved: true, is_active: true, }, { is_ready: !rider.is_ready }).exec()
-
         res.json({
             'status': true,
             'data': !rider.is_ready,
@@ -926,6 +925,26 @@ router.post('/accept-ride-request/:requestId' , verifyToken, async (req, res, ne
 
         const rider = await rider_model.findOneAndUpdate({ user_id: userId }, { $inc: { profit: rideData.price, trips: 1 } }).exec()
         
+        // ---------- calculate b -------------
+
+        const info = await app_manager_model.findOne({}).select('price_per_km trip_ratio constant_y constant_z ')
+        const origin  = `${parseFloat(rideData.user_lat)},${parseFloat(rideData.user_lng)}`;
+        const destination = `${parseFloat(rideData.location.coordinates[1])},${parseFloat(rideData.location.coordinates[0])}`;
+        
+        const url = `https://maps.googleapis.com/maps/api/distancematrix/json?origins=${origin}&destinations=${destination}&key=AIzaSyB0BtWBSQYdjvND0zL17L3dNdPJWZbG0EY`;
+        const response = await axios.get(url);
+        const distance = response.data.rows[0].elements[0].distance.text;
+        let y = info.constant_y
+        let z = info.constant_z
+        let x = info.price_per_km
+        let trip_ratio = info.trip_ratio
+        const calculate_b = (await calculatePrice(distance , trip_ratio , y , z , x)).calculate_b
+        
+        if(calculate_b != 0) {
+            wallets_model.findOneAndUpdate({user_id : userId} , {user_wallet : {$inc : -calculate_b}})
+        }
+
+        // ---------- calculate b -------------
 
         const titleClientAr = 'تواصل مع الكابتن'
         const titleClientEn = 'Contact the captain.'
@@ -975,7 +994,26 @@ router.post('/accept-ride-offer/:offerId' , verifyToken, async (req, res, next) 
         ride_model.updateOne({ _id: offerData.ride_id.id }, { rider_id: offerData.from, is_start: true, is_completed: true, price: offerData.price_offer }).exec()
 
         const rider = await rider_model.findOneAndUpdate({ user_id: offerData.from }, { $inc: { profit: offerData.price_offer, trips: 1 } }).exec()
+        // ---------- calculate b
+        const info = await app_manager_model.findOne({}).select('price_per_km trip_ratio constant_y constant_z ')
+        const origin  = `${parseFloat(offerData.user_lat)},${parseFloat(offerData.user_lng)}`;
+        const destination = `${parseFloat(offerData.location.coordinates[1])},${parseFloat(offerData.location.coordinates[0])}`;
         
+        const url = `https://maps.googleapis.com/maps/api/distancematrix/json?origins=${origin}&destinations=${destination}&key=AIzaSyB0BtWBSQYdjvND0zL17L3dNdPJWZbG0EY`;
+        const response = await axios.get(url);
+        const distance = response.data.rows[0].elements[0].distance.text;
+        let y = info.constant_y
+        let z = info.constant_z
+        let x = info.price_per_km
+        let trip_ratio = info.trip_ratio
+        const calculate_b = (await calculatePrice(distance , trip_ratio , y , z , x)).calculate_b
+        
+        if(calculate_b != 0) {
+            wallets_model.findOneAndUpdate({user_id : req.user.id} , {user_wallet : {$inc : -calculate_b}})
+        }
+
+        // ---------- calculate b
+
         const titleAr = 'تم قبول عرض السعر'
         const titleEn = 'The Price Offer Accepted'
         const bodyEn = `Price Offer ${offerData.price_offer} for Ride ${offerData.ride_id.to} is Accepted, you can contact the customer now `
@@ -1141,34 +1179,54 @@ router.delete('/cancel-ride/:id' , cancelRide() , handel_validation_errors , ver
 
         const { language } = req.headers
         const { reasonId } = req.body
-        const { id } = req.params
-        const ride = await ride_model.findOne({ _id: id, is_completed: false, is_canceled: false })
-        const userReason = await cancelation_reasons.findOne({ _id: reasonId})
-        if (!ride) return next({ 'status': 404, 'message': language == 'ar' ? 'لم يتم العثور على الرحلة' : 'The Ride is not Exist' })
+        const { id } = req.params 
+        const userId = req.user.id
+        let ride = await ride_model.findOne({ _id: id, is_completed: false , is_canceled: false })
 
+        if (!ride) return next({ 'status': 404, 'message': language == 'ar' ? 'لم يتم العثور على الرحلة' : 'The Ride is not Exist' })
+        let is_cancel_client =   ride.user_id == userId ? reasonId : null 
+        let is_cancel_ride   =   ride.rider_id == userId ? reasonId : null
+
+        ride = ride_model.findOneAndUpdate({ _id: id }, { is_canceled: true , is_cancel_client , is_cancel_ride } , {new : true}).exec()
+        
+        if(is_cancel_ride) {
+            rider_model.updateOne({ user_id: ride.rider_id }, { has_ride: false }).exec()
+        }
+
+        const userReason = await cancelation_reasons.findOne({ _id: ride.is_cancel_client })
+        const rideReason = await cancelation_reasons.findOne({ _id: ride.is_cancel_ride })
 
         if (ride.user_id == req.user.id || ride.rider_id == req.user.id) {
-            // const info = await app_manager_model.findOne({}).select('price_per_km trip_ratio constant_y constant_z ')
-            // const origin  = `${parseFloat(ride.user_lat)},${parseFloat(ride.user_lng)}`;
-            // const destination = `${parseFloat(ride.location.coordinates[1])},${parseFloat(ride.location.coordinates[0])}`;
-            
-            // const url = `https://maps.googleapis.com/maps/api/distancematrix/json?origins=${origin}&destinations=${destination}&key=AIzaSyB0BtWBSQYdjvND0zL17L3dNdPJWZbG0EY`;
-            // const response = await axios.get(url);
-            // const distance = response.data.rows[0].elements[0].distance.text;
-            // let y = info.constant_y
-            // let z = info.constant_z
-            // let x = info.price_per_km
-            // let trip_ratio = info.trip_ratio
-            // const calculate_b = (await calculatePrice(distance , trip_ratio , y , z , x)).calculate_b
-        
-            // if(calculate_b != 0) {
-            //     if(reason.according == true)
+            // if(userReason && rideReason) {
+            //     const info = await app_manager_model.findOne({}).select('price_per_km trip_ratio constant_y constant_z ')
+            //     const origin  = `${parseFloat(ride.user_lat)},${parseFloat(ride.user_lng)}`;
+            //     const destination = `${parseFloat(ride.location.coordinates[1])},${parseFloat(ride.location.coordinates[0])}`;
+                
+            //     const url = `https://maps.googleapis.com/maps/api/distancematrix/json?origins=${origin}&destinations=${destination}&key=AIzaSyB0BtWBSQYdjvND0zL17L3dNdPJWZbG0EY`;
+            //     const response = await axios.get(url);
+            //     const distance = response.data.rows[0].elements[0].distance.text;
+            //     let y = info.constant_y
+            //     let z = info.constant_z
+            //     let x = info.price_per_km
+            //     let trip_ratio = info.trip_ratio
+            //     const calculate_b = (await calculatePrice(distance , trip_ratio , y , z , x)).calculate_b
+                
+            //     if(calculate_b != 0) {
+            //         if(rideReason.according == true && userReason.according == true) {
+            //             ride_model.updateOne({ user_id: ride.rider_id }, { penalty: calculate_b ,  payed_penalty : {$inc : calculate_b} }).exec()
+            //         } else if (rideReason.according == false && userReason.according == false) {
+            //             wallets_model.findOneAndUpdate({user_id : ride.rider_id} , {user_wallet : {$inc : -calculate_b}})
+            //         } else {
+            //             if(ride.user_id == userId) {
+            //                 ride_model.updateOne({ user_id: ride.rider_id }, { penalty: calculate_b ,  payed_penalty : {$inc : calculate_b} }).exec()
+            //             } else {
+            //                 wallets_model.findOneAndUpdate({user_id : ride.rider_id} , {user_wallet : {$inc : -calculate_b}})
+            //             }
+            //         }
+            //     }
+    
             // }
-
-
-
-            ride_model.updateOne({ _id: id }, { is_canceled: true }).exec()
-            rider_model.updateOne({ user_id: ride.rider_id }, { has_ride: false }).exec()
+           
 
             axios.post(process.env.REAL_TIME_SERVER_URL + 'cancel-ride',
                 {
