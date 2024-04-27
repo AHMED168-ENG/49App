@@ -27,3 +27,12 @@ const schema = new mongoose.Schema({
 }, { versionKey: false, timestamps: true })
 
 export default mongoose.model("dynamic_ads", schema);
+
+/*
+
+title, desc, sub_category_id, user_id: req.user.id, props,
+            pictures: pictures.filter((e) => e.endsWith('.jpg')),
+            main_category_id: subCategory.parent,
+            is_premium: subscription != null,
+            country_code: user.country_code,
+*/

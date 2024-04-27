@@ -14,8 +14,8 @@ const schema = new mongoose.Schema({
     direction: { type: String, },
     
     attachment: { type: String, },
-    main_category_id: { type: String, },
-    sub_category_id: { type: String, },
+    main_category_id: { type: String , ref : "main_categories"},
+    sub_category_id: { type: String , ref : "main_categories"},
     ad_owner: { type: String, },
     request_price: { type: Number, },
     is_accepted: { type: Boolean, default: false },
