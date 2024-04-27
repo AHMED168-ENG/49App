@@ -24,6 +24,7 @@ const schema = new mongoose.Schema({
     picture: { type: String, required: true },
     index: { type: Number, required: true },
 
+    has_auction: { type: Boolean, required: true },
 
 }, { versionKey: false, timestamps: true, })
 

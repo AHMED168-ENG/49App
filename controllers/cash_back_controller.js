@@ -10,6 +10,7 @@ import { sendCashBackNotifications, sendRefCashBackNotifications, sendNotificati
 export const requestCashBack = async (userId, language) => {
 
     try {
+
         const user = await user_model.findById(userId).select('_id referral_id first_name last_name')
 
         const wallet = await wallet_model.findOne({ user_id: userId })
@@ -25,7 +26,7 @@ export const requestCashBack = async (userId, language) => {
 
         if (wallet.last_gift == todayDate && wallet.today_gift >= appManager.max_day_gift) return // check  
 
-        if (wallet.last_gift != todayDate) await wallet_model.updateOne({ _id: wallet.id }, { today_gift: 0, last_gift: todayDate }) // 
+        if (wallet.last_gift != todayDate) await wallet_model.updateOne({ _id: wallet.id } , { today_gift: 0, last_gift: todayDate }) // 
 
         if (wallet.balance > 1000 && wallet.free_click_storage > 0) {
             await wallet_model.updateOne({ _id: wallet._id }, { free_click_storage: 0, $inc: { referral_storage: wallet.free_click_storage } })
@@ -160,6 +161,7 @@ export const requestCashBack = async (userId, language) => {
                 }
             }
         }
+        
     } catch (e) {
         console.log(e)
     }

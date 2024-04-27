@@ -24,22 +24,26 @@ const schema = new mongoose.Schema({
     is_start: { type: Boolean, default: false },
     is_completed: { type: Boolean, default: false },
     is_canceled: { type: Boolean, default: false },
-
+    
     passengers: { type: Number, default: 0 },
-
+    
     is_user_get_cashback : { type: Boolean, default: false },
     is_rider_get_cashback: { type: Boolean, default: false },
     phone : {type:String},
     auto_accept : {
         type: Boolean, default: false
-    }
-    
+    },
+    penalty: { type: Number , default : 0},
+    payed_penalty : { type: Boolean , default : false},
+    is_cancel_client : { type: mongoose.Schema.ObjectId , ref: "cancelation_reasons" },
+    is_cancel_ride : { type: mongoose.Schema.ObjectId , ref: "cancelation_reasons" },
 
 }, { versionKey: false, timestamps: true })
 
 schema.index({
     location: "2dsphere",
 })
+
 schema.plugin(mongoosePaginate);
 schema.plugin(mongooseAggregatePaginate);
 export default mongoose.model("rides", schema);

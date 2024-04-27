@@ -57,6 +57,8 @@ const schema = new mongoose.Schema(
 
     social_status: { type: Number, default: 0 },
 
+    
+
     is_male: { type: Boolean },
 
     is_locked: { type: Boolean, default: false },

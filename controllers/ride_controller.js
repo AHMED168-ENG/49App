@@ -25,6 +25,8 @@ export const healthCategoryId = '62c8b57c9332225799fe3306';
 export const appRadioCategoryId = '62fe5a9b67834d48be806da2';
 export const profileViewCategoryId = '62ef7cf658c90d4a7ed48120';
 
+export const auctionCategoryId = '662cfacc35ddb6ba8094f80f';
+
 
 export async function createOtherRequest(userId, country_code, mainCategoryId, cateogryNameAr, cateogryNameEn, category_id, from, to, distance, time, lat, lng, destination_lat, destination_lng, price, passengers, phone, language, air_conditioner, car_model_year , auto_accept) {
     try {
