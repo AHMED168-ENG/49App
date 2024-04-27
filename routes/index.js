@@ -27,8 +27,14 @@ import payout from "./payout.js";
 import contests from "./contests.js";
 import dashboardAuth from "./dashboard/auth.js";
 import dashboardSuperAdmin from "./dashboard/super_admin.js";
+import competitionRouter from "./dashboard/competition.js";
 import dashboardAdmin from "./dashboard/admin.js";
+
 import dashboardSubscribersRouter from "./dashboard/Subscriber.js";
+
+
+import competition_subscriber from "./competition_subscriber.js";
+import dashboardWinner from "./dashboard/winner.js";
 
 const initializeRoutes = (app) => {
   app.use("/auth", auth);
@@ -64,8 +70,15 @@ const initializeRoutes = (app) => {
 
   app.use("/dashboard/auth", dashboardAuth);
   app.use("/dashboard/super-admin", dashboardSuperAdmin);
+  app.use("/dashboard/winner", dashboardWinner ); 
   app.use("/dashboard/admin", dashboardAdmin);
+
   app.use("/dashboard", dashboardSubscribersRouter);
+
+  app.use("/subscriber" , competition_subscriber) 
+  // nested routes
+  app.use('/dashboard/super-admin/competitions', competitionRouter)
+
 };
 
 export { initializeRoutes };

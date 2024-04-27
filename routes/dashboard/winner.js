@@ -1,34 +1,23 @@
-// make user winner route by super admin -> jsut only active comptitions
-// check of subscriber's counter is equal to limitOfComptition
-router.put(
-  "/dashboard/winner/:subscriberId",
-  isAuthenticated,
-  isAuthorized(["super_admin"])
-);
+import {createWinner ,getWinners ,getWinnerById} from "../../controllers/dashboard/winner.js";
+import {isAuthenticated} from "../../middleware/is-authenticated.js";
+import {isAuthorized} from "../../middleware/is-authorized.js";
+import express from "express";
+const router = express.Router();
 
-// get all winners for whole comptitions by super admin
+// make user winner route by super admin -> just only active competitions
+// check of subscriber's counter is equal to limitOf competition
+
+router.put("/:subscriberId",isAuthenticated,isAuthorized(["super_admin"]),createWinner);
+
+// get all winners for whole competitions by super admin
 /*
     1- all winners (include name, email, phone, wallet, status , counter , isBlocked/fraud)
  */
-router.get(
-  "/dashboard/winners",
-  isAuthenticated,
-  isAuthorized(["super_admin"])
-);
+
+// make super admin query what is need all winners in all competitions or in specific competition
+router.get("/",isAuthenticated,isAuthorized(["super_admin"]) , getWinners);
 
 // get specific winner by id by super admin
-/*
-    1- name
-    1- email
-    1- phone
-    1- wallet
-    1- status
-    1- counter
-    1- isBlocked/fraud
-    1- all comptitions that user won (include comptition name, category name, pricePer request, start_date, end_date, status)
- */
-router.get(
-  "/dashboard/winners/:winnerId",
-  isAuthenticated,
-  isAuthorized(["super_admin"])
-);
+router.get("/:winnerId",isAuthenticated,isAuthorized(["super_admin"]) , getWinnerById);
+
+export default router

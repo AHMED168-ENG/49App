@@ -24,7 +24,7 @@ import patient_book_model from '../models/patient_book_model.js'
 const router = express.Router()
 
 
-router.get('/registration-services', verifyToken, async (req, res, next) => {
+router.get('/registration-services', async (req, res, next) => {
 
     try {
 
@@ -207,7 +207,7 @@ router.get('/props/:categoryId', async (req, res, next) => {
     }
 })
 
-router.post('/create', verifyToken, async (req, res, next) => {
+router.post('/create', async (req, res, next) => {
 
     try {
 
@@ -281,7 +281,7 @@ router.get('/get-sub-category-ads/:subCategory', tryVerify, async (req, res, nex
         const { language } = req.headers
 
         const { user } = req
-        
+
         const result = await dynamic_ad_model.find({
             sub_category_id: req.params.subCategory,
             is_approved: true,
