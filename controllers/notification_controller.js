@@ -3,7 +3,7 @@ import notification_model from '../models/notification_model.js'
 import admin_fcm_model from '../models/admin_fcm_model.js';
 
 export const sendNotification = function (fcm, title, body) {
-
+    console.log(fcm);
     if (fcm && title && body) {
         const payload = {
             "token": fcm,

@@ -1,19 +1,19 @@
-import mongoose, { Mongoose } from "mongoose";
+import mongoose from "mongoose";
 
 const schema = new mongoose.Schema(
   {
     subscriber_id: {
-      type: Mongoose.Schema.Types.ObjectId,
+      type: mongoose.Schema.Types.ObjectId,
       required: true,
       ref: "subscribers",
     },
     competition_id: {
-      type: Mongoose.Schema.Types.ObjectId,
+      type: mongoose.Schema.Types.ObjectId,
       required: true,
       ref: "competitions",
     },
     user_id: {
-      type: Mongoose.Schema.Types.ObjectId,
+      type: mongoose.Schema.Types.ObjectId,
       required: true,
       ref: "users",
     },

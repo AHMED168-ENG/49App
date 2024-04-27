@@ -6,6 +6,8 @@ import auth_model from '../models/auth_model.js'
 import notification_model from '../models/notification_model.js'
 import user_model from '../models/user_model.js'
 import wallet_model from '../models/wallet_model.js'
+import { payoutManualValidation } from '../validation/payout_manual.js'
+import handel_validation_errors from '../middleware/handelBodyError.js'
 const router = express.Router()
 
 const amountTransfer = 10
@@ -16,7 +18,7 @@ router.post('/mobile-wallet', verifyToken, async (req, res, next) => {
 
         const { language } = req.headers
 
-        const { operator, number } = req.body
+        const { operator , number } = req.body
 
         if (!operator || !number) return next('Bad Request')
 
@@ -29,7 +31,7 @@ router.post('/mobile-wallet', verifyToken, async (req, res, next) => {
 
         const token = await getPayoutToken()
 
-        const result = await walletPayout(token, amountTransfer, operator, number)
+        const result = await walletPayout(token, amountTransfer , operator, number)
 
         if (result.disbursement_status == 'successful') {
 
@@ -74,6 +76,7 @@ router.post('/mobile-wallet', verifyToken, async (req, res, next) => {
         console.log(e)
         next(e)
     }
+
 })
 
 router.post('/bank-wallet', verifyToken, async (req, res, next) => {
@@ -275,5 +278,88 @@ router.post('/bank', verifyToken, async (req, res, next) => {
         next(e)
     }
 })
+
+/** ------------------------------------------------------  
+ * 
+ * @desc send notification to super admin to take his mony
+ * @route send notification to super admin to take his mony
+ * @method post
+ * @access private send notification to super admin to take his mony
+ * 
+/**  ------------------------------------------------------  */
+router.post('/send-with-number', verifyToken , payoutManualValidation() , handel_validation_errors , async (req , res , next) => {
+    try { 
+        const { language } = req.headers
+        const {number , amount , type} = req.body
+        const userId = req.user.id
+        const user = await user_model.findOne({_id : userId})
+        const userSuperAdmin = await user_model.find({role : {$eq : "super_admin"}})
+        if(!user) return next("this user not exist")
+        var bodyEn = `${user.first_name} ${ user.first_name} asked you for send mony ${amount} for him ${number} ${type}`
+        var bodyAr = `${user.first_name} ${ user.first_name} يطلب منك ارسال المبلغ الملي ${amount} له ${number} ${type}`
+        var titleAr = `send mony to client use instapay`
+        var titleEn = "ارسال اموال للمستخدم عن طريق انستا باي"
+
+        if(type == "wallet") {
+            const wallet = await wallet_model.findOne({user_id : userId})
+            if(wallet.user_wallet < amount)  return next({ 'status': 404, 'message': language == 'ar' ? "لا يوجد لديك رصيد كافي" : 'there is no enough balance' })
+            await wallet_model.updateOne({user_id : userId} , {$inc :{user_wallet : -wallet.user_wallet}})
+        } else if (type == "wallet_winner") {
+            // whene model created i will continue
+        } else if (type = "ballance") {
+            const wallet = await wallet_model.findOne({user_id : userId})
+            if(wallet.balance < amount)  return next({ 'status': 404, 'message': language == 'ar' ? "لا يوجد لديك رصيد كافي" : 'there is no enough balance' })
+            await wallet_model.updateOne({user_id : userId} , {$inc : {balance : -wallet.user_wallet}})
+        }
+
+        let notifications = []
+        userSuperAdmin.forEach(ele => {
+            notifications.push({
+                receiver_id: ele.id ,
+                user_id: req.user.id,
+                tab: 7, /// this tap according to instapay 
+                text_ar: bodyAr,
+                text_en: bodyEn,
+            })
+            auth_model.find({ 'user_id': ele.id }).distinct('fcm').then(
+                fcm => sendNotifications(fcm, language == 'ar' ? titleAr : titleEn, language == 'ar' ? bodyAr : bodyEn, 10003))
+
+        })
+        await notification_model.insertMany(notifications)
+ 
+        return res.json({ 'status': true })
+
+    } catch (error) {
+        next(error)
+    }
+})
+
+router.post("confirmation-payment-cachout/:id" , verifyToken , async (req , res , next) => {
+    try {
+        const userId = req.params.id
+        const user = await user_model.findOne({_id : userId})
+        var bodyEn = `check your account we sent your mony on your number `
+        var bodyAr = `لقد قمنا بارسال المبلغ الخاص بك عن طريق الموبايل انستا باي`
+        var titleAr = `send mony to client use instapay`
+        var titleEn = "ارسال اموال للمستخدم عن طريق انستا باي"
+        let notification = {
+            receiver_id: userId ,
+            user_id: req.user.id,
+            tab: 7, /// this tap according to instapay cachout
+            text_ar: bodyAr,
+            text_en: bodyEn,
+        }
+
+        auth_model.find({ 'user_id': userId }).distinct('fcm').then(
+            fcm => sendNotifications(fcm, language == 'ar' ? titleAr : titleEn, language == 'ar' ? bodyAr : bodyEn, 10003))
+        await notification_model.insertMany(notification)
+        
+        return res.json({ 'status': true })
+
+    } catch (error) {
+        next(error)  
+    }
+})
+
 
 export default router
