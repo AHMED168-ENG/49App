@@ -10,6 +10,15 @@ const oauth2Client = new OAuth2(
   "https://developers.google.com/oauthplayground",
 );
 
+
+oauth2Client.setCredentials({
+  refresh_token: "1//04AruWOtl-2SlCgYIARAAGAQSNwF-L9Ir1TG8Q8nxj77AIvz-n5PRRhjCoTuUJrdMiG7civftpfe70hXy75iMafLcu4ZUGn-mGlw"
+});
+
+/**
+ * 
+ * @deprecated This function is deprecated from refactor ver. 0.1 Use sendAnyEmail
+ */
 export async function SendMails(data) {
   oauth2Client.setCredentials({
     refresh_token:process.env.REFRESH_TOKEN

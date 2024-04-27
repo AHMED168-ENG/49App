@@ -9,6 +9,12 @@ export const serverURL = 'https://api.49hub.com/'
 export const filesCloudUrl = 'https://49-space.fra1.digitaloceanspaces.com/'
 export var publicIPAddress = ''
 
+
+export const extractPictureUrls = (pictures) => {
+    const car_pictures = pictures.slice(0, 4);
+    const [id_front, id_behind, driving_license_front, driving_license_behind, car_license_front, car_license_behind] = pictures.slice(4, 10);
+    return { car_pictures, id_front, id_behind, driving_license_front, driving_license_behind, car_license_front, car_license_behind };
+};
 export const encryptText = (text) => {
     return CryptoJS.AES.encrypt(text, process.env.CRYPTO_KEY).toString()
 };
@@ -33,6 +39,9 @@ export const createToken = (id, auth, authDate, isSuperAdmin, isAdmin) => {
     )
 }
 
+/**
+ * @deprecated This function is deprecated from refactor ver. 0.1 Use isAuthenticated
+ */
 export const verifyToken = async (req, res, next) => {
 
     try {
@@ -119,6 +128,7 @@ export const verifyTokenAndAdmin = (req, res, next) => {
         return res.sendStatus(401)
     })
 }
+
 
 
 export const getUserData = function (doc) {

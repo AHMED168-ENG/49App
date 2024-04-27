@@ -1,9 +1,10 @@
 import mongoose from 'mongoose'
 
 
+
 const schema = new mongoose.Schema({
-    user_id: { type: String, required: true },
-    category_id: { type: String, required: true },
+    user_id: { type: mongoose.Schema.Types.ObjectId, required: true },
+    category_id: { type:  mongoose.Schema.Types.ObjectId, required: true },
 
     picture: { type: String, required: true },
 

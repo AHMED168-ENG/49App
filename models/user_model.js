@@ -1,40 +1,59 @@
-import mongoose from 'mongoose'
-import mongoosePaginate from 'mongoose-paginate-v2';
+import mongoose from "mongoose";
+import mongoosePaginate from "mongoose-paginate-v2";
 import bcrypt from "bcrypt";
 import mongooseAggregatePaginate from "mongoose-aggregate-paginate-v2";
 
-const schema = new mongoose.Schema({
-
+const schema = new mongoose.Schema(
+  {
     first_name: { type: String, required: true },
     last_name: { type: String, required: true },
 
-    email: { type: String, requried: true, unique: true },
-    password: { type: String, requried: true },
-    otp : {
-        type : Number,
+    email: { type: String, required: true, unique: true },
+    password: { type: String, required: true },
+
+    role: {
+      type: String,
+      enum: ["user", "admin", "super_admin"],
+      required: true,
+      default: "user",
     },
-    passwordResetExpiration : {
-        type : Date,           
+
+    isEmailVerified: {
+      type: Boolean,
+      default: false,
+    },
+
+    otp: {
+      type: String,
+      default: null,
+    },
+
+    passwordChangeAt: {
+      type: Date,
+      default: null,
+    },
+
+    passwordResetExpiration: {
+      type: Date,
     },
     user_lat: { type: Number },
     user_lng: { type: Number },
 
-    provider: { type: String, requried: true, default: 'email' },
-    uid: { type: String, requried: true, default: '_' },
+    provider: { type: String, required: true, default: "email" },
+    uid: { type: String, required: true, default: "_" },
 
     phone: { type: String },
-    birth_date: { type: String, default: '' },
-    referral_id: { type: String, default: '' },
-    hash_code: { type: String, required: true, unique: true },
-    profile_picture: { type: String, default: '', },
-    cover_picture: { type: String, default: '' },
-    tinder_picture: { type: String, default: '' },
-    country: { type: String, default: '' },
-    city: { type: String, default: '' },
-    job: { type: String, default: '' },
-    language: { type: String, default: 'en' },
-    currency: { type: String, default: 'EGP' },
-    country_code: { type: String, defualt: 'EG' },
+    birth_date: { type: String, default: "" },
+    referral_id: { type: String, default: "" },
+    profile_picture: { type: String, default: "" },
+    cover_picture: { type: String, default: "" },
+    tinder_picture: { type: String, default: "" },
+    country: { type: String, default: "" },
+    city: { type: String, default: "" },
+    job: { type: String, default: "" },
+    language: { type: String, default: "en" },
+    currency: { type: String, default: "EGP" },
+    country_code: { type: String, default: "EG" },
 
     social_status: { type: Number, default: 0 },
 
@@ -44,7 +63,6 @@ const schema = new mongoose.Schema({
 
     is_locked: { type: Boolean, default: false },
     locked_days: { type: Number, default: 0 },
-
 
     privacy_country: { type: Number, default: 2 },
     privacy_phone: { type: Number, default: 1 },
@@ -66,10 +84,9 @@ const schema = new mongoose.Schema({
     privacy_follow_request: { type: Number, default: 2 },
     privacy_call: { type: Number, default: 2 },
 
-
-    is_rider: { type: Boolean, default: false, },       
-    is_doctor: { type: Boolean, default: false },       
-    is_restaurant: { type: Boolean, default: false },     
+    is_rider: { type: Boolean, default: false },
+    is_doctor: { type: Boolean, default: false },
+    is_restaurant: { type: Boolean, default: false },
     is_loading: { type: Boolean, default: false },
 
     friends: { type: Array, default: [] },
@@ -85,20 +102,19 @@ const schema = new mongoose.Schema({
 
     bio: { type: String, maxLength: 100 },
     // device_id: { type: String, required: true },
+  },
+  { versionKey: false, timestamps: true }
+);
 
-}, { versionKey: false, timestamps: true })
-
-schema.methods.comparePassword = function (password) { 
-    return bcrypt.compareSync(password , this.password) 
-}
+schema.methods.comparePassword = function (password) {
+  return bcrypt.compareSync(password, this.password);
+};
 
 schema.methods.toJSON = function () {
-    const user = this.toObject()
-    delete user.password
-    return user
-}
-
-
+  const user = this.toObject();
+  delete user.password;
+  return user;
+};
 
 schema.plugin(mongooseAggregatePaginate);
 schema.plugin(mongoosePaginate);
