@@ -10,7 +10,8 @@ import auth_model from '../../models/auth_model.js'
 import ride_model from '../../models/ride_model.js';
 import rating_model from '../../models/rating_model.js';
 import ride_request_logs from '../../models/ride_request_logs.js';
-import ad_ratings from '../../models/rating_model.js';
+import wallets_model from '../../models/wallet_model.js';
+import cancelation_reasons from '../../models/cancelation_reasons.js';
 
 import { verifyToken, comeWithMeTripKeys, pickMeTripKeys, tryVerify } from '../../helper.js'
 import { sendNotifications } from '../../controllers/notification_controller.js'
@@ -21,7 +22,7 @@ import pick_me_ride_model from '../../models/pick_me_ride_model.js';
 import axios from 'axios';
 import wallet_model from '../../models/wallet_model.js';
 import handel_validation_errors from '../../middleware/handelBodyError.js';
-import getLocation, { acceptRideOfferValidation, addNormalRide, addUserRating, changeRideOfferStatus, getExpectedPrice, sendClientOfferValidation, sendRideValidation } from '../../validation/riders.js';
+import getLocation, { acceptRideOfferValidation, addNormalRide, addUserRating, cancelRide, changeRideOfferStatus, getExpectedPrice, sendClientOfferValidation, sendRideValidation } from '../../validation/riders.js';
 import { updateUserLocation } from '../../validation/user.js';
 import mongoose from 'mongoose';
 import { calculateDistance } from '../../utils/calculateDestance.js';
@@ -54,9 +55,6 @@ router.get('/attachments-info', async (req, res, next) => { // attachments info
 })
 
 // register a new rider
-/**
- * capiten => mohafazat => buses man
- */
 router.post('/register-rider', verifyToken, async (req, res, next) => {
 
     try {
@@ -134,9 +132,6 @@ router.post('/register-rider', verifyToken, async (req, res, next) => {
 
 // get the highest and the lowest price for this distance in all riders
 
-/**
- * 
- */
 router.post('/get-high-low-price', async (req, res, next) => {
 
     try {
@@ -174,10 +169,9 @@ router.post('/get-high-low-price', async (req, res, next) => {
 router.get('/toggle-ready', verifyToken, async (req, res, next) => {
 
     try {
+
         const rider = await rider_model.findOne({ user_id: req.user.id, is_approved: true, is_active: true, }).select('is_ready')
-
         rider_model.updateOne({ user_id: req.user.id, is_approved: true, is_active: true, }, { is_ready: !rider.is_ready }).exec()
-
         res.json({
             'status': true,
             'data': !rider.is_ready,
@@ -254,7 +248,7 @@ router.post('/update-air-conditioner', verifyToken, async (req, res, next) => {
 router.post('/update-car-model-year', verifyToken, async (req, res, next) => {
 
     try {
-
+        
         const { car_model_year } = req.body
 
         const result = await rider_model.findOneAndUpdate({ user_id: req.user.id, is_approved: true, is_active: true, car_model_year: null }, { car_model_year }).select('_id')
@@ -528,8 +522,6 @@ router.get('/get-rider-rides', verifyToken, async (req, res, next) => {
     }
 })
 
-///////////////////////////////////////////////// CLEINT /////////////////////////////////////////////////////////////
-
 router.get('/client-request' , verifyToken, async (req, res, next) => {
     try {
         const userRequest = await ride_model.aggregate([
@@ -544,14 +536,7 @@ router.get('/client-request' , verifyToken, async (req, res, next) => {
                     localField : "user_id",
                     as : "user_id",
                     foreignField : "_id",
-                    pipeline : [
-                        {
-                            $project : {
-                                first_name : 1,
-                                last_name : 1,
-                            }
-                        }
-                    ]
+
                 }
             },
             {
@@ -571,7 +556,7 @@ router.get('/client-request' , verifyToken, async (req, res, next) => {
             },
             {
                 $lookup : {
-                    from : "riders",
+                    from : "users",
                     localField : "rider_id",
                     as : "rider_id",
                     foreignField : "_id",
@@ -630,18 +615,156 @@ router.get('/requests-of-rider' , verifyToken, async (req, res, next) => {
                     localField : "user_id",
                     as : "user_id",
                     foreignField : "_id",
+
+                }
+            },
+            {
+                $unwind : {path  : "$user_id" , preserveNullAndEmptyArrays : true},
+            },
+            {
+                $lookup : {
+                    from : "users",
+                    localField : "rider_id",
+                    as : "rider_id",
+                    foreignField : "_id",
+                }
+            },
+            {
+                $unwind : {path  : "$rider_id" , preserveNullAndEmptyArrays : true},
+            },
+            {
+                $lookup : {
+                    from : "sub_categories",
+                    localField : "category_id",
+                    as : "category_id",
+                    foreignField : "_id",
+
+                }
+            },
+            {
+                $unwind : {path  : "$category_id" , preserveNullAndEmptyArrays : true},
+            },
+
+            {
+                $lookup : {
+                    from : "ride_offers",
+                    localField : "_id",
+                    as : "ride_offer",
+                    foreignField : "ride_id",
                     pipeline : [
                         {
-                            $project : {
-                                first_name : 1,
-                                last_name : 1,
+                            $match : {
+                                is_accept : true
                             }
                         }
                     ]
                 }
             },
+        ])
+        res.json({ 'status': true , data : riderRequest});
+    } catch (e) {
+        next(e)
+    }
+})
+
+router.get('/requests-of-rider-now' , verifyToken, async (req, res, next) => {
+    try {
+        const riderRequest = await ride_model.aggregate([
+            {
+                $match : {
+                    rider_id : new mongoose.Types.ObjectId(req.user.id),
+                    is_completed : false
+                }
+            },
+            {
+                $lookup : {
+                    from : "users",
+                    localField : "user_id",
+                    as : "user_id",
+                    foreignField : "_id",
+
+                }
+            },
             {
                 $unwind : {path  : "$user_id" , preserveNullAndEmptyArrays : true},
+            },
+            {
+                $lookup : {
+                    from : "users",
+                    localField : "rider_id",
+                    as : "rider_id",
+                    foreignField : "_id",
+                }
+            },
+            {
+                $unwind : {path  : "$rider_id" , preserveNullAndEmptyArrays : true},
+            },
+            {
+                $lookup : {
+                    from : "sub_categories",
+                    localField : "category_id",
+                    as : "category_id",
+                    foreignField : "_id",
+
+                }
+            },
+            {
+                $unwind : {path  : "$category_id" , preserveNullAndEmptyArrays : true},
+            },
+
+            {
+                $lookup : {
+                    from : "ride_offers",
+                    localField : "_id",
+                    as : "ride_offer",
+                    foreignField : "ride_id",
+                    pipeline : [
+                        {
+                            $match : {
+                                is_accept : true
+                            }
+                        }
+                    ]
+                }
+            },
+        ])
+        res.json({ 'status': true , data : riderRequest});
+    } catch (e) {
+        next(e)
+    }
+})
+
+router.get('/requests-of-client-now' , verifyToken, async (req, res, next) => {
+    try {
+        const riderRequest = await ride_model.aggregate([
+            {
+                $match : {
+                    user_id : new mongoose.Types.ObjectId(req.user.id),
+                    is_completed : false
+                }
+            },
+            {
+                $lookup : {
+                    from : "users",
+                    localField : "user_id",
+                    as : "user_id",
+                    foreignField : "_id",
+
+                }
+            },
+            {
+                $unwind : {path  : "$user_id" , preserveNullAndEmptyArrays : true},
+            },
+            {
+                $lookup : {
+                    from : "users",
+                    localField : "rider_id",
+                    as : "rider_id",
+                    foreignField : "_id",
+                }
+            },
+            {
+                $unwind : {path  : "$rider_id" , preserveNullAndEmptyArrays : true},
             },
             {
                 $lookup : {
@@ -712,7 +835,7 @@ router.get('/client-request/:id' , verifyToken, async (req, res, next) => {
             },
             {
                 $lookup : {
-                    from : "riders",
+                    from : "users",
                     localField : "rider_id",
                     as : "rider_id",
                     foreignField : "_id",
@@ -770,9 +893,9 @@ router.post('/new-ride-request' , addNormalRide() , handel_validation_errors , v
         const destination = `${parseFloat(destination_lat)},${parseFloat(destination_lng)}`;
         
         const url = `https://maps.googleapis.com/maps/api/distancematrix/json?origins=${origin}&destinations=${destination}&key=AIzaSyB0BtWBSQYdjvND0zL17L3dNdPJWZbG0EY`;
-          const response = await axios.get(url);
-          const distance = response.data.rows[0].elements[0].distance.text;
-          const duration = response.data.rows[0].elements[0].duration.text;
+        const response = await axios.get(url);
+        const distance = response.data.rows[0].elements[0].distance.text;
+        const duration = response.data.rows[0].elements[0].duration.text;
         const user = await user_model.findById(req.user.id).select('country_code phone')
         const ride = await createOtherRequest(req.user.id, user?.country_code, subCateogry.parent, subCateogry.name_ar, subCateogry.name_en, category_id, from, to, distance, duration, user_lat, user_lng, destination_lat, destination_lng, price, passengers, user.phone, language, air_conditioner, car_model_year , auto_accept)
         await ride_request_logs.create({
@@ -791,9 +914,8 @@ router.post('/new-ride-request' , addNormalRide() , handel_validation_errors , v
 
 router.post('/accept-ride-request/:requestId' , verifyToken, async (req, res, next) => {
     try {
-
         const { language } = req.headers
-        const { requestId } = req.params 
+        const { requestId } = req.params
         const userId = req.user.id
         const rideData = await ride_model.findOne({_id : requestId })
         if (!rideData.auto_accept) return next({ 'status': 404, 'message': language == 'ar' ? "لا يمكنك الموافقه علي هذه الطلب يجب ارسال طلب اولا الي المستخدم " : 'You cannot approve this request. A request must first be sent to the user' })
@@ -803,6 +925,26 @@ router.post('/accept-ride-request/:requestId' , verifyToken, async (req, res, ne
 
         const rider = await rider_model.findOneAndUpdate({ user_id: userId }, { $inc: { profit: rideData.price, trips: 1 } }).exec()
         
+        // ---------- calculate b -------------
+
+        const info = await app_manager_model.findOne({}).select('price_per_km trip_ratio constant_y constant_z ')
+        const origin  = `${parseFloat(rideData.user_lat)},${parseFloat(rideData.user_lng)}`;
+        const destination = `${parseFloat(rideData.location.coordinates[1])},${parseFloat(rideData.location.coordinates[0])}`;
+        
+        const url = `https://maps.googleapis.com/maps/api/distancematrix/json?origins=${origin}&destinations=${destination}&key=AIzaSyB0BtWBSQYdjvND0zL17L3dNdPJWZbG0EY`;
+        const response = await axios.get(url);
+        const distance = response.data.rows[0].elements[0].distance.text;
+        let y = info.constant_y
+        let z = info.constant_z
+        let x = info.price_per_km
+        let trip_ratio = info.trip_ratio
+        const calculate_b = (await calculatePrice(distance , trip_ratio , y , z , x)).calculate_b
+        
+        if(calculate_b != 0) {
+            wallets_model.findOneAndUpdate({user_id : userId} , {user_wallet : {$inc : -calculate_b}})
+        }
+
+        // ---------- calculate b -------------
 
         const titleClientAr = 'تواصل مع الكابتن'
         const titleClientEn = 'Contact the captain.'
@@ -852,7 +994,26 @@ router.post('/accept-ride-offer/:offerId' , verifyToken, async (req, res, next) 
         ride_model.updateOne({ _id: offerData.ride_id.id }, { rider_id: offerData.from, is_start: true, is_completed: true, price: offerData.price_offer }).exec()
 
         const rider = await rider_model.findOneAndUpdate({ user_id: offerData.from }, { $inc: { profit: offerData.price_offer, trips: 1 } }).exec()
+        // ---------- calculate b
+        const info = await app_manager_model.findOne({}).select('price_per_km trip_ratio constant_y constant_z ')
+        const origin  = `${parseFloat(offerData.user_lat)},${parseFloat(offerData.user_lng)}`;
+        const destination = `${parseFloat(offerData.location.coordinates[1])},${parseFloat(offerData.location.coordinates[0])}`;
         
+        const url = `https://maps.googleapis.com/maps/api/distancematrix/json?origins=${origin}&destinations=${destination}&key=AIzaSyB0BtWBSQYdjvND0zL17L3dNdPJWZbG0EY`;
+        const response = await axios.get(url);
+        const distance = response.data.rows[0].elements[0].distance.text;
+        let y = info.constant_y
+        let z = info.constant_z
+        let x = info.price_per_km
+        let trip_ratio = info.trip_ratio
+        const calculate_b = (await calculatePrice(distance , trip_ratio , y , z , x)).calculate_b
+        
+        if(calculate_b != 0) {
+            wallets_model.findOneAndUpdate({user_id : req.user.id} , {user_wallet : {$inc : -calculate_b}})
+        }
+
+        // ---------- calculate b
+
         const titleAr = 'تم قبول عرض السعر'
         const titleEn = 'The Price Offer Accepted'
         const bodyEn = `Price Offer ${offerData.price_offer} for Ride ${offerData.ride_id.to} is Accepted, you can contact the customer now `
@@ -920,22 +1081,21 @@ router.post('/accept-ride-offer/:offerId' , verifyToken, async (req, res, next) 
 router.get('/get-expected-price' , getExpectedPrice() , handel_validation_errors , async (req, res, next) => {
     try {
         const { user_longitude , user_latitude , location_longitude , location_latitude} = req.query
-        const info = await app_manager_model.findOne({}).select('price_per_km')
+        const info = await app_manager_model.findOne({}).select('price_per_km trip_ratio constant_y constant_z ')
         const origin  = `${parseFloat(user_latitude)},${parseFloat(user_longitude)}`;
         const destination = `${parseFloat(location_latitude)},${parseFloat(location_longitude)}`;
         
         const url = `https://maps.googleapis.com/maps/api/distancematrix/json?origins=${origin}&destinations=${destination}&key=AIzaSyB0BtWBSQYdjvND0zL17L3dNdPJWZbG0EY`;
-          const response = await axios.get(url);
-          const distance = response.data.rows[0].elements[0].distance.text;
-          const duration = response.data.rows[0].elements[0].duration.text;
-          let price = 0
-        if(distance.indexOf("km") != -1) {
-
-            price = parseFloat(distance.replaceAll("," , "")) * info.price_per_km
-        } else {
-            price = (parseFloat(distance.replaceAll("," , "")) / 1000) * info.price_per_km
-        } 
-        res.json({ 'status': true , price  , distance : distance , duration});
+        const response = await axios.get(url);
+        const distance = response.data.rows[0].elements[0].distance.text;
+        const duration = response.data.rows[0].elements[0].duration.text;
+        let y = info.constant_y
+        let z = info.constant_z
+        let x = info.price_per_km
+        let trip_ratio = info.trip_ratio
+        const priceCalculate = (await calculatePrice(distance , trip_ratio , y , z , x)).priceCalculate
+    
+        res.json({ 'status': true , price : priceCalculate , distance : distance , duration});
     } catch (e) {
         next(e)
     }
@@ -971,7 +1131,7 @@ router.get('/rider-request' , getLocation() , handel_validation_errors , verifyT
 
     try {
         const { longitude, latitude } = req.query; // Get the longitude and latitude from the request query parameters
-        const info = await app_manager_model.findOne({}).select('ride_area_distance')
+        const info = await app_manager_model.findOne({}).select('ride_area_distance ')
         const page = req.query.page || process.env.page;
         const limit = req.query.limit || process.env.limit;
         const search = req.query.search?.trim();
@@ -1012,20 +1172,61 @@ router.get('/rider-request' , getLocation() , handel_validation_errors , verifyT
     }
 })
 
-router.delete('/cancel-ride/:id', verifyToken, async (req, res, next) => {
+
+
+router.delete('/cancel-ride/:id' , cancelRide() , handel_validation_errors , verifyToken, async (req, res, next) => {
     try {
 
         const { language } = req.headers
-
-        const { id } = req.params
-        const ride = await ride_model.findOne({ _id: id, is_completed: false, is_canceled: false })
+        const { reasonId } = req.body
+        const { id } = req.params 
+        const userId = req.user.id
+        let ride = await ride_model.findOne({ _id: id, is_completed: false , is_canceled: false })
 
         if (!ride) return next({ 'status': 404, 'message': language == 'ar' ? 'لم يتم العثور على الرحلة' : 'The Ride is not Exist' })
+        let is_cancel_client =   ride.user_id == userId ? reasonId : null 
+        let is_cancel_ride   =   ride.rider_id == userId ? reasonId : null
 
+        ride = ride_model.findOneAndUpdate({ _id: id }, { is_canceled: true , is_cancel_client , is_cancel_ride } , {new : true}).exec()
+        
+        if(is_cancel_ride) {
+            rider_model.updateOne({ user_id: ride.rider_id }, { has_ride: false }).exec()
+        }
+
+        const userReason = await cancelation_reasons.findOne({ _id: ride.is_cancel_client })
+        const rideReason = await cancelation_reasons.findOne({ _id: ride.is_cancel_ride })
 
         if (ride.user_id == req.user.id || ride.rider_id == req.user.id) {
-            ride_model.updateOne({ _id: id }, { is_canceled: true }).exec()
-            rider_model.updateOne({ user_id: ride.rider_id }, { has_ride: false }).exec()
+            // if(userReason && rideReason) {
+            //     const info = await app_manager_model.findOne({}).select('price_per_km trip_ratio constant_y constant_z ')
+            //     const origin  = `${parseFloat(ride.user_lat)},${parseFloat(ride.user_lng)}`;
+            //     const destination = `${parseFloat(ride.location.coordinates[1])},${parseFloat(ride.location.coordinates[0])}`;
+                
+            //     const url = `https://maps.googleapis.com/maps/api/distancematrix/json?origins=${origin}&destinations=${destination}&key=AIzaSyB0BtWBSQYdjvND0zL17L3dNdPJWZbG0EY`;
+            //     const response = await axios.get(url);
+            //     const distance = response.data.rows[0].elements[0].distance.text;
+            //     let y = info.constant_y
+            //     let z = info.constant_z
+            //     let x = info.price_per_km
+            //     let trip_ratio = info.trip_ratio
+            //     const calculate_b = (await calculatePrice(distance , trip_ratio , y , z , x)).calculate_b
+                
+            //     if(calculate_b != 0) {
+            //         if(rideReason.according == true && userReason.according == true) {
+            //             ride_model.updateOne({ user_id: ride.rider_id }, { penalty: calculate_b ,  payed_penalty : {$inc : calculate_b} }).exec()
+            //         } else if (rideReason.according == false && userReason.according == false) {
+            //             wallets_model.findOneAndUpdate({user_id : ride.rider_id} , {user_wallet : {$inc : -calculate_b}})
+            //         } else {
+            //             if(ride.user_id == userId) {
+            //                 ride_model.updateOne({ user_id: ride.rider_id }, { penalty: calculate_b ,  payed_penalty : {$inc : calculate_b} }).exec()
+            //             } else {
+            //                 wallets_model.findOneAndUpdate({user_id : ride.rider_id} , {user_wallet : {$inc : -calculate_b}})
+            //             }
+            //         }
+            //     }
+    
+            // }
+           
 
             axios.post(process.env.REAL_TIME_SERVER_URL + 'cancel-ride',
                 {
@@ -1055,31 +1256,48 @@ router.delete('/cancel-ride/:id', verifyToken, async (req, res, next) => {
 router.get('/rider-five-kilometers-away' , verifyToken , getLocation() , handel_validation_errors , async (req, res, next) => {
     try {
         const { longitude, latitude } = req.query; // Get the longitude and latitude from the request query parameters
-        const info = await app_manager_model.findOne({}).select('ride_area_distance')
+        const info = await app_manager_model.findOne({}).select('ride_area_distance trip_ratio')
         const page = req.query.page || process.env.page;
         const limit = req.query.limit || process.env.limit;
         const search = req.query.search?.trim();
         const queryObj = {is_active : true , is_approved : true , is_ready : true};
-        if(search){
+        if(search) {
           queryObj.car_brand = {'$regex' :  search, '$options' : 'i'}
         }
-        console.log(parseFloat(latitude) , parseFloat(longitude))
         const aggregate = rider_model.aggregate([
-     
             {
               $geoNear: {
                 near: {
                   type: 'Point',
                   coordinates: [parseFloat(latitude) , parseFloat(longitude)]
                 },
-                distanceField: 'distance',
-                spherical: true,
+                distanceField: 'distance',  
+                spherical: true,            
                 maxDistance: info.ride_area_distance ?? process.env.maxDistance // 5 km in meters
               }
             },
-            // {
-            //     $match : queryObj
-            // },
+            {
+                $lookup : {
+                    from : "wallets",
+                    as : "user_wallet",
+                    foreignField : "user_id",
+                    localField : "user_id"
+                }
+            },
+            {
+                $unwind : {
+                    path : "$user_id",
+                    preserveNullAndEmptyArrays : true
+                }
+            },
+            {
+                $match : {
+                    ...queryObj,
+                    "$user_wallet" : {
+                        $gt : 0
+                    }
+                }
+            },
 
           ]);
           const riders = await rider_model.aggregatePaginate(aggregate , {page , limit , sort : {
@@ -1237,12 +1455,27 @@ router.post('/start-ride/:id', verifyToken, async (req, res, next) => {
         const { id } = req.params
 
         if (!id) return next('Bad Request')
-
         const ride = await ride_model.findOneAndUpdate({ _id: id, rider_id: req.user.id, is_completed: false, is_canceled: false, is_start: false }, { is_start: true })
 
         if (!ride) return next({ 'status': 404, 'message': language == 'ar' ? 'لم يتم العثور على الرحلة' : 'The Ride is not Exist' })
 
-        //sendStartRide(id, ride.user_id)
+
+        const info = await app_manager_model.findOne({}).select('price_per_km trip_ratio constant_y constant_z ')
+        const origin  = `${parseFloat(ride.user_lat)},${parseFloat(ride.user_lng)}`;
+        const destination = `${parseFloat(ride.location.coordinates[1])},${parseFloat(ride.location.coordinates[0])}`;
+        
+        const url = `https://maps.googleapis.com/maps/api/distancematrix/json?origins=${origin}&destinations=${destination}&key=AIzaSyB0BtWBSQYdjvND0zL17L3dNdPJWZbG0EY`;
+        const response = await axios.get(url);
+        const distance = response.data.rows[0].elements[0].distance.text;
+        let y = info.constant_y
+        let z = info.constant_z     
+        let x = info.price_per_km   
+        let trip_ratio = info.trip_ratio
+        
+        const calculate_b = await calculatePrice(distance , trip_ratio , y , z , x)
+        if(calculate_b > 0) {
+            await wallets_model.updateOne({user_id : req.user.id} , {$inc : -calculate_b})
+        }
 
         axios.post(process.env.REAL_TIME_SERVER_URL + 'start-ride',
             {
@@ -1256,6 +1489,7 @@ router.post('/start-ride/:id', verifyToken, async (req, res, next) => {
                 },
             },
         )
+        requestCashBack(req.user.id , language)
         res.json({ 'status': true })
 
     } catch (e) {
@@ -1265,10 +1499,8 @@ router.post('/start-ride/:id', verifyToken, async (req, res, next) => {
 
 router.post('/complete-ride/:id', verifyToken, async (req, res, next) => {
     try {
-
         const { language } = req.headers
         const { id } = req.params
-
         const ride = await ride_model.findOneAndUpdate({ _id: id, rider_id: req.user.id, is_completed: false, is_canceled: false, is_start: true }, { is_completed: true })
 
         if (!ride) return next({ 'status': 404, 'message': language == 'ar' ? 'لم يتم العثور على الرحلة' : 'The Ride is not Exist' })
@@ -1446,7 +1678,7 @@ router.get('/get-user-rides', verifyToken, async (req, res, next) => {
 router.post('/send-ride-offer/:adId' , sendRideValidation() , handel_validation_errors , verifyToken, async (req, res, next) => {
 
     try {
-
+        
         const { language } = req.headers
         const { price } = req.body  
         const { adId } = req.params 
@@ -2180,6 +2412,21 @@ async function updateRideRating(riderId, category_id) {
     } catch (e) {
         console.log(e)
     }
+}
+
+async function calculatePrice(distance , trip_ratio , y , z , x) {
+    let distanceFloat = parseFloat(distance)
+    if(distance.indexOf("km") == -1) {
+        distanceFloat = parseFloat(distance) / 1000
+    } 
+
+    // 1 -> calculate operation 
+
+    let calculate_b = (trip_ratio / 100) * ((distanceFloat * x) + y) * z
+    let priceCalculate = (((distanceFloat * x )+ y) * z ) + calculate_b
+
+    priceCalculate = Math.ceil(priceCalculate)
+    return {priceCalculate , calculate_b}
 }
 
 export default router
