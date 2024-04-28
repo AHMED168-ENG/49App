@@ -12,7 +12,7 @@ const schema = new mongoose.Schema(
       required: true,
       ref: "competitions",
     },
-    amount: { type: Number, required: true, default: 0 },
+    amount: { type: Number, default: 0 },
   },
   { versionKey: false, timestamps: true }
 );

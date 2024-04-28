@@ -1,3 +1,4 @@
+import auth_model from "../models/auth_model.js";
 import competition_model from "../models/competitions/competition_model.js";
 import competition_wallet_model from "../models/competitions/competition_wallet_model.js";
 import subscriber_model from "../models/competitions/subscriber_model.js";
@@ -65,11 +66,34 @@ const checkIsUserSubscribeAndIsBlocked = async (userId, competitionId) => {
       competition_id: competitionId,
     });
 
+    console.log("subscriber", subscriber);
+
     if (!subscriber) {
       return { isSubscribed: false, isBlocked: false };
     }
 
     return { isSubscribed: true, isBlocked: subscriber.isBlocked };
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const checkIfUserUnique = async (userId) => {
+  try {
+    // -> 1) get macAddress of the user
+    const macAddress = await auth_model
+      .findOne({ user_id: userId })
+      .select("mac_address");
+
+    // -> 2) check if user is unique or not
+    const result = await auth_model.find({ mac_address: macAddress }).count();
+
+    // -> 3) if user is not unique return false
+    if (result > 1) {
+      return false;
+    }
+
+    return true;
   } catch (error) {
     throw error;
   }
@@ -88,33 +112,50 @@ const getSubscriberId = async (userId, competitionId) => {
       competition_id: competitionId,
     });
 
-    // missing check here if subscriber is fraud or not by checking if user's fcm token is same in other users or not (fcm token is unique for each user and can be used to identify user's device)
-    // fcm should be unique for each user because when user login to the app we save the fcm token in the user's document
-    // and when user logout we remove the fcm token from the user's document -> this way we can identify if user is fraud or not
+    // -> 3) increase the count of request for the subscriber
+    subscriber.countOfRequest++;
+
+    // -> 4) check if user is unique or not
+    // const isUnique = await checkIfUserUnique(userId);
+
+    // -> 5) if user is not unique set isFraud to true
+    // if (!isUnique) {
+    //   subscriber.isFraud = true;
+    // }
+
+    // -> 6) save the subscriber
+    await subscriber.save();
 
     // -> 3) return subscriber id
-    return subscriber._id;
+    return {
+      subscriberId: subscriber._id,
+      countOfRequest: subscriber.countOfRequest,
+    };
   } catch (error) {
     throw error;
   }
 };
 
-const increaseCompetitionWalletAmount = async (
+export const increaseCompetitionWalletAmount = async (
   subscriberId,
   competitionId,
-  pricePerRequest
+  pricePerRequest,
+  countOfRequest
 ) => {
   try {
+    // -> 1) get competition wallet
     const competitionWallet = await competition_wallet_model.findOne({
       subscriber_id: subscriberId,
       competition_id: competitionId,
     });
 
+    // -> 2) if competition wallet not exist return false
     if (!competitionWallet) {
       return false;
     }
 
-    competitionWallet.amount += pricePerRequest;
+    // -> 4) save the competition wallet
+    competitionWallet.amount = countOfRequest * pricePerRequest;
     await competitionWallet.save();
   } catch (error) {
     throw error;
@@ -153,14 +194,20 @@ export const competitionLogic = async (userId, main_category_id) => {
     }
 
     // -> 7) get subscriber id
-    const subscriberId = await getSubscriberId(userId, competitionId);
+    const { subscriberId, countOfRequest } = await getSubscriberId(
+      userId,
+      competitionId
+    );
 
     // -> 8) increase the amount of the competition wallet by pricePerRequest for user
     const result = await increaseCompetitionWalletAmount(
       subscriberId,
       competitionId,
-      pricePerRequest
+      pricePerRequest,
+      countOfRequest
     );
+
+    return true;
   } catch (error) {
     throw error;
   }
