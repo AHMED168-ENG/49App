@@ -1,6 +1,7 @@
 import httpStatus from "http-status";
 import {
   createWheelItemService,
+  deleteWheelItemService,
   getWheelItemService,
   getWheelItemsService,
   updateWheelItemService,
@@ -96,9 +97,28 @@ const updateWheelItemController = async (req, res, next) => {
   }
 };
 
+const deleteWheelItemController = async (req, res, next) => {
+  try {
+    // --> 1) get data from request
+    const { itemId } = req.params;
+
+    // --> 2) delete wheel item
+    await deleteWheelItemService(itemId);
+
+    // --> 3) return response to client
+    res.status(httpStatus.OK).json({
+      status: true,
+      message: "Deleted wheel item successfully",
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 export {
   createWheelItemController,
   getWheelItemsController,
   getWheelItemController,
   updateWheelItemController,
+  deleteWheelItemController,
 };

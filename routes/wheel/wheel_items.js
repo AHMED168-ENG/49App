@@ -4,6 +4,7 @@ import { isAuthorized } from "../../middleware/is-authorized.js";
 
 import {
   validateCreateWheelItemInput,
+  validateDeleteWheelItemInput,
   validateGetWheelItemInput,
   validateGetWheelItemsInput,
   validateUpdateWheelItemInput,
@@ -11,6 +12,7 @@ import {
 
 import {
   createWheelItemController,
+  deleteWheelItemController,
   getWheelItemController,
   getWheelItemsController,
   updateWheelItemController,
@@ -18,7 +20,6 @@ import {
 
 const router = express.Router();
 
-// body: [ wheelId , name , value , type , percentage , isActive ]
 router.post(
   "/:wheelId/items",
   isAuthenticated,
@@ -27,8 +28,6 @@ router.post(
   createWheelItemController
 );
 
-// action: get wheel items by wheel id
-// params: [ wheelId ]
 router.get(
   "/:wheelId/items",
   isAuthenticated,
@@ -37,8 +36,6 @@ router.get(
   getWheelItemsController
 );
 
-// action: get wheel item by item id
-// params: [ wheelId , itemId ]
 router.get(
   "/items/:itemId",
   isAuthenticated,
@@ -47,8 +44,6 @@ router.get(
   getWheelItemController
 );
 
-// action: update wheel item
-// body: [ wheelId , name , value , type , percentage , isActive ]
 router.put(
   "/items/:itemId",
   isAuthenticated,
@@ -57,11 +52,12 @@ router.put(
   updateWheelItemController
 );
 
-// action: delete wheel item by item id
-router.delete("/wheel-items/:itemId");
-
-// action: delete many wheel items by wheel id
-// body [ wheelsIds: [ "", "", "" ] ]
-router.delete("/wheel-items");
+router.delete(
+  "/items/:itemId",
+  isAuthenticated,
+  isAuthorized(["super_admin"]),
+  validateDeleteWheelItemInput,
+  deleteWheelItemController
+);
 
 export default router;

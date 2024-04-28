@@ -93,9 +93,26 @@ const updateWheelItemService = async (wheelItemId, wheelItem) => {
   }
 };
 
+const deleteWheelItemService = async (wheelItemId) => {
+  try {
+    // --> 1) check if the wheel item exists
+    const isWheelItemExists = await wheel_item_model.findById(wheelItemId);
+
+    if (!isWheelItemExists) {
+      throw new NotFoundError("Sorry, this wheel item does not exist");
+    }
+
+    // --> 2) delete wheel item
+    await wheel_item_model.findByIdAndDelete({ _id: wheelItemId });
+  } catch (error) {
+    throw error;
+  }
+};
+
 export {
   createWheelItemService,
   getWheelItemsService,
   getWheelItemService,
   updateWheelItemService,
+  deleteWheelItemService,
 };
