@@ -1,8 +1,16 @@
 import express from "express";
-import { validateCreateWheelItemInput } from "../../validation/wheel/wheel_items.js";
-import { createWheelItemController } from "../../controllers/wheel/wheel_item.js";
 import { isAuthenticated } from "../../middleware/is-authenticated.js";
 import { isAuthorized } from "../../middleware/is-authorized.js";
+
+import {
+  validateCreateWheelItemInput,
+  validateUpdateWheelItemInput,
+} from "../../validation/wheel/wheel_items.js";
+
+import {
+  createWheelItemController,
+  updateWheelItemController,
+} from "../../controllers/wheel/wheel_item.js";
 
 const router = express.Router();
 
@@ -17,7 +25,7 @@ router.post(
 
 // action: get all wheel items by wheel id
 // params: [ wheelId ]
-router.get("/wheel-items/");
+router.get("/wheel-items");
 
 // action: get wheel item by item id
 // params: [ wheelId , itemId ]
@@ -25,7 +33,13 @@ router.get("/wheel-items/:itemId");
 
 // action: update wheel item
 // body: [ wheelId , name , value , type , percentage , isActive ]
-router.put("/wheel-items/:itemId");
+router.put(
+  "/items/:itemId",
+  isAuthenticated,
+  isAuthorized(["super_admin"]),
+  validateUpdateWheelItemInput,
+  updateWheelItemController
+);
 
 // action: delete wheel item by item id
 router.delete("/wheel-items/:itemId");
