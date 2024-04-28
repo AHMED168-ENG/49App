@@ -7,7 +7,7 @@ const wheelItemSchema = new mongoose.Schema(
       required: true,
       ref: "wheels",
     },
-    name: { type: String, required: true },
+    name: { type: String, required: true, unique: true },
     value: { type: Number, required: true },
     type: { type: ["point", "money"] },
     percentage: { type: Number, required: true },
