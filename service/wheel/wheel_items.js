@@ -31,6 +31,27 @@ const createWheelItemService = async (wheelId, wheelItem) => {
   }
 };
 
+const getWheelItemsService = async (wheelId) => {
+  try {
+    // --> 1) check if the wheel exists
+    const isWheelExists = await wheel_item_model
+      .findById(wheelId)
+      .select("_id");
+
+    if (!isWheelExists) {
+      throw new NotFoundError("Sorry, this wheel does not exist");
+    }
+
+    // --> 2) get wheel items
+    const wheelItems = await wheel_item_model.find({ wheel_id: wheelId });
+
+    // --> 3) return response to client
+    return wheelItems;
+  } catch (error) {
+    throw error;
+  }
+};
+
 const updateWheelItemService = async (wheelItemId, wheelItem) => {
   try {
     // --> 1) check if the wheel item exists
@@ -56,4 +77,4 @@ const updateWheelItemService = async (wheelItemId, wheelItem) => {
   }
 };
 
-export { createWheelItemService, updateWheelItemService };
+export { createWheelItemService, getWheelItemsService, updateWheelItemService };

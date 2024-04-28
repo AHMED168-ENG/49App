@@ -4,11 +4,13 @@ import { isAuthorized } from "../../middleware/is-authorized.js";
 
 import {
   validateCreateWheelItemInput,
+  validateGetWheelItemsInput,
   validateUpdateWheelItemInput,
 } from "../../validation/wheel/wheel_items.js";
 
 import {
   createWheelItemController,
+  getWheelItemsController,
   updateWheelItemController,
 } from "../../controllers/wheel/wheel_item.js";
 
@@ -23,9 +25,15 @@ router.post(
   createWheelItemController
 );
 
-// action: get all wheel items by wheel id
+// action: get wheel items by wheel id
 // params: [ wheelId ]
-router.get("/wheel-items");
+router.get(
+  "/:wheelId/items",
+  isAuthenticated,
+  isAuthorized(["super_admin", "admin", "user"]),
+  validateGetWheelItemsInput,
+  getWheelItemsController
+);
 
 // action: get wheel item by item id
 // params: [ wheelId , itemId ]
