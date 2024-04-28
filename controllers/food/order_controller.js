@@ -18,6 +18,8 @@ import { foodCategoryId } from "../ride_controller.js";
 // errors
 import NotFoundError from "../../utils/types-errors/not-found.js";
 
+import { competitionLogic } from "../../service/competition_logic.js";
+
 /** ------------------------------------------------------
  * @desc get restaurant orders
  * @route /services/food/get-restaurant-orders
@@ -307,6 +309,13 @@ export const createOrder = asyncWrapper(async (req, res, next) => {
         10007
       );
     });
+
+  // get category with category id
+  const category = await sub_category_model.findById(
+    restaurantData.category_id
+  );
+  // increase counter for food copemtition
+  const result = await competitionLogic(req.user.id, category.parent);
 
   // -> 13) Send the response
   res.json({
