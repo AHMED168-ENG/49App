@@ -65,4 +65,18 @@ const validateGetWheelInput = [
   validatorHandlerMiddleware,
 ];
 
-export { validateCreateWheelInput, validateGetWheelInput };
+const validateGetWheelsInput = [
+  checkExact([], {
+    message: returnValidationMessageToClient({
+      en: "Sorry, you are trying to enter fields that are not required",
+      ar: "لقد قمت بادخال حقول غير مطلوبة",
+    }),
+  }),
+  validatorHandlerMiddleware,
+];
+
+export {
+  validateCreateWheelInput,
+  validateGetWheelInput,
+  validateGetWheelsInput,
+};

@@ -40,4 +40,29 @@ const getWheelService = async (wheelId) => {
   }
 };
 
-export { createWheelService, getWheelService };
+const getWheelsService = async ({ pagination }) => {
+  try {
+    // --> 1) get wheels
+    const wheels = await wheel_model
+      .find()
+      .select("-createdAt -updatedAt")
+      .skip((pagination.page - 1) * pagination.limit)
+      .limit(pagination.limit);
+
+    // --> 2) get count of subscribers from database
+    const count = await wheel_model.countDocuments();
+
+    // --> 2) return response to client
+    return {
+      wheels,
+      pagination: {
+        countItem: count,
+        pageCount: Math.ceil(count / pagination.limit),
+      },
+    };
+  } catch (error) {
+    throw error;
+  }
+};
+
+export { createWheelService, getWheelService, getWheelsService };
