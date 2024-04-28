@@ -93,6 +93,24 @@ const validateGetWheelItemsInput = [
   validatorHandlerMiddleware,
 ];
 
+const validateGetWheelItemInput = [
+  param("itemId")
+    .isMongoId()
+    .withMessage(
+      returnValidationMessageToClient({
+        en: "The wheel id is not valid",
+        ar: "معرف الدورة غير صالح",
+      })
+    ),
+  checkExact([], {
+    message: returnValidationMessageToClient({
+      en: "Sorry, you are trying to enter fields that are not required",
+      ar: "لقد قمت بادخال حقول غير مطلوبة",
+    }),
+  }),
+  validatorHandlerMiddleware,
+];
+
 const validateUpdateWheelItemInput = [
   param("itemId")
     .isMongoId()
@@ -172,5 +190,6 @@ const validateUpdateWheelItemInput = [
 export {
   validateCreateWheelItemInput,
   validateGetWheelItemsInput,
+  validateGetWheelItemInput,
   validateUpdateWheelItemInput,
 };
