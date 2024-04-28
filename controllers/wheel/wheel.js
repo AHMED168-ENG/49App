@@ -4,6 +4,7 @@ import {
   createWheelService,
   getWheelService,
   getWheelsService,
+  updateWheelService,
 } from "../../service/wheel/wheel.js";
 
 dotenv.config({ path: "./.env" });
@@ -76,4 +77,32 @@ const getWheelsController = async (req, res, next) => {
   }
 };
 
-export { createWheelController, getWheelController, getWheelsController };
+const updateWheelController = async (req, res, next) => {
+  try {
+    // --> 1) get data from request
+    const { wheelId } = req.params;
+    const { name, pricePerPoint, isActive } = req.body;
+
+    // --> 2) update wheel
+    await updateWheelService(wheelId, {
+      name,
+      pricePerPoint,
+      isActive,
+    });
+
+    // --> 3) return response to client
+    return res.status(httpStatus.OK).json({
+      success: true,
+      message: "wheel updated successfully",
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export {
+  createWheelController,
+  getWheelController,
+  getWheelsController,
+  updateWheelController,
+};

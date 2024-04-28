@@ -1,5 +1,6 @@
 import ConflictError from "../../utils/types-errors/conflict-error.js";
 import wheel_model from "../../models/wheel/wheel_model.js";
+import NotFoundError from "../../utils/types-errors/not-found.js";
 
 const createWheelService = async (wheel) => {
   try {
@@ -65,4 +66,25 @@ const getWheelsService = async ({ pagination }) => {
   }
 };
 
-export { createWheelService, getWheelService, getWheelsService };
+const updateWheelService = async (wheelId, wheel) => {
+  try {
+    // --> 1) check if the wheel exists
+    const isWheelExists = await wheel_model.findById(wheelId).select("_id");
+
+    if (!isWheelExists) {
+      throw new NotFoundError("Sorry, this wheel does not exist");
+    }
+
+    // --> 2) update wheel
+    await wheel_model.updateOne({ _id: wheelId }, { ...wheel });
+  } catch (error) {
+    throw error;
+  }
+};
+
+export {
+  createWheelService,
+  getWheelService,
+  getWheelsService,
+  updateWheelService,
+};
