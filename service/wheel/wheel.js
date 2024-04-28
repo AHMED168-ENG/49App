@@ -19,4 +19,25 @@ const createWheelService = async (wheel) => {
   }
 };
 
-export { createWheelService };
+const getWheelService = async (wheelId) => {
+  try {
+    // --> 1) check if the wheel exists
+    const isWheelExists = await wheel_model.findById(wheelId).select("_id");
+
+    if (!isWheelExists) {
+      throw new ConflictError("Sorry, this wheel does not exist");
+    }
+
+    // --> 2) get wheel
+    const wheel = await wheel_model
+      .findById(wheelId)
+      .select("-createdAt -updatedAt");
+
+    // --> 3) return response to client
+    return wheel;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export { createWheelService, getWheelService };

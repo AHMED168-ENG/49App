@@ -1,5 +1,8 @@
 import httpStatus from "http-status";
-import { createWheelService } from "../../service/wheel/wheel.js";
+import {
+  createWheelService,
+  getWheelService,
+} from "../../service/wheel/wheel.js";
 
 const createWheelController = async (req, res, next) => {
   try {
@@ -23,4 +26,24 @@ const createWheelController = async (req, res, next) => {
   }
 };
 
-export { createWheelController };
+const getWheelController = async (req, res, next) => {
+  try {
+    // --> 1) get data from request
+    const { wheelId } = req.params;
+
+    // --> 2) get wheel
+    const wheel = await getWheelService(wheelId);
+
+    // --> 3) return response to client
+    return res.status(httpStatus.OK).json({
+      success: true,
+      data: {
+        wheel,
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export { createWheelController, getWheelController };
