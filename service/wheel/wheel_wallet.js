@@ -80,6 +80,15 @@ const getWheelWalletsService = async ({ pagination }) => {
   }
 };
 
+const resetWalletToZeroAmount = async (walletId) => {
+  try {
+    // --> 1) update all wheel wallets to zero amount
+    await wheel_wallet_model.updateMany({ _id: walletId }, { amount: 0 });
+  } catch (error) {
+    throw error;
+  }
+};
+
 const updateWheelWalletService = async (walletId, wallet) => {
   try {
     // --> 1) check if wallet exists
@@ -95,8 +104,6 @@ const updateWheelWalletService = async (walletId, wallet) => {
     throw error;
   }
 };
-
-const updateWheelWalletForUsersService = async (newAmount) => {};
 
 const increaseAmountInWalletService = async (userId, amount) => {
   // --> 1) check if user has wallet
@@ -120,8 +127,8 @@ export {
   createWheelWalletService,
   getWheelWalletService,
   getWheelWalletsService,
+  resetWalletToZeroAmount,
   updateWheelWalletService,
-  updateWheelWalletForUsersService,
   increaseAmountInWalletService,
   updatePointsWalletService,
 };
