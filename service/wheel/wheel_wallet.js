@@ -80,7 +80,7 @@ const getWheelWalletsService = async ({ pagination }) => {
   }
 };
 
-const resetWalletToZeroAmount = async (walletId) => {
+const resetWalletToZeroAmountService = async (walletId) => {
   try {
     // --> 1) update all wheel wallets to zero amount
     await wheel_wallet_model.updateMany({ _id: walletId }, { amount: 0 });
@@ -127,7 +127,7 @@ export {
   createWheelWalletService,
   getWheelWalletService,
   getWheelWalletsService,
-  resetWalletToZeroAmount,
+  resetWalletToZeroAmountService,
   updateWheelWalletService,
   increaseAmountInWalletService,
   updatePointsWalletService,
