@@ -19,7 +19,7 @@ const getWheelWalletController = async (req, res, next) => {
   }
 };
 
-// dashboard
+
 const getWalletsController = async (req, res, next) => {
   try {
     // --> 1) get data from request
