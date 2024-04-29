@@ -6,8 +6,8 @@ import {
   getSubCategoryByParent
 } from '../controllers/categories/categories_controller.js'
 import { isAuthenticated } from '../middleware/is-authenticated.js'
-import { validationGetSubCategoryByParent } from '../validation/main_category'
-import { validationGetSubCategoryById } from '../validation/main_category'
+import { validationGetSubCategoryByParent } from '../validation/main_category.js'
+import { validationGetSubCategoryById } from '../validation/main_category.js'
 
 const router = express.Router()
 /** ------------------------------------------------------
