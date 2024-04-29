@@ -1,13 +1,13 @@
 import httpStatus from "http-status";
-import { getWheelWalletService } from "../../service/wheel/wheel_wallet.js";
+import { getWheelWalletService, getWheelWalletsService } from "../../service/wheel/wheel_wallet.js";
 
 const getWheelWalletController = async (req, res, next) => {
   try {
     // --> 1) get data from request
-    const { id } = req.user;
+    const { walletId } = req.params;
 
     // --> 2) get wallet
-    await getWheelWalletService(id);
+    await getWheelWalletService(walletId);
 
     // --> 3) return response to client
     res.status(httpStatus.OK).json({
@@ -15,11 +15,35 @@ const getWheelWalletController = async (req, res, next) => {
       message: "Get wallet successfully",
     });
   } catch (error) {
-    next(error)
+    next(error);
   }
 };
 
 // dashboard
-const getWalletsController = async (req, res, next) => {};
+const getWalletsController = async (req, res, next) => {
+  try {
+    // --> 1) get data from request
+    const { page, limit } = req.query;
+
+    // --> 2) get wallets
+    const { wallets, pagination } = await getWheelWalletsService({
+      pagination: {
+        page: page ? parseInt(page) : process.env.PAGINATION_PAGE,
+        limit: limit ? parseInt(limit) : process.env.PAGINATION_LIMIT,
+      },
+    });
+
+    // --> 3) return response to client
+    return res.status(httpStatus.OK).json({
+      success: true,
+      data: {
+        wallets,
+      },
+      pagination,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
 
 export { getWheelWalletController, getWalletsController };

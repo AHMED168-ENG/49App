@@ -1,11 +1,12 @@
 import wheel_wallet_model from "../../models/wheel/wheel_wallet_model.js";
 import BadRequestError from "../../utils/types-errors/bad-request.js";
 import ConflictError from "../../utils/types-errors/conflict-error.js";
+import NotFoundError from "../../utils/types-errors/not-found.js";
 
-const checkIfUserHasWalletService = async (userId) => {
+const checkIfUserHasWalletService = async (walletId) => {
   try {
     const wallet = await wheel_wallet_model
-      .findOne({ user_id: userId })
+      .findOne({ _id: walletId })
       .select("_id");
 
     if (!wallet) {
@@ -34,13 +35,13 @@ const createWheelWalletService = async (userId) => {
   }
 };
 
-const getWheelWalletService = async (userId) => {
+const getWheelWalletService = async (walletId) => {
   try {
     // --> 1) check if user has wallet
-    const isUserHashWheelWallet = await checkIfUserHasWalletService(userId);
+    const isUserHashWheelWallet = await checkIfUserHasWalletService(walletId);
 
     if (!isUserHashWheelWallet) {
-      throw new BadRequestError("Sorry, you don't have a wallet");
+      throw new NotFoundError("Sorry, you don't have a wallet");
     }
 
     // --> 2) get wheel wallet
@@ -55,7 +56,30 @@ const getWheelWalletService = async (userId) => {
   }
 };
 
-const getWheelWalletsService = async () => {};
+const getWheelWalletsService = async ({ pagination }) => {
+  try {
+    // --> 1) get wheel wallets
+    const wallets = await wheel_wallet_model
+      .find()
+      .select("_id amount points")
+      .skip((pagination.page - 1) * pagination.limit)
+      .limit(pagination.limit);
+
+    // --> 2) get count of wheel wallets from database
+    const count = await wheel_wallet_model.countDocuments();
+
+    // --> 3) return response to client
+    return {
+      wallets,
+      pagination: {
+        countItem: count,
+        pageCount: Math.ceil(count / pagination.limit),
+      },
+    };
+  } catch (error) {
+    throw error;
+  }
+};
 
 const updateWheelWalletService = async (userId, wallet) => {};
 
