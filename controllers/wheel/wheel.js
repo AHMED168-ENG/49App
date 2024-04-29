@@ -100,6 +100,17 @@ const updateWheelController = async (req, res, next) => {
   }
 };
 
+// spin wheel, return item
+const spinWheelController = async (req, res, next) => {
+  // --> 1) check if user has wallet, create new wallet
+  // --> 2) get random item from wheel
+  // --> 3) check item type
+  // --> 4) update wallet
+  // --> 5) return item
+};
+
+
+
 export {
   createWheelController,
   getWheelController,

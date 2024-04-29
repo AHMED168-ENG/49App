@@ -1,4 +1,5 @@
 import wheel_item_model from "../../models/wheel/wheel_item_model.js";
+import wheel_model from "../../models/wheel/wheel_model.js";
 import ConflictError from "../../utils/types-errors/conflict-error.js";
 import NotFoundError from "../../utils/types-errors/not-found.js";
 
@@ -25,7 +26,12 @@ const createWheelItemService = async (wheelId, wheelItem) => {
     }
 
     // --> 3) create wheel item
-    await wheel_item_model.create(wheelItem);
+    const newWheelItem = await wheel_item_model.create(wheelItem);
+
+    // --> 4) update wheel
+    await wheel_model.findByIdAndUpdate(wheelId, {
+      $push: { items: newWheelItem._id },
+    });
   } catch (error) {
     throw error;
   }
@@ -104,6 +110,14 @@ const deleteWheelItemService = async (wheelItemId) => {
 
     // --> 2) delete wheel item
     await wheel_item_model.findByIdAndDelete({ _id: wheelItemId });
+
+    // --> 3) delete wheel item from wheel
+    await wheel_model.updateOne(
+      { _id: isWheelItemExists.wheel_id },
+      {
+        $pull: { items: wheelItemId },
+      }
+    );
   } catch (error) {
     throw error;
   }
