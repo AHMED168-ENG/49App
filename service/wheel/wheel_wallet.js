@@ -80,10 +80,19 @@ const getWheelWalletsService = async ({ pagination }) => {
   }
 };
 
+const resetWalletsToZeroAmountService = async () => {
+  try {
+    // --> 1) update all wheel wallets to zero amount
+    await wheel_wallet_model.updateMany({}, { amount: 0 });
+  } catch (error) {
+    throw error;
+  }
+};
+
 const resetWalletToZeroAmountService = async (walletId) => {
   try {
     // --> 1) update all wheel wallets to zero amount
-    await wheel_wallet_model.updateMany({ _id: walletId }, { amount: 0 });
+    await wheel_wallet_model.updateOne({ _id: walletId }, { amount: 0 });
   } catch (error) {
     throw error;
   }
@@ -127,6 +136,7 @@ export {
   createWheelWalletService,
   getWheelWalletService,
   getWheelWalletsService,
+  resetWalletsToZeroAmountService,
   resetWalletToZeroAmountService,
   updateWheelWalletService,
   increaseAmountInWalletService,
