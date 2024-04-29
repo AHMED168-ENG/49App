@@ -36,7 +36,8 @@ import competition_subscriber from "./competition_subscriber.js";
 import dashboardWinner from "./dashboard/winner.js";
 
 import wheelItems from "./wheel/wheel_items.js";
-import wheels from "./wheel/wheel.js";
+import wheel from "./wheel/wheel.js";
+import wheelWallet from "./wheel/wheel_wallet.js"
 
 const initializeRoutes = (app) => {
   app.use("/auth", auth);
@@ -82,7 +83,8 @@ const initializeRoutes = (app) => {
   app.use("/dashboard/super-admin/competitions", competitionRouter);
 
   app.use("/wheels", wheelItems);
-  app.use("/wheels", wheels);
+  app.use("/wheels", wheelWallet)
+  app.use("/wheels", wheel);
 };
 
 export { initializeRoutes };
