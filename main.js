@@ -14,6 +14,7 @@ import cors from "cors";
 import hpp from "hpp";
 import fs from "fs";
 import { globalErrorHandlerMiddleware } from "./middleware/global-error-handler-middleware.js";
+import { checkIfUserHasWallet } from "./service/wheel/wheel_wallet.js";
 
 async function bootstrap() {
   try {
@@ -39,6 +40,8 @@ async function bootstrap() {
         __dirname + "/serviceAccountKey.json"
       ),
     });
+
+    const result = await checkIfUserHasWallet("662417391dfe4d5d8cbb4578");
 
     /* Create express app */
     const app = express();
