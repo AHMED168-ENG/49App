@@ -1,3 +1,4 @@
+import { resetAllWalletsToZeroAmountJob } from "./utils/scheduled-tasks.js";
 import { globalErrorHandlerMiddleware } from "./middleware/global-error-handler-middleware.js";
 import { notFoundErrorMiddleware } from "./middleware/not-found-error-middleware.js";
 import { initializeRoutes } from "./routes/index.js";
@@ -32,6 +33,9 @@ async function bootstrap() {
 
     /* Connect to database */
     await connectDB();
+
+    /* Schedule tasks */
+    resetAllWalletsToZeroAmountJob;
 
     /* Initialize firebase */
     firebaseAdmin.initializeApp({
