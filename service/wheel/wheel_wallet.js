@@ -1,4 +1,5 @@
 import wheel_wallet_model from "../../models/wheel/wheel_wallet_model.js";
+import BadRequestError from "../../utils/types-errors/bad-request.js";
 import ConflictError from "../../utils/types-errors/conflict-error.js";
 
 const checkIfUserHasWalletService = async (userId) => {
@@ -33,7 +34,26 @@ const createWheelWalletService = async (userId) => {
   }
 };
 
-const getWheelWalletService = async (userId) => {};
+const getWheelWalletService = async (userId) => {
+  try {
+    // --> 1) check if user has wallet
+    const isUserHashWheelWallet = await checkIfUserHasWalletService(userId);
+
+    if (!isUserHashWheelWallet) {
+      throw new BadRequestError("Sorry, you don't have a wallet");
+    }
+
+    // --> 2) get wheel wallet
+    const wallet = await wheel_wallet_model
+      .findOne({ user_id: userId })
+      .select("_id amount points");
+
+    // --> 3) return wheel wallet
+    return wallet;
+  } catch (error) {
+    throw error;
+  }
+};
 
 const getWheelWalletsService = async () => {};
 
