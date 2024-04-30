@@ -4,8 +4,16 @@ import {
   createWheelService,
   getWheelService,
   getWheelsService,
+  getWheelsServiceWitoutPagination,
   updateWheelService,
+  spinWheelService,
 } from "../../service/wheel/wheel.js";
+import {
+  checkIfUserHasWalletService,
+  createWheelWalletService,
+  getWheelWalletService,
+  getWheelWalletsService,
+} from "../../service/wheel/wheel_wallet.js";
 
 dotenv.config({ path: "./.env" });
 
@@ -44,6 +52,26 @@ const getWheelController = async (req, res, next) => {
       success: true,
       data: {
         wheel,
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+const getRandomWheelController = async (req, res, next) => {
+  try {
+    // --> 1) get all wheels
+    const wheels = await getWheelsServiceWitoutPagination();
+
+    // --> 2) get random wheel
+    const randomWheel = wheels[Math.floor(Math.random() * wheels.length)];
+
+    // --> 3) return response to client
+    return res.status(httpStatus.OK).json({
+      success: true,
+      data: {
+        wheel: randomWheel,
       },
     });
   } catch (error) {
@@ -100,20 +128,34 @@ const updateWheelController = async (req, res, next) => {
   }
 };
 
-// spin wheel, return item
+// spin wheel, return selected item
 const spinWheelController = async (req, res, next) => {
-  // --> 1) check if user has wallet, create new wallet
-  // --> 2) get random item from wheel
-  // --> 3) check item type
-  // --> 4) update wallet
-  // --> 5) return item
+  try {
+    // --> 1) get data from request
+    const { wheelId } = req.params;
+
+    // --> 2) get random item from wheel
+    const selectedItem = await spinWheelService(req.user.id, wheelId);
+
+    // --> 3) return response to client
+    return res.status(httpStatus.OK).json({
+      success: true,
+      data: {
+        name : selectedItem.name,
+        value : selectedItem.value,
+        type : selectedItem.type,
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
 };
-
-
 
 export {
   createWheelController,
   getWheelController,
+  getRandomWheelController,
   getWheelsController,
   updateWheelController,
+  spinWheelController,
 };

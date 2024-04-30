@@ -15,6 +15,7 @@ const createWheelItemController = async (req, res, next) => {
 
     // --> 2) create wheel item
     await createWheelItemService(wheelId, {
+      wheel_id: wheelId,
       name,
       value,
       type,

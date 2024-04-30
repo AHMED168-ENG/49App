@@ -6,7 +6,7 @@ import NotFoundError from "../../utils/types-errors/not-found.js";
 const createWheelItemService = async (wheelId, wheelItem) => {
   try {
     // --> 1) check if the wheel exists
-    const isWheelExists = await wheel_item_model
+    const isWheelExists = await wheel_model
       .findById(wheelId)
       .select("_id");
 
