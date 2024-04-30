@@ -65,6 +65,24 @@ const validateGetWheelInput = [
   validatorHandlerMiddleware,
 ];
 
+const validateSpinWheelInput = [
+  param("wheelId")
+    .isMongoId()
+    .withMessage(
+      returnValidationMessageToClient({
+        en: "The wheelId must be a mongoId",
+        ar: "wheelId يجب ان يكون من نوع mongoId",
+      })
+    ),
+  checkExact([], {
+    message: returnValidationMessageToClient({
+      en: "Sorry, you are trying to enter fields that are not required",
+      ar: "لقد قمت بادخال حقول غير مطلوبة",
+    }),
+  }),
+  validatorHandlerMiddleware,
+];
+
 const validateGetWheelsInput = [
   checkExact([], {
     message: returnValidationMessageToClient({
@@ -99,7 +117,8 @@ const validateUpdateWheelsInput = [
         en: "The name is required",
         ar: "الاسم مطلوب",
       })
-    ).optional(),
+    )
+    .optional(),
 
   body("pricePerPoint")
     .isFloat({ gt: 0 })
@@ -133,6 +152,7 @@ const validateUpdateWheelsInput = [
 export {
   validateCreateWheelInput,
   validateGetWheelInput,
+  validateSpinWheelInput,
   validateGetWheelsInput,
   validateUpdateWheelsInput,
 };

@@ -2,10 +2,10 @@ import wheel_wallet_model from "../../models/wheel/wheel_wallet_model.js";
 import ConflictError from "../../utils/types-errors/conflict-error.js";
 import NotFoundError from "../../utils/types-errors/not-found.js";
 
-const checkIfUserHasWalletService = async (walletId) => {
+const checkIfUserHasWalletService = async (userId) => {
   try {
     const wallet = await wheel_wallet_model
-      .findOne({ _id: walletId })
+      .findOne({ user_id: userId })
       .select("_id");
 
     if (!wallet) {
@@ -34,10 +34,10 @@ const createWheelWalletService = async (userId) => {
   }
 };
 
-const getWheelWalletService = async (walletId) => {
+const getWheelWalletService = async (userId) => {
   try {
     // --> 1) check if user has wallet
-    const isUserHashWheelWallet = await checkIfUserHasWalletService(walletId);
+    const isUserHashWheelWallet = await checkIfUserHasWalletService(userId);
 
     if (!isUserHashWheelWallet) {
       throw new NotFoundError("Sorry, you don't have a wallet");
@@ -98,17 +98,17 @@ const resetWalletToZeroAmountService = async (walletId) => {
   }
 };
 
-const updateWheelWalletService = async (walletId, wallet) => {
+const updateWheelWalletService = async (userId, wallet) => {
   try {
     // --> 1) check if wallet exists
-    const isWheelWalletExists = await checkIfUserHasWalletService(walletId);
+    const isWheelWalletExists = await checkIfUserHasWalletService(userId);
 
     if (!isWheelWalletExists) {
       throw new NotFoundError("Sorry, you don't have a wallet");
     }
 
     // --> 2) update wheel wallet
-    await wheel_wallet_model.updateOne({ _id: walletId }, wallet).select("_id");
+    await wheel_wallet_model.updateOne({ user_id: userId }, wallet).select("_id");
   } catch (error) {
     throw error;
   }

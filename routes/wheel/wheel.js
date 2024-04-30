@@ -5,6 +5,7 @@ import { isAuthorized } from "../../middleware/is-authorized.js";
 import {
   validateCreateWheelInput,
   validateGetWheelInput,
+  validateSpinWheelInput,
   validateGetWheelsInput,
   validateUpdateWheelsInput,
 } from "../../validation/wheel/wheel.js";
@@ -14,6 +15,8 @@ import {
   getWheelController,
   getWheelsController,
   updateWheelController,
+  spinWheelController,
+  getRandomWheelController,
 } from "../../controllers/wheel/wheel.js";
 
 const router = express.Router();
@@ -25,6 +28,20 @@ router.post(
   validateCreateWheelInput,
   createWheelController
 );
+router.get(
+  "/spin/:wheelId",
+  isAuthenticated,
+  isAuthorized(["super_admin", "admin", "user"]),
+  validateSpinWheelInput,
+  spinWheelController
+);
+
+router.get(
+  "/random",
+  isAuthenticated,
+  isAuthorized(["super_admin", "admin", "user"]),
+  getRandomWheelController
+);
 
 router.get(
   "/:wheelId",
@@ -33,6 +50,8 @@ router.get(
   validateGetWheelInput,
   getWheelController
 );
+
+
 
 router.get(
   "/",

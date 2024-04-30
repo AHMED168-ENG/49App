@@ -9,7 +9,7 @@ const wheelItemSchema = new mongoose.Schema(
     },
     name: { type: String, required: true, unique: true },
     value: { type: Number, required: true },
-    type: { enum: ["point", "money"] },
+    type: { type: String, required: true  , enum: ["money", "point"]},
     percentage: { type: Number, required: true },
     isActive: { type: Boolean, default: true },
   },
