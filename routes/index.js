@@ -38,6 +38,7 @@ import dashboardWinner from "./dashboard/winner.js";
 import wheelItems from "./wheel/wheel_items.js";
 import wheel from "./wheel/wheel.js";
 import wheelWallet from "./wheel/wheel_wallet.js"
+import wheelWinner from "./dashboard/wheel_winner.js"
 
 const initializeRoutes = (app) => {
   app.use("/auth", auth);
@@ -85,6 +86,7 @@ const initializeRoutes = (app) => {
   app.use("/wheels", wheelItems);
   app.use("/wheels", wheelWallet)
   app.use("/wheels", wheel);
+  app.use("/dashboard/winner", wheelWinner)
 };
 
 export { initializeRoutes };
