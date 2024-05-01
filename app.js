@@ -58,6 +58,7 @@ import user_model from "./models/user_model.js";
 import { sendNotification } from "./controllers/notification_controller.js";
 import come_with_me_ride_model from "./models/come_with_me_ride_model.js";
 import pick_me_ride_model from "./models/pick_me_ride_model.js";
+import { deleteExpiredChats} from "./controllers/chat/chat_controller.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -66,7 +67,7 @@ const app = express();
 const server = http.createServer(app);
 
 const serviceAccount = __dirname + "/serviceAccountKey.json";
-
+deleteExpiredChats()
 dontenv.config();
 
 app.use(express.json());
@@ -74,7 +75,6 @@ app.use(express.urlencoded({ extended: false }));
 app.use(morgan("dev"));
 app.set("views", path.join(__dirname, "views"));
 app.set("view engine", "ejs");
-
 mongoose
   .connect(process.env.MONGODB_URI_REFACTOR, {
     useNewUrlParser: true,
@@ -97,6 +97,8 @@ mongoose
       await checkUsersBalanceStorage();
       console.log("Cron 12 PM is Finished");
     });
+    //delete all messages that sent in the last 24 hours
+     cron.schedule("* * * * *",deleteExpiredChats)
 
     cron.schedule("0 0 1 * *", async () => {
       // every Month
