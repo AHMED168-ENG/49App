@@ -80,21 +80,23 @@ const schema = new mongoose.Schema(
     privacy_follower_list: { type: Number, default: 2 },
     privacy_activity: { type: Number, default: 2 }, // for tinder
     privacy_random_appearance: { type: Number, default: 2 }, // ظهور عشوائي في tinder
-    privacy_friend_request: { type: Number, default: 2 },
-    privacy_follow_request: { type: Number, default: 2 },
     privacy_call: { type: Number, default: 2 },
-
+    
     is_rider: { type: Boolean, default: false },
     is_doctor: { type: Boolean, default: false },
     is_restaurant: { type: Boolean, default: false },
     is_loading: { type: Boolean, default: false },
-
+    
+    // profile model
+    privacy_follow_request: { type: Number, default: 2 },
+    privacy_friend_request: { type: Number, default: 2 },
     friends: { type: Array, default: [] },
     friend_requests: { type: Array, default: [] },
     followers: { type: Array, default: [] },
     following: { type: Array, default: [] },
-
     block: { type: Array, default: [] },
+
+
     hide_posts: { type: Array, default: [] },
 
     is_online: { type: Boolean, default: false },
