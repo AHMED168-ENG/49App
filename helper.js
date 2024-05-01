@@ -136,6 +136,7 @@ export const verifyTokenAndAdmin = (req, res, next) => {
 }
 
 
+
 export const getUserData = function (doc) {
 
     return {
@@ -203,6 +204,7 @@ export const getPublicIPAddress = async () => {
         console.log(publicIPAddress)
     })
 };
+
 
 
 export const fullUserKeys = 'first_name phone last_name email profile_picture cover_picture provider birth_date referral_id hash_code tender_picture country language social_status city job is_male is_locked currency privacy_country privacy_email privacy_phone privacy_email privacy_birth_date privacy_social_status privacy_job privacy_city privacy_is_male privacy_language privacy_receive_messages privacy_last_seen privacy_friend_list privacy_follower_list privacy_activity privacy_random_appearance privacy_friend_request privacy_follow_request privacy_call bio'

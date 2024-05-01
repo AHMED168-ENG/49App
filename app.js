@@ -15,33 +15,34 @@ import path from "path";
 import { fileURLToPath } from "url";
 import dontenv from "dotenv";
 
-import auth from "./routes/auth.js";
-import profile from "./routes/user_profile.js";
-import ads from "./routes/ad.js";
-import favorites from "./routes/favorite.js";
-import notifications from "./routes/notification.js";
-import cashBack from "./routes/cash_back.js";
-import subscriptions from "./routes/subscription.js";
-import payment from "./routes/payment.js";
-import addressRoute from "./routes/address.js";
+import auth from './routes/auth.js'
+import profile from './routes/user_profile.js'
+import ads from './routes/ad.js'
+import favorites from './routes/favorite.js'
+import notifications from './routes/notification.js'
+import cashBack from './routes/cash_back.js'
+import subscriptions from './routes/subscription.js'
+import payment from './routes/payment.js'
+import manual_payment from './routes/manual_payment.js'
+import addressRoute from './routes/address.js'
 
-import ride from "./routes/services/ride.js";
-import food from "./routes/services/food.js";
-import health from "./routes/services/health.js";
+import ride from './routes/services/ride.js'
+import cancelation_reasons from './routes/services/cancelation_reasons.js'
+import food from './routes/services/food.js'
+import health from './routes/services/health.js'
 
 import loading from "./routes/services/loading.js";
 import posts from "./routes/social/post.js";
 import categories from "./routes/categories.js";
 
-import report from "./routes/social/report.js";
-import search from "./routes/social/search.js";
-import peerProfile from "./routes/social/peer_profile.js";
-import hiddenOpinion from "./routes/social/hidden_opinion.js";
-import list from "./routes/social/list.js";
-import tinder from "./routes/social/tinder.js";
-import gift from "./routes/social/gift.js";
-import reel from "./routes/social/reel.js";
-import appRadio from "./routes/app_radio.js";
+import report from './routes/social/report.js'
+import search from './routes/social/search.js'
+import peerProfile from './routes/social/peer_profile.js'
+import hiddenOpinion from './routes/social/hidden_opinion.js'
+import list from './routes/social/list.js'
+import tinder from './routes/social/tinder.js'
+import gift from './routes/social/gift.js'
+import appRadio from './routes/app_radio.js'
 
 import chat from "./routes/social/chat.js";
 import contests from "./routes/contests.js";
@@ -61,7 +62,7 @@ import pick_me_ride_model from "./models/pick_me_ride_model.js";
 import { deleteExpiredChats} from "./controllers/chat/chat_controller.js";
 
 const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+const __dirname = path.dirname(__filename);       
 
 const app = express();
 const server = http.createServer(app);
@@ -77,6 +78,7 @@ app.set("views", path.join(__dirname, "views"));
 app.set("view engine", "ejs");
 mongoose
   .connect(process.env.MONGODB_URI_REFACTOR, {
+
     useNewUrlParser: true,
     useUnifiedTopology: false,
   })
@@ -118,15 +120,16 @@ firebaseAdmin.initializeApp({
   credential: firebaseAdmin.credential.cert(serviceAccount),
 });
 
-app.use("/auth", auth);
-app.use("/profile", profile);
-app.use("/ads", ads);
-app.use("/favorites", favorites);
-app.use("/notifications", notifications);
-app.use("/cash-back", cashBack);
-app.use("/subscriptions", subscriptions);
-app.use("/payment", payment);
-app.use("/address", addressRoute);
+app.use('/auth', auth);
+app.use('/profile', profile);
+app.use('/ads', ads);
+app.use('/favorites', favorites);
+app.use('/notifications', notifications);
+app.use('/cash-back', cashBack);
+app.use('/subscriptions', subscriptions);
+app.use('/payment', payment);
+app.use('/manual-payment', manual_payment);
+app.use('/address', addressRoute);
 
 app.use("/social/report", report);
 app.use("/social/search", search);
@@ -144,10 +147,16 @@ app.use("/services/loading", loading);
 app.use("/services/food", food);
 app.use("/services/health", health);
 
-app.use("/categories", categories);
-app.use("/app-radio", appRadio);
-app.use("/payout", payout);
-app.use("/contests", contests);
+app.use('/services/ride', ride);
+app.use('/services/cancelation-reasons', cancelation_reasons);
+app.use('/services/loading', loading);
+app.use('/services/food', food);
+app.use('/services/health', health);
+
+app.use('/categories', categories);
+app.use('/app-radio', appRadio);
+app.use('/payout', payout);
+app.use('/contests', contests);
 
 // app.use('/dashboard/', (req, res, next) => {
 
@@ -166,7 +175,11 @@ app.use("/dashboard/admin", dashboardAdmin);
 app.use(express.static(__dirname + "/public"));
 
 app.use((req, res, next) => {
-  next(createError.NotFound());
+  next(
+    new NotFoundError(
+      "Ooh you are lost, read the the API documentations to find your way back home 😂"
+    )
+  );
 });
 
 app.use((err, req, res, next) => {
