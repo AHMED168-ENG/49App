@@ -9,7 +9,8 @@ const schema = new mongoose.Schema({
     category_id: { type: String },
     background: { type: String },
     name: { type: String },
-
+    chatdelete_at:{type:Date,required:false},
+    password:{type:String,required:false},
     is_archived: { type: Boolean, default: false, required: true },
 }, { versionKey: false, timestamps: true })
 

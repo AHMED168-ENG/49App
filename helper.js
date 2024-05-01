@@ -7,6 +7,7 @@ import user_model from './models/user_model.js'
 
 export const serverURL = 'https://api.49hub.com/'
 export const filesCloudUrl = 'https://49-space.fra1.digitaloceanspaces.com/'
+import { errorWithLanguages } from "./utils/errorWithLanguages.js"
 export var publicIPAddress = ''
 
 
@@ -38,16 +39,30 @@ export const createToken = (id, auth, authDate, isSuperAdmin, isAdmin) => {
 
     )
 }
-
-/**
- * @deprecated This function is deprecated from refactor ver. 0.1 Use isAuthenticated
- */
+export const validateUser=async(req,res,next,decodedToken)=>{
+    const user = await user_model.findOne({
+        _id : decodedToken.id                                                          
+      }) 
+     
+      if(!user) return res.status(httpStatus.NOT_FOUND).send(errorWithLanguages({en : "this account is not avaliable",ar : "هذا الحساب لا يوجد بالخدمة"}))
+      
+        if(user.is_locked) return res.status(httpStatus.NOT_FOUND).send( errorWithLanguages({en : "this account is locked",ar : "تم غلق هذا الحساب"}))
+           
+        //validated
+           req.user = {id : decodedToken.id , email : user.email , isAdmin : decodedToken.isAdmin , isSuperAdmin : decodedToken.isSuperAdmin,block:user.block };                                                       
+           next()
+        
+    //  if(user.is_locked) throw buildError(httpStatus.NOT_FOUND , errorWithLanguages({
+   //     en : "this account is locked",
+    //    ar : "تم غلق هذا الحساب"
+   //   }))    
+     
+}
 export const verifyToken = async (req, res, next) => {
 
     try {
 
         const authorization = req.headers?.authorization
-        
         if (authorization) {
             jwt.verify(authorization.split(' ')[1], process.env.SECRET_KEY, async (err, decodedToken) => {
                 if((err?.name == "TokenExpiredError")) {
@@ -61,16 +76,7 @@ export const verifyToken = async (req, res, next) => {
                     success: false,
                   });
                 } else  {     
-                  const user = await user_model.findOne({
-                    _id : decodedToken.id                                                          
-                  })          
-                  
-                  if(user.is_locked) throw buildError(httpStatus.NOT_FOUND , errorWithLanguages({
-                    en : "this account is locked",
-                    ar : "تم غلق هذا الحساب"
-                  }))    
-                  req.user = {id : decodedToken.id , email : user.email , isAdmin : decodedToken.isAdmin , isSuperAdmin : decodedToken.isSuperAdmin };                                                       
-                  next()
+                    validateUser(req,res,next,decodedToken)
                 }
 
             })
