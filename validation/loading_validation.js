@@ -1,4 +1,4 @@
-import { check , checkExact } from "express-validator";
+import { check , checkExact ,body } from "express-validator";
 import { returnValidationMessageToClient } from "../utils/return-validation-message-to-client.js";
 import { validatorHandlerMiddleware } from "../middleware/validator-handler-middleware.js";
 export const validationRegisterLoading = () => {
@@ -58,41 +58,6 @@ export const validationRegisterLoading = () => {
   ];
 };
 
-export const validationLoadingRating = () => {
-
-  return [
-    check("category_id")
-      .notEmpty()
-      .withMessage(
-        returnValidationMessageToClient({
-          ar: "ادخل القسم الخاص السيارة",
-          en: "enter car category",
-        })
-      ),
-    check("ad_id")
-      .notEmpty()
-      .withMessage(
-        returnValidationMessageToClient({
-          ar: "ادخل السيارة",
-          en: "enter car advertise",
-        })
-      ),
-    check("user_id")
-      .notEmpty()
-      .withMessage(
-        returnValidationMessageToClient({
-          ar: "ادخل المستخدم",
-          en: "enter user",
-        })
-      ),
-      checkExact([], {
-        message: returnValidationMessageToClient({
-          en: "Sorry, you are trying to enter fields that are not required",
-          ar: "لقد قمت بادخال حقول غير مطلوبة",
-        }),
-      })
-  ];
-};
 
 export const requestLoadingValidation = () => {
   return [
@@ -216,3 +181,87 @@ export const acceptLoadingOfferValidation = () => {
   ];
 };
 
+export const validationAddRating = () => {
+  return [
+    body("field_one")
+    .isNumeric()
+    .withMessage(
+      returnValidationMessageToClient({
+        ar: "ادخل التقييم",
+        en: "enter rating",
+      })
+    ),
+    check("field_two")
+    .isNumeric()
+    .withMessage(
+      returnValidationMessageToClient({
+        ar: "ادخل التقييم",
+        en: "enter rating",
+      })
+    ),
+    check("field_three")
+    .isNumeric()
+    .withMessage(
+      returnValidationMessageToClient({
+        ar: "يجب ان يكون رقم ",
+        en: "please enter number",
+      })
+    ),  
+    check("comment")
+    .isString()
+    .withMessage(
+      returnValidationMessageToClient({
+        ar: "ادخل التعليق",
+        en: "enter comment",
+      })
+    ),
+    check("category_id")
+    .notEmpty()
+    .withMessage(
+      returnValidationMessageToClient({
+        ar: "ادخل الفئة",
+        en: "enter category",
+      })
+    ),
+    check("ad_id")
+    .notEmpty()
+    .withMessage(
+      returnValidationMessageToClient({
+        ar: "ادخل الاعلان",
+        en: "enter advertise",
+      })
+    ),
+    check("user_id")
+    .notEmpty()
+    .withMessage(
+      returnValidationMessageToClient({ 
+        ar: "ادخل السائق",
+        en: "enter user",
+      })
+    ),
+    validatorHandlerMiddleware
+  ];
+}
+
+export const validationDeleteRating = () => {
+  return [
+    check("category_id")
+    .notEmpty()
+    .withMessage(
+      returnValidationMessageToClient({
+        ar: "ادخل الفئة",
+        en: "enter category",
+      })
+    ),
+    check("ad_id")
+    .notEmpty()
+    .withMessage(
+      returnValidationMessageToClient({
+        ar: "ادخل الاعلان",
+        en: "enter advertise",
+      })
+    ),
+    validatorHandlerMiddleware
+  ]
+
+}
