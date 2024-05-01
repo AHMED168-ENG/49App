@@ -1,6 +1,6 @@
 import express from 'express'
 import {createCarForLoading,deleteCarForLoading} from '../../controllers/loading/loading_registration.js';
-import {validationRegisterLoading , requestLoadingValidation ,validationLoadingRating , validateLoadingOffer , acceptLoadingOfferValidation} from '../../validation/loading_validation.js';
+import {validationRegisterLoading , requestLoadingValidation ,validationAddRating , validateLoadingOffer , acceptLoadingOfferValidation} from '../../validation/loading_validation.js';
 import { addRating, deleteRating } from '../../controllers/loading/loading_rating.js';
 import { acceptLoadingOffer, deleteLoadingRequest, getAllUserLoading, getLoadingTrip, makeRequestForLoading , sendLoadingOffer } from '../../controllers/loading/loading_offer.js';
 import { isAuthenticated } from '../../middleware/is-authenticated.js';
@@ -15,7 +15,7 @@ router.post('/register', validationRegisterLoading(), createCarForLoading)
 
 router.delete('/delete-registration',deleteCarForLoading)
 
-router.post('/rating',validationLoadingRating(), addRating)
+router.post('/rating',validationAddRating(), addRating)
 
 router.delete('/delete-rating', deleteRating )
 
