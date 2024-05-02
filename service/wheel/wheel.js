@@ -1,4 +1,6 @@
 import ConflictError from "../../utils/types-errors/conflict-error.js";
+import BadRequestError from "../../utils/types-errors/bad-request.js";
+import wheel_limit_model from "../../models/wheel/wheel_limit_model.js";
 import wheel_model from "../../models/wheel/wheel_model.js";
 import NotFoundError from "../../utils/types-errors/not-found.js";
 import {
@@ -7,6 +9,7 @@ import {
   getWheelWalletService,
   updateWheelWalletService,
 } from "./wheel_wallet.js";
+import { checkUserPlayCounterService } from "./wheel_limit.js";
 
 const createWheelService = async (wheel) => {
   try {
@@ -39,7 +42,8 @@ const getWheelService = async (wheelId) => {
     const wheel = await wheel_model
       .findById(wheelId)
       .select("-createdAt -updatedAt")
-      .populate("items", " _id name value type percentage");
+      .populate("items", " _id name value type percentage")
+      .populate("limit", " _id maxCount");
 
     // --> 3) return response to client
     return wheel;
@@ -80,7 +84,8 @@ const getWheelsServiceWitoutPagination = async () => {
     const wheels = await wheel_model
       .find()
       .select("-createdAt -updatedAt")
-      .populate("items", " _id name value type percentage");
+      .populate("items", " _id name value type percentage")
+      .populate("limit", " _id maxCount");
 
     // --> 2) return response to client
     return wheels;
@@ -114,7 +119,7 @@ const checkUserPointsService = async (userId, item) => {
     const totalPoints = wallet.points + item.value;
 
     // --> 3) return true if user has 10,000 points
-    if (totalPoints >= 10000) {
+    if (totalPoints >= parseInt(process.env.POINT_CONSTANT)) {
       return true;
     }
 
@@ -126,7 +131,7 @@ const checkUserPointsService = async (userId, item) => {
 };
 
 // execute if user has 10,000 points in wallet
-const changePointToMoneyService = async (userId, item) => {
+const changePointToMoneyService = async (userId, item, pricePerPoint) => {
   try {
     // --> 1) check if user has 10,000 points
     const hasEnoughPoints = await checkUserPointsService(userId, item);
@@ -138,8 +143,10 @@ const changePointToMoneyService = async (userId, item) => {
     if (hasEnoughPoints) {
       // --> 4) update wallet
       await updateWheelWalletService(userId, {
-        points: wallet.points + item.value - 10000, // subtract 10,000 points
-        amount: wallet.amount + 10, // add $10 (10,000 points = $10) constant by /*Mohamed Gamal*/
+        points:
+          wallet.points + item.value - parseInt(process.env.POINT_CONSTANT), // subtract 10,000 points
+        amount:
+          wallet.amount + parseInt(process.env.POINT_CONSTANT) * pricePerPoint, // add $10 (10,000 points = $10) constant by /*Mohamed Gamal*/
       });
       return;
     }
@@ -190,18 +197,35 @@ const spinWheelService = async (userId, wheelId) => {
     // --> 4) get random item from wheel
     const item = getRandomItem(wheel.items);
 
-    // --> 5) check item type
+    // --> 5) check if item exists
+    if (!item) {
+      throw new BadRequestError("Sorry, this wheel does not have any items");
+    }
+
+    // --> 6) check if user has played more than seven times
+    const hasPlayedMoreThanTenTimes = await checkUserPlayCounterService(
+      userId,
+      wheelId
+    );
+
+    if (hasPlayedMoreThanTenTimes) {
+      throw new BadRequestError(
+        "Sorry, you have played all your spins for today"
+      );
+    }
+
+    // --> 7) check item type
     if (item.type === "point") {
       // --> update wallet
-      await changePointToMoneyService(userId, item);
+      await changePointToMoneyService(userId, item, wheel.pricePerPoint);
     } else if (item.type === "money") {
       // --> update wallet
       const wallet = await getWheelWalletService(userId);
-      await updateWheelWalletService(wallet._id, {
+      await updateWheelWalletService(userId, {
         amount: wallet.amount + item.value,
       });
     }
-    // --> 6) return item to client
+    // --> 8) return item to client
     return item;
   } catch (error) {
     throw error;
