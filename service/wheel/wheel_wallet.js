@@ -39,6 +39,7 @@ const getWheelWalletService = async (userId) => {
     // --> 1) check if user has wallet
     const isUserHashWheelWallet = await checkIfUserHasWalletService(userId);
 
+
     if (!isUserHashWheelWallet) {
       throw new NotFoundError("Sorry, you don't have a wallet");
     }
@@ -46,7 +47,7 @@ const getWheelWalletService = async (userId) => {
     // --> 2) get wheel wallet
     const wallet = await wheel_wallet_model
       .findOne({ user_id: userId })
-      .select("_id amount points");
+      .select("_id amount points count");
 
     // --> 3) return wheel wallet
     return wallet;
@@ -88,6 +89,15 @@ const resetWalletsToZeroAmountService = async () => {
     throw error;
   }
 };
+
+const resetUserWheelCountToZeroService = async () => {
+  try {
+    // --> 1) update all wheel wallets to zero amount
+    await wheel_wallet_model.updateMany({}, { count: 0 });
+  } catch (error) {
+    throw error;
+  }
+}
 
 const resetWalletToZeroAmountService = async (walletId) => {
   try {
@@ -137,6 +147,7 @@ export {
   getWheelWalletService,
   getWheelWalletsService,
   resetWalletsToZeroAmountService,
+  resetUserWheelCountToZeroService,
   resetWalletToZeroAmountService,
   updateWheelWalletService,
   increaseAmountInWalletService,

@@ -8,6 +8,7 @@ const wheelWalletSchema = new mongoose.Schema(
     },
     amount: { type: Number, default: 0 },
     points: { type: Number, default: 0 },
+    count: { type: Number, default: 0 },
   },
   { versionKey: false, timestamps: true }
 );

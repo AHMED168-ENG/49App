@@ -27,6 +27,7 @@ const createWheelController = async (req, res, next) => {
       name,
       pricePerPoint,
       isActive,
+      limit: "66327f7bcf781a81ffa419c3", // refar to wheellimits collection -> contain just one document for all wheels
     });
 
     // --> 3) return response to client
@@ -141,9 +142,9 @@ const spinWheelController = async (req, res, next) => {
     return res.status(httpStatus.OK).json({
       success: true,
       data: {
-        name : selectedItem.name,
-        value : selectedItem.value,
-        type : selectedItem.type,
+        name: selectedItem.name,
+        value: selectedItem.value,
+        type: selectedItem.type,
       },
     });
   } catch (error) {
