@@ -34,6 +34,8 @@ import dashboardSubscribersRouter from "./dashboard/Subscriber.js";
 
 import competition_subscriber from "./competition_subscriber.js";
 import dashboardWinner from "./dashboard/winner.js";
+import manual_payment from "./manual_payment.js";
+import auction from "./auction.js";
 
 import wheelItems from "./wheel/wheel_items.js";
 import wheel from "./wheel/wheel.js";
@@ -49,6 +51,7 @@ const initializeRoutes = (app) => {
   app.use("/cash-back", cashBack);
   app.use("/subscriptions", subscriptions);
   app.use("/payment", payment);
+  app.use('/manual-payment', manual_payment);
   app.use("/address", addressRoute);
 
   app.use("/social/report", report);
@@ -66,6 +69,7 @@ const initializeRoutes = (app) => {
   app.use("/services/loading", loading);
   app.use("/services/food", food);
   app.use("/services/health", health);
+  app.use("/auction", auction);
 
   app.use("/categories", categories);
   app.use("/app-radio", appRadio);
