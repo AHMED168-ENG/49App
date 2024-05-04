@@ -30,7 +30,7 @@ import dashboardSuperAdmin from "./dashboard/super_admin.js";
 import competitionRouter from "./dashboard/competition.js";
 import dashboardAdmin from "./dashboard/admin.js";
 
-import dashboardSubscribersRouter from "./dashboard/Subscriber.js";
+import dashboardSubscribersRouter from "./dashboard/subscriber.js";
 
 import competition_subscriber from "./competition_subscriber.js";
 import dashboardWinner from "./dashboard/winner.js";
