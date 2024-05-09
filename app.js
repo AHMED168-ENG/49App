@@ -60,12 +60,16 @@ import { sendNotification } from "./controllers/notification_controller.js";
 import come_with_me_ride_model from "./models/come_with_me_ride_model.js";
 import pick_me_ride_model from "./models/pick_me_ride_model.js";
 import { deleteExpiredChats} from "./controllers/chat/chat_controller.js";
+import {agenda} from "./agenda/agenda.js";
+import NotFoundError from "./utils/types-errors/not-found.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);       
 
 const app = express();
 const server = http.createServer(app);
+
+
 
 const serviceAccount = __dirname + "/serviceAccountKey.json";
 deleteExpiredChats()

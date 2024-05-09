@@ -1,6 +1,6 @@
 import express from 'express'
 import { isAuthenticated } from '../middleware/is-authenticated.js'
-import { addAuction, addUserAuction, allUsersAuction, auctionToggleApproved, deleteAuction, endAuction, followUserAuction, getAllAuctions, getAuction } from '../controllers/auction.js'
+import { addAuction, addUserAuction, allUsersAuction, auctionToggleApproved, deleteAuction, endAuction, followUserAuction, getAllAuctions, getAllAuctionsApproved, getAuction } from '../controllers/auction.js'
 import { addUserAuctionValidation, createAuctionValidation } from '../validation/auction.js'
 import handel_validation_errors from '../middleware/handelBodyError.js'
 
@@ -34,6 +34,14 @@ router.post("/:id" ,
     handel_validation_errors,
     addAuction
 )
+
+/** ------------------------------------------------------  
+ * @desc get all Installments
+ * @route /Installments
+ * @method get
+ * @access private get all Installments
+ /**  ------------------------------------------------------  */
+ router.get("/approved" , isAuthenticated , getAllAuctionsApproved)
 
 /** ------------------------------------------------------  
  * @desc follow user auction

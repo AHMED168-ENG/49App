@@ -103,7 +103,8 @@ const schema = new mongoose.Schema(
     last_seen: { type: String },
 
     bio: { type: String, maxLength: 100 },
-    // device_id: { type: String, required: true },
+    auction_users: { type: [mongoose.Schema.Types.ObjectId] , ref : "users" },
+    installments_users: { type: [mongoose.Schema.Types.ObjectId] , ref : "users" },
   },
   { versionKey: false, timestamps: true }
 );

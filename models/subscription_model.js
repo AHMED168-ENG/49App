@@ -2,9 +2,9 @@ import mongoose from 'mongoose'
 
 const schema = new mongoose.Schema({
 
-    user_id: { type: String, required: true },
+    user_id: { type: mongoose.Schema.Types.ObjectId , ref : "users" , required : true  },
 
-    sub_category_id : { type: String, required: true },
+    sub_category_id : { type: mongoose.Schema.Types.ObjectId , ref : "sub_categories" , default : false},
     
     is_premium: { type: Boolean, required : true },
 

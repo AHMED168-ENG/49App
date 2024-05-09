@@ -36,6 +36,7 @@ import competition_subscriber from "./competition_subscriber.js";
 import dashboardWinner from "./dashboard/winner.js";
 import manual_payment from "./manual_payment.js";
 import auction from "./auction.js";
+import installments from "./installments.js";
 
 import wheelItems from "./wheel/wheel_items.js";
 import wheel from "./wheel/wheel.js";
@@ -70,6 +71,7 @@ const initializeRoutes = (app) => {
   app.use("/services/food", food);
   app.use("/services/health", health);
   app.use("/auction", auction);
+  app.use("/installments", installments);
 
   app.use("/categories", categories);
   app.use("/app-radio", appRadio);

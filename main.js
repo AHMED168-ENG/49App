@@ -15,6 +15,7 @@ import path from "path";
 import cors from "cors";
 import hpp from "hpp";
 import fs from "fs";
+import { agenda } from "./agenda/agenda.js";
 
 async function bootstrap() {
   try {
@@ -80,6 +81,15 @@ async function bootstrap() {
     process.on("unhandledRejection", (error) => {
       throw error;
     });
+
+
+
+
+    (async () => {
+      await agenda.start();
+      agenda.every('0 12 * * *', 'process-quotes');
+    })()
+    
 
     /* Handling exception */
     const uncaughtException = (error) => {

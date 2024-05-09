@@ -102,15 +102,15 @@ export const addAuction = async (req, res, next) => {
 export const followUserAuction = async (req, res, next) => {
     try {
         const id = req.user.id
-        const auctionId = req.params.id
-        const auction = await auction_model.findOne({_id : auctionId}).populate("user_id")
+        const userId = req.params.id
+        // const auction = await auction_model.findOne({_id : auctionId}).populate("user_id")
         const user = await user_model.findOne({_id : id})                   
-        if(!auction) throw buildError(httpStatus.NOT_FOUND , JSON.stringify({
-            ar : "هذا المزاد غير مسجل ",
-            en : "this auction not register"
-        }))
+        // if(!auction) throw buildError(httpStatus.NOT_FOUND , JSON.stringify({
+        //     ar : "هذا المزاد غير مسجل ",
+        //     en : "this auction not register"
+        // }))
 
-        await user_model.updateOne({_id : auction.user_id.id} , {$addToSet  : {auction_users : id}})
+        let auction = await user_model.findOneAndUpdate({_id : userId} , {$addToSet  : {auction_users : user.id}} , {new : true})
 
         var bodyEn = `some has been follow your auction`
         var bodyAr = `قام احد بمتابعه مزاداتك`
@@ -118,15 +118,15 @@ export const followUserAuction = async (req, res, next) => {
         var titleAr = "متابعه مزادك"
         
         await notification_model.create({
-            receiver_id: auction.user_id.id ,
+            receiver_id: userId ,
             user_id: req.user.id,
             tab: 7, /// this tap according to auction 
             text_ar: bodyAr,
             text_en: bodyEn,
-            main_category_id: auction.main_category,
-            sub_category_id: auction.sup_category,  
+            // main_category_id: auction.main_category,
+            // sub_category_id: auction.sup_category,  
         })
-        auth_model.find({ 'user_id': auction.user_id.id }).distinct('fcm').then(
+        auth_model.find({ 'user_id': userId }).distinct('fcm').then(
             fcm => sendNotifications(fcm, language == 'ar' ? titleAr : titleEn, language == 'ar' ? bodyAr : bodyEn, 10003))
 
             return res.json({status : true , data : auction})
@@ -198,13 +198,41 @@ export const getAllAuctions = async (req, res, next) => {
         if(req.query.userId) {
             query.user_id = req.query.userId
         }
-        const auction = await auction_model.find({ ...query}).populate(
-            [
-                "user_id" , 
-                "sup_category" , 
-                "main_category" , 
-                "ad_id"
-            ])
+        const auction = await auction_model.paginate(query , {populate :  [
+            "user_id" , 
+            "sup_category" , 
+            "main_category" , 
+            "ad_id"
+        ]})
+
+        return res.json({status : true , auction})
+    } catch (error) {
+        next(error)
+    }
+}
+
+/** ------------------------------------------------------  
+ * @desc get auctions approved
+ * @route /auction approved
+ * @method get
+ * @access private get auctions approved
+/**  ------------------------------------------------------  */
+export const getAllAuctionsApproved = async (req, res, next) => {
+    try {
+        const {id} = req.user
+        const query = {user_id : id , is_approved : true} 
+        if(req.query.finished) {
+            query.is_finished = true
+        }
+        if(req.query.userId) {
+            query.user_id = req.query.userId
+        }
+        const auction = await auction_model.paginate(query , {populate : [
+            "user_id" , 
+            "sup_category" , 
+            "main_category" , 
+            "ad_id"
+        ]})
 
         return res.json({status : true , auction})
     } catch (error) {
@@ -301,8 +329,17 @@ export const addUserAuction = async (req, res, next) => {
         const user_id = req.user.id
         const body = req.body
         const auction = await auction_model.findOne({_id : auctionId})
-        const allUserAuctionDocs = await user_auction_model.find({auction_id : auctionId}).sort({createdAt : -1})        
+        const allUserAuctionDocs = await user_auction_model.find({auction_id : auctionId , is_accepted : true}).sort({createdAt : -1})        
         let is_accepted = false
+        if(allUserAuctionDocs.length) throw buildError(httpStatus.NOT_FOUND , JSON.stringify({
+            ar : "تم شراء هذا المزاد",
+            en : "This auction was bought."
+        }))
+        if(!auction.is_approved) throw buildError(httpStatus.NOT_FOUND , JSON.stringify({
+            ar : "هذا المزاد غير مفعل من جهه الادمن",
+            en : "This auction is ineffective from the addict side."
+        }))
+
         if(!auction) throw buildError(httpStatus.NOT_FOUND , JSON.stringify({
             ar : "هذا المزاد غير مسجل ",
             en : "this auction not register"
@@ -312,11 +349,6 @@ export const addUserAuction = async (req, res, next) => {
             en : "this auction is finished"
         }))
                         
-        if(auction.is_approved) throw buildError(httpStatus.NOT_FOUND , JSON.stringify({
-            ar : " لقد تم شراء هذا المزاد من قبل مستخدم",
-            en : "This auction was purchased by a user"
-        }))
-
         if(body.price < auction.small_price) throw buildError(httpStatus.NOT_FOUND , JSON.stringify({
             ar : `غفوا اقل قيمه مسموح بها في المزاد هيا ${auction.small_price}`,
             en : `The lowest value allowed in the auction is ${auction.small_price}`
@@ -394,17 +426,15 @@ export const allUsersAuction = async (req, res, next) => {
         }))
              
 
-        const user_auction = await user_auction_model.find({auction_id : auctionId , user_id : user_id}).populate(
-            [
-                {path : "user_id" } , 
-                {path : "auction_id" , populate : [
-                    "user_id" , 
-                    "sup_category" , 
-                    "main_category" , 
-                    "ad_id"
-                ]}
-            ]).sort({createdAt : -1})
-
+        const user_auction = await user_auction_model.paginate({auction_id : auctionId , user_id : user_id} , { populate : [
+            {path : "user_id" } , 
+            {path : "auction_id" , populate : [
+                "user_id" , 
+                "sup_category" , 
+                "main_category" , 
+                "ad_id"
+            ]}
+        ] , sort : {createdAt : -1}})
         return res.json({status : true , data : user_auction})
     } catch (error) {
         next(error)

@@ -1,4 +1,5 @@
 import mongoose from 'mongoose'
+import mongoosePaginate from 'mongoose-paginate-v2';
 
 
 const schema = new mongoose.Schema({
@@ -15,4 +16,6 @@ const schema = new mongoose.Schema({
     ad_id : {type: mongoose.Schema.Types.ObjectId , ref : "dynamic_ads" , required : true}
 }, { versionKey : false , timestamps : true })
 
+schema.plugin(mongoosePaginate);
 export default mongoose.model("auction", schema);
+

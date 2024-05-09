@@ -1,4 +1,5 @@
 import mongoose from 'mongoose'
+import mongoosePaginate from 'mongoose-paginate-v2';
 
 
 const schema = new mongoose.Schema({
@@ -8,4 +9,5 @@ const schema = new mongoose.Schema({
     is_accepted: { type: Boolean , required : true , default : false}
 }, { versionKey: false, timestamps: true })
 
+schema.plugin(mongoosePaginate);
 export default mongoose.model("user_auction", schema);

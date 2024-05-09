@@ -10,12 +10,12 @@ import { sendNotifications } from '../controllers/notification_controller.js'
 import app_manager_model from '../models/app_manager_model.js'
 import mongoose from 'mongoose'
 
-export const taxiCategoryId = '62c8ba9e8e28a58a3edf57e9'
-export const captainCategoryId = '62c8ba9f8e28a58a3edf57eb'
-export const scooterCategoryId = '62c8baac8e28a58a3edf5803'
-export const womenOnlyCategoryId = '62ea012a69ea29c91dfc3917'
+export const taxiCategoryId        = '62c8ba9e8e28a58a3edf57e9'
+export const captainCategoryId     = '62c8ba9f8e28a58a3edf57eb'
+export const scooterCategoryId     = '62c8baac8e28a58a3edf5803'
+export const womenOnlyCategoryId   = '62ea012a69ea29c91dfc3917'
 export const comeWithYouCategoryId = '62ea00e269ea29c91dfc390c';
-export const pickMeCategoryId = '62ea008d69ea29c91dfc3908';
+export const pickMeCategoryId      = '62ea008d69ea29c91dfc3908';
 
 export const rideCategoryId = '62c8b5779332225799fe3304';
 export const loadingCategoryId = '62c8b5779332225799fe3302';
@@ -25,8 +25,8 @@ export const healthCategoryId = '62c8b57c9332225799fe3306';
 export const appRadioCategoryId = '62fe5a9b67834d48be806da2';
 export const profileViewCategoryId = '62ef7cf658c90d4a7ed48120';
 
-export const auctionCategoryId = '662cfacc35ddb6ba8094f80f';
-
+export const auctionCategoryId = '662e60b485d0823b535058f1';
+export const installmentsCategoryId = '663749307041134902628aec';
 
 export async function createOtherRequest(userId, country_code, mainCategoryId, cateogryNameAr, cateogryNameEn, category_id, from, to, distance, time, lat, lng, destination_lat, destination_lng, price, passengers, phone, language, air_conditioner, car_model_year , auto_accept) {
     try {
@@ -139,7 +139,7 @@ export async function createOtherRequest(userId, country_code, mainCategoryId, c
 }
 
 export const isTaxiOrCaptainOrScooter = (categoryId) =>
-    categoryId == taxiCategoryId ||
+    categoryId == taxiCategoryId ||     
     categoryId == captainCategoryId ||
     categoryId == scooterCategoryId ||
     categoryId == womenOnlyCategoryId;
